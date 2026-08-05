@@ -1350,7 +1350,7 @@ class Component extends DCLogic {
         ];
       })(),
       filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, limit: 12 }), () => this.build()),
-      contactEmail: 'Replies go to a monitored inbox',
+      contactEmail: '',
       cName: this.state.cName, cMail: this.state.cMail, cMsg: this.state.cMsg,
       contactNote: this.state.cNote || 'Sent straight from this page. Nothing is stored here.',
       setCName: e => this.setState({ cName: e.target.value }),
@@ -1438,7 +1438,7 @@ class Component extends DCLogic {
       flowSummary: flowRows.length ? 'This week ' + addedNow + ' roles were added and ' + removedNow + ' closed or expired, a net change of ' + (netNow > 0 ? 'plus ' : '') + Math.abs(netNow) + ' roles. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + ' and removals from ' + Math.min(...flowRows.map(r => r.removed)) + ' to ' + Math.max(...flowRows.map(r => r.removed)) + '.' : '',
       gridLines: [0, 1, 2, 3].map(i => ({ y: (pad + i * ((H - pad * 2) / 3)).toFixed(1) })),
       firstWeek: fmtWeek(first.week), lastWeek: fmtWeek(last.week),
-      chartSummary: n ? 'Over ' + n + ' weeks openings moved from ' + first.open + ' to ' + last.open + ', new roles per week from ' + first.new + ' to ' + last.new + ', and the median time to fill from ' + first.daysToFill + ' to ' + last.daysToFill + ' days.' : '',
+      chartSummary: n ? ((n < 2) ? ('One week recorded so far, ' + last.open + ' roles open and ' + last.new + ' new. The trend line needs a few more weeks.') : ('Over ' + n + ' weeks openings moved from ' + first.open + ' to ' + last.open + ', new roles per week from ' + first.new + ' to ' + last.new + (first.daysToFill != null && last.daysToFill != null ? ', and the median time to fill from ' + first.daysToFill + ' to ' + last.daysToFill + ' days.' : '. Time to fill is not measurable until roles start closing.'))) : '',
       filterLabel: filter ? 'Clear filter' : 'All disciplines',
       catMenuOpen: !!this.state.catMenu,
       toggleCatMenu: () => this.setState(s => ({ catMenu: !s.catMenu })),

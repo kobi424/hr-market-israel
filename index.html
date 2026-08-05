@@ -407,6 +407,39 @@
       </sc-if>
     </section>
 
+    
+    <section data-screen-label="Contact" id="jr-contact"
+      style="position: relative; min-height: 62svh; display: flex; flex-direction: column;
+             justify-content: center; padding: clamp(40px, 6vw, 90px) clamp(20px, 5vw, 80px);">
+      <div style="font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .22em;
+                  text-transform: uppercase; color: #6b767e; margin-bottom: 18px;">Contact</div>
+      <h2 style="margin: 0 0 10px; font-size: clamp(26px, 4vw, 44px); font-weight: 600;
+                 letter-spacing: -.02em; color: #e8ecef;">Get in touch</h2>
+      <p style="margin: 0 0 26px; font-size: 14px; line-height: 1.7; color: #7d888f; max-width: 42em;">
+        Questions about the data, a correction, or a role you think belongs here.
+      </p>
+      <form id="jr-form" style="max-width: 560px; display: flex; flex-direction: column; gap: 12px;">
+        <input type="hidden" name="access_key" value="">
+        <input type="hidden" name="subject" value="HRjobs.co.il contact form">
+        <input type="hidden" name="from_name" value="HRjobs.co.il">
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+        <input name="name" required placeholder="Name" autocomplete="name"
+          style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.13); border-radius: 10px;
+                 padding: 13px 15px; color: #e8ecef; font: 14px inherit; outline: none;">
+        <input name="email" type="email" required placeholder="Email" autocomplete="email"
+          style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.13); border-radius: 10px;
+                 padding: 13px 15px; color: #e8ecef; font: 14px inherit; outline: none;">
+        <textarea name="message" required rows="5" placeholder="Message"
+          style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.13); border-radius: 10px;
+                 padding: 13px 15px; color: #e8ecef; font: 14px inherit; outline: none; resize: vertical;"></textarea>
+        <button type="submit" id="jr-send"
+          style="align-self: flex-start; margin-top: 4px; padding: 12px 26px; border-radius: 999px;
+                 border: 1px solid rgba(255,255,255,.2); background: #e8ecef; color: #06080a;
+                 font: 600 13.5px inherit; cursor: pointer;">Send</button>
+        <div id="jr-msg" style="font-size: 13px; line-height: 1.6; min-height: 1em; color: #7d888f;"></div>
+      </form>
+    </section>
+
     <footer style="margin-top: clamp(48px, 7vw, 110px); border-top: 1px solid rgba(255,255,255,.09); padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 80px) clamp(40px, 5vw, 72px); display: flex; flex-wrap: wrap; gap: 20px 48px; justify-content: space-between; align-items: flex-start;">
       <p style="margin: 0; font-size: 13px; line-height: 1.7; color: #7d888f; max-width: 44em;">Counts come from HR and Total Rewards roles listed publicly on LinkedIn in Israel, tracked from H2 2026. LinkedIn skews toward technology employers, so this reads the tech side of the market rather than the whole of it. Listings are matched by title and may be reposted, duplicated or left open after a hire, so treat every figure as an approximation. This page is an observation of the market, not career advice.</p>
       <div style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6b767e; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">Collected {{ agoLabel }}</div>
@@ -1074,7 +1107,7 @@ class Component extends DCLogic {
       splitRows: splitRows,
       showSplitRows: !filter,
       splitSummary: allJobs.length ? (fcat ? 'In ' + fcat.label + ', ' : '') + icN + ' of ' + allJobs.length + ' tracked roles are individual contributor positions (' + pctOf(icN, allJobs.length) + '%) against ' + mgrN + ' at manager level or above (' + pctOf(mgrN, allJobs.length) + '%). ' + (!fcat && splitRows.length ? splitRows.slice().sort((a, b) => b.mgrPct - a.mgrPct)[0].label + ' is the most management heavy discipline, ' + splitRows.slice().sort((a, b) => b.icPct - a.icPct)[0].label + ' the most individual contributor heavy.' : '') : '',
-      navSections: ['Verdict', 'Field', 'Analytics', 'IC vs managers', 'All jobs'].map((label, i) => ({
+      navSections: ['Verdict', 'Field', 'Analytics', 'IC vs managers', 'All jobs', 'Contact'].map((label, i) => ({
         label: label, aria: 'Jump to ' + label,
         ink: this.state.active === label ? '#ffffff' : '#8b959c',
         line: this.state.active === label ? st.accent : 'transparent',
@@ -1185,6 +1218,132 @@ class Component extends DCLogic {
   }
 }
 
+</script>
+
+    <a href="#" onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
+       style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
+              font: 700 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
+              color: #e8ecef; padding: 9px 13px; border: 1px solid rgba(255,255,255,.14);
+              border-radius: 999px; background: rgba(6,8,10,.62); backdrop-filter: blur(9px);">
+      HRjobs<span style="opacity:.45">.co.il</span>
+    </a>
+
+    <button id="jr-totop" aria-label="Back to top" title="Back to top"
+       style="position: fixed; right: 22px; bottom: 26px; z-index: 60; width: 42px; height: 42px;
+              border-radius: 999px; border: 1px solid rgba(255,255,255,.16); cursor: pointer;
+              background: rgba(6,8,10,.66); backdrop-filter: blur(9px); color: #e8ecef;
+              font-size: 17px; line-height: 1; opacity: 0; pointer-events: none;
+              transition: opacity .3s ease, transform .3s ease; transform: translateY(6px);">&#8593;</button>
+
+<script>
+(function () {
+  'use strict';
+  // The design owns scrolling, and it may scroll an inner element rather than the window.
+  function scroller() {
+    var de = document.scrollingElement || document.documentElement;
+    if (de.scrollHeight > de.clientHeight + 4) return de;
+    if (document.body.scrollHeight > document.body.clientHeight + 4) return document.body;
+    return de;
+  }
+  // Native smooth scrolling gets cancelled here, most likely by the design's own
+  // scroll handling, so drive the animation ourselves.
+  var animId = 0;
+  function glide(to) {
+    var sc = scroller();
+    var docScroll = (sc === document.scrollingElement || sc === document.documentElement);
+    var from = docScroll ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
+    var max = (docScroll ? document.documentElement.scrollHeight - window.innerHeight
+                         : sc.scrollHeight - sc.clientHeight);
+    var end = Math.max(0, Math.min(max, to));
+    var dist = end - from;
+    if (Math.abs(dist) < 2) return;
+    var dur = Math.min(900, Math.max(320, Math.abs(dist) * 0.45));
+    var t0 = performance.now();
+    var id = ++animId;
+    (function step(now) {
+      if (id !== animId) return;
+      var p = Math.min(1, (now - t0) / dur);
+      var e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      var y = Math.round(from + dist * e);
+      if (docScroll) window.scrollTo(0, y); else sc.scrollTop = y;
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  window.__jrTop = function () { glide(0); };
+
+  var btn = document.getElementById('jr-totop');
+  if (btn) {
+    btn.addEventListener('click', window.__jrTop);
+    var watch = function () {
+      var sc = scroller();
+      var top = (sc === document.scrollingElement || sc === document.documentElement)
+        ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
+      var on = top > 400;
+      btn.style.opacity = on ? '1' : '0';
+      btn.style.pointerEvents = on ? 'auto' : 'none';
+      btn.style.transform = on ? 'translateY(0)' : 'translateY(6px)';
+    };
+    addEventListener('scroll', watch, { passive: true });
+    setInterval(watch, 600);   // the inner scroller can change after React mounts
+    watch();
+  }
+
+  // The design captures its scroll container at mount. Outside Claude Design's host
+  // that reference does not end up on the element that actually scrolls, so its nav
+  // buttons do nothing. Rather than patch its internals, watch for a nav click and,
+  // if nothing moved, glide to the matching section ourselves.
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('nav button');
+    if (!b) return;
+    var label = (b.textContent || '').trim();
+    var sec = null;
+    document.querySelectorAll('section[data-screen-label]').forEach(function (s) {
+      if (s.getAttribute('data-screen-label') === label) sec = s;
+    });
+    if (!sec) return;
+    setTimeout(function () {
+      var off = sec.getBoundingClientRect().top;
+      if (Math.abs(off) < 140) return;           // the design handled it
+      var sc = scroller();
+      var cur = (sc === document.scrollingElement || sc === document.documentElement)
+        ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
+      glide(cur + off - 64);   // 64 clears the sticky header
+    }, 1200);
+  }, true);
+  var form = document.getElementById('jr-form');
+  if (form) {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('jr-msg');
+      var send = document.getElementById('jr-send');
+      var key = form.access_key.value;
+      if (!key || key.indexOf('__') === 0) {
+        msg.style.color = '#ff6257';
+        msg.textContent = 'The form is not connected yet.';
+        return;
+      }
+      send.disabled = true; send.textContent = 'Sending…';
+      msg.style.color = '#7d888f'; msg.textContent = '';
+      try {
+        var r = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+        var j = await r.json();
+        if (!j.success) throw new Error(j.message || 'failed');
+        msg.style.color = '#2ee6a8';
+        msg.textContent = 'Thank you, your message was sent.';
+        form.reset();
+        send.textContent = 'Sent';
+      } catch (err) {
+        msg.style.color = '#ff6257';
+        msg.textContent = 'Could not send. Please try again later.';
+        send.disabled = false; send.textContent = 'Send';
+      }
+    });
+  }
+})();
 </script>
 </body>
 </html>

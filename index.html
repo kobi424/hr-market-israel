@@ -609,7 +609,7 @@ const STATES = {
 };
 
 class Component extends DCLogic {
-  state = { data: null, failed: false, filter: null, hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, cName: '', cMail: '', cMsg: '', cNote: '' };
+  state = { data: null, failed: false, filter: (function () { try { var d = new URLSearchParams(location.search).get('d'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, cName: '', cMail: '', cMsg: '', cNote: '' };
 
   monthNames() { return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; }
 
@@ -1087,7 +1087,7 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: () => this.setState({ filter: c.key, limit: 12 }, () => this.build())
+          click: () => this.setState({ filter: c.key, limit: 12 }, () => { this.build(); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} })
         }, chip(filter === c.key))),
       senChips: SEN.map(s => Object.assign({
         label: s === 'all' ? 'Any level' : s.replace(/-/g, ' '), active: sen === s,
@@ -1379,7 +1379,7 @@ class Component extends DCLogic {
       headline: d.verdict ? d.verdict.headline : '',
       why: (d.verdict && d.verdict.why) || [],
       whyChips: ((d.verdict && d.verdict.why) || []).map((text, i) => ({ text: text, d: (0.9 + i * 0.14).toFixed(2) })),
-      agoLabel: this.ago(d.generated),
+      agoLabel: (function (g) { var hrs = (Date.now() - Date.parse(g)) / 3600000; if (!isFinite(hrs)) return 'at an unknown time'; if (hrs > 168) return 'over a week ago · this feed has stopped updating'; if (hrs > 36) return 'over ' + Math.floor(hrs / 24) + ' days ago · update overdue'; return this.ago(g); }).call(this, d.generated),
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {

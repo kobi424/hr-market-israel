@@ -3,6 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR Market Israel — is now a good time to look?</title>
+<meta name="description" content="A twice daily read on the Israeli HR and Total Rewards job market: how many roles are open, whether that is growing, and how fast they fill.">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="HRjobs.co.il">
+<meta property="og:title" content="HR Market Israel — is now a good time to look?">
+<meta property="og:description" content="A twice daily read on the Israeli HR and Total Rewards job market: how many roles are open, whether that is growing, and how fast they fill.">
+<meta property="og:url" content="https://kobi424.github.io/hr-market-israel/">
+<meta property="og:image" content="https://kobi424.github.io/hr-market-israel/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HR Market Israel — is now a good time to look?">
+<meta name="twitter:description" content="A twice daily read on the Israeli HR and Total Rewards job market: how many roles are open, whether that is growing, and how fast they fill.">
+<meta name="twitter:image" content="https://kobi424.github.io/hr-market-israel/social.png">
+<meta name="theme-color" content="#06080a">
 <script src="./react.js"></script>
 <script src="./react-dom.js"></script>
 <script src="./support.js"></script>
@@ -1334,16 +1350,16 @@ class Component extends DCLogic {
         ];
       })(),
       filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, limit: 12 }), () => this.build()),
-      contactEmail: this.props.contactEmail || 'hello@hrjobs.co.il',
+      contactEmail: 'Replies go to a monitored inbox',
       cName: this.state.cName, cMail: this.state.cMail, cMsg: this.state.cMsg,
-      contactNote: this.state.cNote || 'Opens your mail app with the message ready.',
+      contactNote: this.state.cNote || 'Sent straight from this page. Nothing is stored here.',
       setCName: e => this.setState({ cName: e.target.value }),
       setCMail: e => this.setState({ cMail: e.target.value }),
       setCMsg: e => this.setState({ cMsg: e.target.value }),
       sendContact: () => {
         const { cName, cMail, cMsg } = this.state;
         if (!cName.trim() || !cMail.trim() || !cMsg.trim()) { this.setState({ cNote: 'Fill in all three fields first.' }); return; }
-        const to = this.props.contactEmail || 'hello@hrjobs.co.il';
+        const relayKey = '853945b5-b6bb-4096-a37c-f72d56516e5a'; this.setState({ cNote: 'Sending…' }); fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ access_key: relayKey, subject: 'HRjobs.co.il · message from ' + cName, from_name: 'HRjobs.co.il', name: cName, email: cMail, message: cMsg }) }).then(r => r.json()).then(j => { if (!j.success) throw new Error(j.message || 'failed'); this.setState({ cName: '', cMail: '', cMsg: '', cNote: 'Thank you, your message was sent.' }); }).catch(() => this.setState({ cNote: 'Could not send just now. Please try again later.' })); return; const to = 'hello@hrjobs.co.il';
         const body = cMsg + '\n\n— ' + cName + ' (' + cMail + ')';
         window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent('HRjobs.co.il · message from ' + cName) + '&body=' + encodeURIComponent(body);
         this.setState({ cNote: 'Your mail app should be open. Nothing is stored here.' });

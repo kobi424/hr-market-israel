@@ -267,7 +267,7 @@
           </sc-for>
         </div>
       </div>
-      <div data-field="1" style="position: relative; height: clamp(400px, 68vh, 760px); border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, rgba(255,255,255,.035), rgba(0,0,0,0));">
+      <div data-field="1" style="position: relative; height: clamp(460px, 86vh, 1040px); border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, rgba(255,255,255,.035), rgba(0,0,0,0));">
         <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 130%; aspect-ratio: 1; margin: -65% 0 0 -65%; border-radius: 50%; pointer-events: none; background: conic-gradient(from 0deg, rgba(255,255,255,0), {{ sheenTint }}, rgba(255,255,255,0) 55%); filter: blur(70px); animation: fieldSheen 46s linear infinite;"></div>
         <sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="14">
           <a href="{{ b.url }}" target="_blank" rel="noopener noreferrer" onClick="{{ b.click }}" data-bub="{{ b.id }}" aria-label="{{ b.aria }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" onFocus="{{ b.enter }}" onBlur="{{ b.leave }}" style="position: absolute; left: 0; top: 0; width: {{ b.size }}px; height: {{ b.size }}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; opacity: {{ b.op }}; background: {{ b.fill }}; border: 1px solid {{ b.ring }}; box-shadow: {{ b.glow }}; transition: opacity .5s ease; will-change: transform; outline-offset: 4px;">
@@ -672,11 +672,11 @@ class Component extends DCLogic {
   }
 
   sizeFor(days) {
-    // Steeper falloff so today's roles read as clearly the largest, with a floor
-    // so a month-old posting is still visible rather than a dot.
+    // Smaller overall so the field breathes, with a steep falloff by age:
+    // today reads clearly largest, a month-old posting is still legible.
     var d = Math.min(30, Math.max(0, days || 0));
-    var f = Math.pow(1 - d / 30, 1.6);
-    return 30 + f * 96;
+    var f = Math.pow(1 - d / 30, 1.7);
+    return 17 + f * 55;
   }
 
   componentDidMount() {
@@ -925,7 +925,7 @@ class Component extends DCLogic {
     if (!el) return;
     this._field = el;
     const w = el.clientWidth, h = el.clientHeight;
-    const scale = this._isSmall ? 1.35 : Math.min(1.15, Math.max(0.72, w / 1320));
+    const scale = this._isSmall ? 0.72 : Math.min(1.0, Math.max(0.62, w / 1320));
     const prev = {};
     (this._parts || []).forEach(p => { prev[p.id] = p; });
     const keys = ((this.state.data && this.state.data.categories) || []).map(c => c.key);

@@ -599,7 +599,7 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:6,&quot;max&quot;:400,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.8,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:6,&quot;max&quot;:400,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
 const HUES = { 'total-rewards': 152, 'hrbp': 205, 'talent-acquisition': 268, 'hr-ops': 32, 'learning': 330, 'hris': 186, 'leadership': 8, 'payroll': 288, 'analytics': 100 };
 const SIZES = { analyst: 42, specialist: 58, manager: 78, 'senior-manager': 98, director: 122 };
 const STATES = {
@@ -976,7 +976,7 @@ class Component extends DCLogic {
   }
 
   tick(t) {
-    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 1);
+    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 1.8);
     this._last = t;
     const el = this._field;
     if (el) {

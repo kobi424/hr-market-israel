@@ -76,31 +76,12 @@
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 28px); font-weight: 600; letter-spacing: -0.03em;">How the score is calculated</h2>
               <div style="display: flex; align-items: baseline; gap: 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #7d878e;">
-                <span>published {{ score }}</span><span style="color: {{ accent }};">recomputed {{ composite }}</span>
+                
               </div>
             </div>
             <button type="button" onClick="{{ closeMethod }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
           </div>
-          <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #98a3aa;">The score arrives with the feed. The page also recalculates it from the same four observable signals and shows both, so a change in method is visible rather than hidden. Each signal is scored out of 100 against its own reference, then weighted and summed. Above 66 reads bull, below 33 reads bear.</p>
-          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
-            <sc-for list="{{ scoreParts }}" as="p" hint-placeholder-count="4">
-              <li style="border-bottom: 1px solid rgba(255,255,255,.07); padding: 16px 0; display: flex; flex-direction: column; gap: 9px;">
-                <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
-                  <span style="font-size: 15px; letter-spacing: -0.01em; color: #f0f4f6;">{{ p.label }}</span>
-                  <span style="display: flex; align-items: baseline; gap: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">
-                    <span style="color: #6f7a82; font-size: 11px;">weight {{ p.weight }}</span>
-                    <span style="color: #eef2f4;">{{ p.val }}</span>
-                    <span style="color: {{ p.color }}; font-size: 12px;">{{ p.contrib }}</span>
-                  </span>
-                </span>
-                <span style="display: block; height: 3px; background: rgba(255,255,255,.08);">
-                  <span style="display: block; height: 3px; width: {{ p.val }}%; background: {{ p.color }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ p.d }}s;"></span>
-                </span>
-                <span style="font-size: 12.5px; line-height: 1.55; color: #98a3aa;">{{ p.detail }}</span>
-              </li>
-            </sc-for>
-          </ul>
-          <p style="margin: 0; font-size: 12px; line-height: 1.7; color: #6f7a82;">References: the trailing four week average for openings, the previous period for time to fill, a balanced market for the added to removed ratio, and a 30% ceiling for senior share.</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #98a3aa;"></p>
         </div>
       </div>
     </sc-if>
@@ -267,7 +248,7 @@
           </sc-for>
         </div>
       </div>
-      <div data-field="1" style="position: relative; height: clamp(460px, 86vh, 1040px); border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, rgba(255,255,255,.035), rgba(0,0,0,0));">
+      <div data-field="1" style="position: relative; height: clamp(400px, 68vh, 760px); border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, rgba(255,255,255,.035), rgba(0,0,0,0));">
         <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 130%; aspect-ratio: 1; margin: -65% 0 0 -65%; border-radius: 50%; pointer-events: none; background: conic-gradient(from 0deg, rgba(255,255,255,0), {{ sheenTint }}, rgba(255,255,255,0) 55%); filter: blur(70px); animation: fieldSheen 46s linear infinite;"></div>
         <sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="14">
           <a href="{{ b.url }}" target="_blank" rel="noopener noreferrer" onClick="{{ b.click }}" data-bub="{{ b.id }}" aria-label="{{ b.aria }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" onFocus="{{ b.enter }}" onBlur="{{ b.leave }}" style="position: absolute; left: 0; top: 0; width: {{ b.size }}px; height: {{ b.size }}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; opacity: {{ b.op }}; background: {{ b.fill }}; border: 1px solid {{ b.ring }}; box-shadow: {{ b.glow }}; transition: opacity .5s ease; will-change: transform; outline-offset: 4px;">
@@ -333,7 +314,7 @@
 
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 28px;">
-          <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.03em;">Eleven weeks <span style="font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82; margin-left: 10px;">{{ scopeNote }}</span></h2>
+          <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.03em;">Over time <span style="font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82; margin-left: 10px;">{{ scopeNote }}</span></h2>
           <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px;">
             <sc-for list="{{ series }}" as="s" hint-placeholder-count="3">
               <li style="display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #99a4ab;">
@@ -567,7 +548,7 @@
     <section data-screen-label="Contact" aria-labelledby="contact-title" style="padding: clamp(48px, 8vw, 110px) clamp(20px, 5vw, 80px) 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(24px, 4vw, 64px); align-items: start;">
       <div style="display: flex; flex-direction: column; gap: 14px;">
         <h2 id="contact-title" style="margin: 0; font-size: clamp(24px, 3.2vw, 40px); font-weight: 600; letter-spacing: -0.03em;">Contact</h2>
-        <p style="margin: 0; font-size: 14.5px; line-height: 1.7; color: #98a3aa; max-width: 30em;">A missing role, a correction, a discipline worth tracking, or a hiring team that wants its openings in the feed. Write and it reaches a person.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.7; color: #98a3aa; max-width: 30em;">A missing role, a correction, a discipline worth tracking, or a hiring team that wants its openings in the feed.</p>
         <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .04em; color: #7d878e;">{{ contactEmail }}</div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 14px; border: 1px solid rgba(255,255,255,.1); padding: clamp(18px, 2.4vw, 30px);">
@@ -599,7 +580,7 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.8,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:6,&quot;max&quot;:400,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.2,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:6,&quot;max&quot;:400,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
 const HUES = { 'total-rewards': 152, 'hrbp': 205, 'talent-acquisition': 268, 'hr-ops': 32, 'learning': 330, 'hris': 186, 'leadership': 8, 'payroll': 288, 'analytics': 100 };
 const SIZES = { analyst: 42, specialist: 58, manager: 78, 'senior-manager': 98, director: 122 };
 const STATES = {
@@ -672,11 +653,10 @@ class Component extends DCLogic {
   }
 
   sizeFor(days) {
-    // Smaller overall so the field breathes, with a steep falloff by age:
-    // today reads clearly largest, a month-old posting is still legible.
+    // Steep falloff by age with a floor: today largest, a month old still legible.
     var d = Math.min(30, Math.max(0, days || 0));
-    var f = Math.pow(1 - d / 30, 1.7);
-    return 17 + f * 55;
+    var f = Math.pow(1 - d / 30, 1.6);
+    return 20 + f * 66;
   }
 
   componentDidMount() {
@@ -925,7 +905,7 @@ class Component extends DCLogic {
     if (!el) return;
     this._field = el;
     const w = el.clientWidth, h = el.clientHeight;
-    const scale = this._isSmall ? 0.72 : Math.min(1.0, Math.max(0.62, w / 1320));
+    const scale = this._isSmall ? 0.45 : Math.min(1.0, Math.max(0.62, w / 1320));
     const prev = {};
     (this._parts || []).forEach(p => { prev[p.id] = p; });
     const keys = ((this.state.data && this.state.data.categories) || []).map(c => c.key);
@@ -976,7 +956,7 @@ class Component extends DCLogic {
   }
 
   tick(t) {
-    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 1.8);
+    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 1.2);
     this._last = t;
     const el = this._field;
     if (el) {
@@ -1304,11 +1284,11 @@ class Component extends DCLogic {
       replayNote: rp == null ? '' : 'Showing last week moving to this week',
       heroAdded: fcat ? new7 : L(t.addedPrevWeek, t.addedThisWeek),
       heroClosed: fcat ? '' : L(t.removedPrevWeek, t.removedThisWeek),
-      heroClosedText: fcat ? '' : '\u2212' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
+      heroClosedText: (fcat || t.removedThisWeek == null) ? '' : '−' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
       heroAddedLabel: fcat ? 'posted in the last 7 days' : 'added this week',
-      heroClosedLabel: fcat ? '' : 'closed this week',
+      heroClosedLabel: (fcat || t.removedThisWeek == null) ? '' : 'closed this week',
       heroOpen: fcat ? fcat.open : L(prevOpen, t.open),
-      heroOpenLabel: fcat ? 'open ' + fcat.label + ' roles · scroll' : 'open roles tracked · scroll',
+      heroOpenLabel: '',
       pulseDur: (7 - freshShare * 4).toFixed(1) + 's',
       pulseOpacity: (0.1 + freshShare * 0.45).toFixed(2),
       freshNote: jobs.filter(j => j.postedDays <= 3).length + ' posted in the last three days',
@@ -1325,7 +1305,7 @@ class Component extends DCLogic {
       ],
       splitRows: splitRows,
       showSplitRows: !filter,
-      splitSummary: allJobs.length ? (fcat ? 'In ' + fcat.label + ', ' : '') + icN + ' of ' + allJobs.length + ' tracked roles are individual contributor positions (' + pctOf(icN, allJobs.length) + '%) against ' + mgrN + ' at manager level or above (' + pctOf(mgrN, allJobs.length) + '%). ' + (!fcat && splitRows.length ? splitRows.slice().sort((a, b) => b.mgrPct - a.mgrPct)[0].label + ' is the most management heavy discipline, ' + splitRows.slice().sort((a, b) => b.icPct - a.icPct)[0].label + ' the most individual contributor heavy.' : '') : '',
+      splitSummary: '',
       navWrap: this.state.small ? 'nowrap' : 'wrap',
       toTop: e => { if (e && e.preventDefault) e.preventDefault(); this.glideTo(0); },
       jobOpen: !!this.state.job,
@@ -1355,7 +1335,7 @@ class Component extends DCLogic {
       filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, limit: 12 }), () => this.build()),
       contactEmail: '',
       cName: this.state.cName, cMail: this.state.cMail, cMsg: this.state.cMsg,
-      contactNote: this.state.cNote || 'Sent straight from this page. Nothing is stored here.',
+      contactNote: this.state.cNote || '',
       setCName: e => this.setState({ cName: e.target.value }),
       setCMail: e => this.setState({ cMail: e.target.value }),
       setCMsg: e => this.setState({ cMsg: e.target.value }),
@@ -1365,7 +1345,7 @@ class Component extends DCLogic {
         const relayKey = '853945b5-b6bb-4096-a37c-f72d56516e5a'; this.setState({ cNote: 'Sending…' }); fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ access_key: relayKey, subject: 'HRjobs.co.il · message from ' + cName, from_name: 'HRjobs.co.il', name: cName, email: cMail, message: cMsg }) }).then(r => r.json()).then(j => { if (!j.success) throw new Error(j.message || 'failed'); this.setState({ cName: '', cMail: '', cMsg: '', cNote: 'Thank you, your message was sent.' }); }).catch(() => this.setState({ cNote: 'Could not send just now. Please try again later.' })); return; const to = 'hello@hrjobs.co.il';
         const body = cMsg + '\n\n— ' + cName + ' (' + cMail + ')';
         window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent('HRjobs.co.il · message from ' + cName) + '&body=' + encodeURIComponent(body);
-        this.setState({ cNote: 'Your mail app should be open. Nothing is stored here.' });
+        this.setState({ cNote: '' });
       },
       navSections: ['Verdict', 'Field', 'Analytics', 'Timing', 'IC vs managers', 'All jobs', 'Contact'].map((label, i) => ({
         label: label, aria: 'Jump to ' + label,
@@ -1488,49 +1468,45 @@ class Component extends DCLogic {
       HRjobs<span style="opacity:.45">.co.il</span>
     </a>
 
-    <button id="jr-totop" aria-label="Back to top" title="Back to top"
-       style="position: fixed; right: 22px; bottom: 26px; z-index: 60; width: 42px; height: 42px;
-              border-radius: 999px; border: 1px solid rgba(255,255,255,.16); cursor: pointer;
-              background: rgba(6,8,10,.66); backdrop-filter: blur(9px); color: #e8ecef;
-              font-size: 17px; line-height: 1; opacity: 0; pointer-events: none;
-              transition: opacity .3s ease, transform .3s ease; transform: translateY(6px);">&#8593;</button>
-
-    <div id="jr-herobtns" style="position: fixed; left: 22px; bottom: 26px; z-index: 60;
-                display: flex; gap: 9px; opacity: 0; pointer-events: none;
+    <div id="jr-herobtns" style="position: fixed; left: clamp(20px, 5vw, 80px); bottom: clamp(64px, 12vh, 130px);
+                z-index: 60; display: flex; gap: 12px; opacity: 0; pointer-events: none;
                 transition: opacity .35s ease;">
-      <button data-goto="Field" style="background: rgba(6,8,10,.66); backdrop-filter: blur(9px);
-              color: #e8ecef; border: 1px solid rgba(255,255,255,.18); border-radius: 999px;
-              padding: 10px 17px; font: 600 12.5px Inter, system-ui, sans-serif; cursor: pointer;">
-        To the field</button>
-      <button data-goto="All jobs" style="background: rgba(6,8,10,.66); backdrop-filter: blur(9px);
-              color: #e8ecef; border: 1px solid rgba(255,255,255,.18); border-radius: 999px;
-              padding: 10px 17px; font: 600 12.5px Inter, system-ui, sans-serif; cursor: pointer;">
-        To all jobs</button>
+      <button data-goto="Analytics" style="background: transparent; color: #e8ecef;
+              border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 13px 26px;
+              font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em;
+              text-transform: uppercase; cursor: pointer;">Analytics</button>
+      <button data-goto="All jobs" style="background: transparent; color: #e8ecef;
+              border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 13px 26px;
+              font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em;
+              text-transform: uppercase; cursor: pointer;">Jobs</button>
     </div>
 
 <script>
 (function () {
   'use strict';
-  // The design owns scrolling, and it may scroll an inner element rather than the window.
   function scroller() {
     var de = document.scrollingElement || document.documentElement;
     if (de.scrollHeight > de.clientHeight + 4) return de;
     if (document.body.scrollHeight > document.body.clientHeight + 4) return document.body;
     return de;
   }
-  // Native smooth scrolling gets cancelled here, most likely by the design's own
-  // scroll handling, so drive the animation ourselves.
+  function topOf(sc) {
+    return (sc === document.scrollingElement || sc === document.documentElement)
+      ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
+  }
+  // Fast, self-driven glide. The design's own animation is leisurely, and native
+  // smooth scrolling fights it, so we drive the frames ourselves.
   var animId = 0;
   function glide(to) {
     var sc = scroller();
     var docScroll = (sc === document.scrollingElement || sc === document.documentElement);
-    var from = docScroll ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
+    var from = topOf(sc);
     var max = (docScroll ? document.documentElement.scrollHeight - window.innerHeight
                          : sc.scrollHeight - sc.clientHeight);
     var end = Math.max(0, Math.min(max, to));
     var dist = end - from;
     if (Math.abs(dist) < 2) return;
-    var dur = Math.min(900, Math.max(320, Math.abs(dist) * 0.45));
+    var dur = Math.min(650, Math.max(260, Math.abs(dist) * 0.22));
     var t0 = performance.now();
     var id = ++animId;
     (function step(now) {
@@ -1544,68 +1520,50 @@ class Component extends DCLogic {
   }
   window.__jrTop = function () { glide(0); };
 
-  var btn = document.getElementById('jr-totop');
-  if (btn) {
-    btn.addEventListener('click', window.__jrTop);
-    var watch = function () {
-      var sc = scroller();
-      var top = (sc === document.scrollingElement || sc === document.documentElement)
-        ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
-      var on = top > 400;
-      btn.style.opacity = on ? '1' : '0';
-      btn.style.pointerEvents = on ? 'auto' : 'none';
-      btn.style.transform = on ? 'translateY(0)' : 'translateY(6px)';
-    };
-    addEventListener('scroll', watch, { passive: true });
-    setInterval(watch, 600);   // the inner scroller can change after React mounts
-    watch();
+  function sectionTop(label) {
+    var sec = null;
+    document.querySelectorAll('section[data-screen-label]').forEach(function (s) {
+      if (s.getAttribute('data-screen-label') === label) sec = s;
+    });
+    if (!sec) return null;
+    return topOf(scroller()) + sec.getBoundingClientRect().top - 64;
   }
 
-  // The design captures its scroll container at mount. Outside Claude Design's host
-  // that reference does not end up on the element that actually scrolls, so its nav
-  // buttons do nothing. Rather than patch its internals, watch for a nav click and,
-  // if nothing moved, glide to the matching section ourselves.
+  // The design's back-to-top glides slowly. Intercept it in the capture phase,
+  // before React's delegated handler sees it, and run the fast glide instead.
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-totop]');
+    if (!b) return;
+    e.stopPropagation();
+    glide(0);
+  }, true);
+
+  // Nav clicks: give the design a beat. If nothing has moved 350ms after the
+  // click, take over rather than leaving the visitor waiting.
   document.addEventListener('click', function (e) {
     var b = e.target && e.target.closest && e.target.closest('nav button');
     if (!b) return;
     var label = (b.textContent || '').trim();
-    var sec = null;
-    document.querySelectorAll('section[data-screen-label]').forEach(function (s) {
-      if (s.getAttribute('data-screen-label') === label) sec = s;
-    });
-    if (!sec) return;
+    var startTop = topOf(scroller());
     setTimeout(function () {
-      var off = sec.getBoundingClientRect().top;
-      if (Math.abs(off) < 140) return;           // the design handled it
-      var sc = scroller();
-      var cur = (sc === document.scrollingElement || sc === document.documentElement)
-        ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
-      glide(cur + off - 64);   // 64 clears the sticky header
-    }, 1200);
+      var moved = Math.abs(topOf(scroller()) - startTop) > 30;
+      var dest = sectionTop(label);
+      if (moved || dest == null) return;
+      glide(dest);
+    }, 350);
   }, true);
 
-  // Hero shortcuts: visible only while the hero is on screen.
-  function goTo(label) {
-    var sec = null;
-    document.querySelectorAll('section[data-screen-label]').forEach(function (s) {
-      if (s.getAttribute('data-screen-label') === label) sec = s;
-    });
-    if (!sec) return;
-    var sc = scroller();
-    var cur = (sc === document.scrollingElement || sc === document.documentElement)
-      ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
-    glide(cur + sec.getBoundingClientRect().top - 64);
-  }
+  // Hero shortcuts.
   var hb = document.getElementById('jr-herobtns');
   if (hb) {
     hb.querySelectorAll('[data-goto]').forEach(function (b) {
-      b.addEventListener('click', function () { goTo(b.dataset.goto); });
+      b.addEventListener('click', function () {
+        var dest = sectionTop(b.dataset.goto);
+        if (dest != null) glide(dest);
+      });
     });
     var heroWatch = function () {
-      var sc = scroller();
-      var top = (sc === document.scrollingElement || sc === document.documentElement)
-        ? (window.scrollY || document.documentElement.scrollTop) : sc.scrollTop;
-      var on = top < 300;
+      var on = topOf(scroller()) < 300;
       hb.style.opacity = on ? '1' : '0';
       hb.style.pointerEvents = on ? 'auto' : 'none';
     };
@@ -1614,8 +1572,7 @@ class Component extends DCLogic {
     heroWatch();
   }
 
-  // A hovered bubble was being clipped by the section above it. Lift the field
-  // out of the stacking context that was trapping its tooltip.
+  // A hovered bubble was being clipped by the section above it.
   var lift = document.createElement('style');
   lift.textContent = 'section[data-screen-label="Field"]{position:relative;z-index:5;overflow:visible}'
     + 'section[data-screen-label="Verdict"]{z-index:1}'

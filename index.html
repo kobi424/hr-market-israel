@@ -22,11 +22,16 @@
 <script src="./react.js"></script>
 <script src="./react-dom.js"></script>
 <script src="./support.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0MQY8LYYJ3"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date());
+gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
+</script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   html, body { margin: 0; padding: 0; background: #06080a; overflow-x: hidden; }
   * { box-sizing: border-box; }
@@ -37,6 +42,11 @@
   ::placeholder { color: #6f7a82; }
   input[type="search"]::-webkit-search-cancel-button { display: none; }
   nav::-webkit-scrollbar { display: none; }
+  [data-splitjobs="1"]::-webkit-scrollbar { width: 4px; }
+  [data-splitjobs="1"]::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); }
+  @keyframes pieIn { from { stroke-dashoffset: 100; opacity: 0; } }
+  [data-desc="1"]::-webkit-scrollbar { width: 4px; }
+  [data-desc="1"]::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); }
   @keyframes driftA { 0% { transform: translate3d(-6%, -4%, 0) scale(1); } 100% { transform: translate3d(10%, 8%, 0) scale(1.25); } }
   @keyframes driftB { 0% { transform: translate3d(8%, 6%, 0) scale(1.15); } 100% { transform: translate3d(-8%, -6%, 0) scale(0.95); } }
   @keyframes driftC { 0% { transform: translate3d(0, 10%, 0) scale(0.9); } 100% { transform: translate3d(-4%, -8%, 0) scale(1.3); } }
@@ -75,21 +85,38 @@
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 28px); font-weight: 600; letter-spacing: -0.03em;">How the score is calculated</h2>
-              <div style="display: flex; align-items: baseline; gap: 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #7d878e;">
-                
-              </div>
+              
             </div>
             <button type="button" onClick="{{ closeMethod }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
           </div>
-          <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #98a3aa;"></p>
+          
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
+            <sc-for list="{{ scoreParts }}" as="p" hint-placeholder-count="4">
+              <li style="border-bottom: 1px solid rgba(255,255,255,.07); padding: 16px 0; display: flex; flex-direction: column; gap: 9px;">
+                <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+                  <span style="font-size: 15px; letter-spacing: -0.01em; color: #f0f4f6;">{{ p.label }}</span>
+                  <span style="display: flex; align-items: baseline; gap: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">
+                    <span style="color: #6f7a82; font-size: 11px;">weight {{ p.weight }}</span>
+                    <span style="color: #eef2f4;">{{ p.val }}</span>
+                    <span style="color: {{ p.color }}; font-size: 12px;">{{ p.contrib }}</span>
+                  </span>
+                </span>
+                <span style="display: block; height: 3px; background: rgba(255,255,255,.08);">
+                  <span style="display: block; height: 3px; width: {{ p.val }}%; background: {{ p.color }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ p.d }}s;"></span>
+                </span>
+                <span style="font-size: 12.5px; line-height: 1.55; color: #98a3aa;">{{ p.detail }}</span>
+              </li>
+            </sc-for>
+          </ul>
+          
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ jobOpen }}" hint-placeholder-val="{{ false }}">
-      <div role="dialog" aria-modal="true" aria-label="Job details" style="position: fixed; inset: 0; z-index: 130; display: flex; align-items: center; justify-content: center; padding: clamp(14px, 4vw, 56px); background: rgba(3,5,6,.74); backdrop-filter: blur(6px); animation: fadeUp .3s ease both;">
+      <div role="dialog" aria-modal="true" aria-label="Job details" style="position: fixed; inset: 0; z-index: 130; display: flex; align-items: flex-start; justify-content: center; padding: max(14px, env(safe-area-inset-top)) clamp(10px, 4vw, 56px) max(22px, env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; background: rgba(3,5,6,.74); backdrop-filter: blur(6px); animation: fadeUp .3s ease both;">
         <div onClick="{{ closeJob }}" aria-hidden="true" style="position: absolute; inset: 0;"></div>
-        <div style="position: relative; width: min(620px, 100%); max-height: 88vh; overflow-y: auto; background: #0a0d10; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: clamp(20px, 3vw, 34px); display: flex; flex-direction: column; gap: 20px; animation: popIn .36s cubic-bezier(.16,.84,.24,1) both;">
+        <div style="position: relative; width: min(620px, 100%); margin: auto; background: #0a0d10; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: clamp(16px, 2.6vw, 30px); display: flex; flex-direction: column; gap: 16px; animation: popIn .36s cubic-bezier(.16,.84,.24,1) both;">
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;">
             <div style="display: flex; flex-direction: column; gap: 10px;">
               <div style="display: flex; align-items: center; gap: 9px; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #8b959c;">
@@ -108,10 +135,47 @@
               </div>
             </sc-for>
           </div>
-          <p style="margin: 0; font-size: 14px; line-height: 1.72; color: #a3adb4;">{{ jobDesc }}</p>
-          <div style="display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">The role</div>
+            <div data-desc="1" style="max-height: {{ descMax }}; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 13px; mask-image: {{ descMask }}; -webkit-mask-image: {{ descMask }};">
+              <sc-for list="{{ jobParas }}" as="p" hint-placeholder-count="3">
+                <p style="margin: 0; font-size: 14px; line-height: 1.75; color: #a3adb4;">{{ p.text }}</p>
+              </sc-for>
+            </div>
+            <sc-if value="{{ descLong }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ toggleDesc }}" aria-expanded="{{ descOpen }}" aria-label="{{ descAria }}" style="align-self: flex-start; background: none; border: 0; padding: 0; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: {{ accent }}; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.2);" style-hover="color: #ffffff;">{{ descToggle }}</button>
+            </sc-if>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center;">
             <a href="{{ jobUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Open the full listing in a new tab" style="border: 1px solid {{ accent }}; color: {{ accent }}; border-radius: 999px; padding: 11px 22px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="background: rgba(255,255,255,.06); color: #ffffff;">Open the listing</a>
+            <sc-if value="{{ hasCompanyUrl }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ jobCompanyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Visit the {{ jobCompany }} site in a new tab" style="border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="border-color: rgba(255,255,255,.45); color: #ffffff;">Company site ↗</a>
+            </sc-if>
+            <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
+              <span aria-label="{{ applicantsAria }}" style="display: flex; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 11px 18px; font-size: 12px; letter-spacing: .04em; color: #a8b2b9;">
+                <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ applicantsColor }};"></span>{{ applicantsLabel }}
+              </span>
+            </sc-if>
+            <button type="button" onClick="{{ companyFromJob }}" aria-label="See every open role at this company" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">All {{ jobCompany }} roles</button>
+            <button type="button" onClick="{{ copyLink }}" aria-label="Copy a direct link to this role" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">{{ copyLabel }}</button>
             <button type="button" onClick="{{ filterFromJob }}" aria-label="See every role in this discipline" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">All {{ jobCat }} roles</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">Roles like this</div>
+            <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
+              <sc-for list="{{ similarJobs }}" as="sj" hint-placeholder-count="3">
+                <li style="border-bottom: 1px solid rgba(255,255,255,.07);">
+                  <button type="button" onClick="{{ sj.click }}" aria-label="{{ sj.aria }}" style="width: 100%; background: none; border: 0; padding: 11px 2px; font: inherit; text-align: left; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background .2s ease;" style-hover="background: rgba(255,255,255,.04);">
+                    <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ sj.dot }}; flex: none;"></span>
+                    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                      <span style="font-size: 13.5px; color: #eef2f4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sj.title }}</span>
+                      <span style="font-size: 12px; color: #8b969e;">{{ sj.company }}</span>
+                    </span>
+                    <span style="flex: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #7d878e;">{{ sj.age }}</span>
+                  </button>
+                </li>
+              </sc-for>
+            </ul>
           </div>
         </div>
       </div>
@@ -120,9 +184,6 @@
     <button type="button" data-totop="1" onClick="{{ toTop }}" aria-label="Back to top" style="position: fixed; right: clamp(12px, 2vw, 26px); bottom: clamp(18px, 4vh, 44px); z-index: 90; width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: rgba(8,11,13,.82); backdrop-filter: blur(10px); color: #e8ecef; font: inherit; font-size: 15px; line-height: 1; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .35s ease, border-color .25s ease, transform .25s ease;" style-hover="border-color: rgba(255,255,255,.55); transform: translate3d(0,-3px,0);">↑</button>
 
     <header data-fixed-header="1" style="position: fixed; left: 0; top: 0; right: 0; z-index: 95; background: rgba(6,8,10,.82); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.08);">
-      <div aria-hidden="true" style="height: 2px; background: rgba(255,255,255,.07);">
-        <div data-progress="1" style="height: 2px; width: 0%; background: {{ accent }}; transition: width .12s linear;"></div>
-      </div>
       <div style="display: flex; align-items: center; gap: 10px 24px; justify-content: space-between; padding: 10px clamp(16px, 5vw, 80px); flex-wrap: wrap;">
         <a href="#top" onClick="{{ toTop }}" aria-label="HRjobs.co.il, back to top" style="display: flex; align-items: baseline; gap: 2px; font-size: 15px; letter-spacing: -0.02em; font-weight: 600; color: #f2f5f7; flex: none;">
           <span>HRjobs</span><span style="color: {{ accent }};">.co.il</span>
@@ -159,9 +220,16 @@
             </div>
           </sc-if>
         </div>
-        <nav aria-label="Jump to section" style="display: flex; flex-wrap: {{ navWrap }}; gap: 6px 2px; overflow-x: auto; max-width: 100%; scrollbar-width: none;">
+        <sc-if value="{{ isSmall }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ toggleMenu }}" aria-expanded="{{ menuOpen }}" aria-label="Open the section menu" style="flex: none; width: 38px; height: 38px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18); background: none; color: #e8ecef; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;" style-hover="border-color: rgba(255,255,255,.5);">
+            <span aria-hidden="true" style="display: block; width: 16px; height: 1.5px; background: currentColor;"></span>
+            <span aria-hidden="true" style="display: block; width: 16px; height: 1.5px; background: currentColor;"></span>
+            <span aria-hidden="true" style="display: block; width: 16px; height: 1.5px; background: currentColor;"></span>
+          </button>
+        </sc-if>
+        <nav aria-label="Jump to section" style="display: {{ navDisplay }}; flex-wrap: wrap; gap: 6px 2px; max-width: 100%; flex-direction: {{ navDir }}; width: {{ navW }}; align-items: {{ navAlign }}; padding-top: {{ navPad }};">
           <sc-for list="{{ navSections }}" as="ns" hint-placeholder-count="5">
-            <button type="button" onClick="{{ ns.click }}" aria-label="{{ ns.aria }}" style="background: none; border: 0; padding: 6px 10px; font: inherit; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: {{ ns.ink }}; cursor: pointer; border-bottom: 1px solid {{ ns.line }}; transition: color .25s ease, border-color .25s ease;" style-hover="color: #ffffff;">{{ ns.label }}</button>
+            <button type="button" onClick="{{ ns.click }}" aria-label="{{ ns.aria }}" style="background: none; border: 0; padding: 8px 10px; font: inherit; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: {{ ns.ink }}; cursor: pointer; border-bottom: 1px solid {{ ns.line }}; transition: color .25s ease, border-color .25s ease;" style-hover="color: #ffffff;">{{ ns.label }}</button>
           </sc-for>
         </nav>
       </div>
@@ -205,6 +273,10 @@
           </div>
         </div>
         <p style="margin: 0; font-size: clamp(21px, 2.6vw, 38px); line-height: 1.25; letter-spacing: -0.02em; color: #dfe6ea; max-width: 22em; animation: fadeUp 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: .72s;">{{ headline }}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; animation: fadeUp 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: .9s;">
+          <a href="#field" onClick="{{ goField }}" aria-label="Jump to the analytics field" style="border: 1px solid {{ accent }}; color: {{ accent }}; border-radius: 999px; padding: 13px 26px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; transition: background .25s ease, color .25s ease;" style-hover="background: rgba(255,255,255,.07); color: #ffffff;">Analytics</a>
+          <a href="#jobs" onClick="{{ goJobs }}" aria-label="Jump to all jobs" style="border: 1px solid rgba(255,255,255,.22); color: #dfe6ea; border-radius: 999px; padding: 13px 26px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; transition: border-color .25s ease, color .25s ease;" style-hover="border-color: rgba(255,255,255,.55); color: #ffffff;">Jobs</a>
+        </div>
       </div>
 
       <div style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 32px; animation: fadeUp 1s ease both; animation-delay: 1.3s;">
@@ -323,7 +395,23 @@
             </sc-for>
           </ul>
         </div>
-        <div style="border: 1px solid rgba(255,255,255,.09); padding: clamp(16px, 2vw, 28px) clamp(12px, 1.6vw, 22px);">
+        <div onMouseMove="{{ chartMove }}" onMouseLeave="{{ chartLeave }}" style="position: relative; border: 1px solid rgba(255,255,255,.09); padding: clamp(16px, 2vw, 28px) clamp(12px, 1.6vw, 22px);">
+          <sc-if value="{{ chartOn }}" hint-placeholder-val="{{ false }}">
+            <div aria-hidden="true" style="position: absolute; left: clamp(12px, 1.6vw, 22px); right: clamp(12px, 1.6vw, 22px); top: clamp(16px, 2vw, 28px); bottom: clamp(16px, 2vw, 28px); pointer-events: none;">
+              <div style="position: absolute; left: {{ chartPct }}; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.28);"></div>
+              <div style="position: absolute; left: {{ chartPct }}; top: 6px; transform: {{ chartSide }}; min-width: 176px; background: rgba(10,13,16,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;">
+                <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #8b959c;">week of {{ chartWeek }}</div>
+                <sc-for list="{{ chartReads }}" as="cr" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px;">
+                    <span style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #b3bcc2;">
+                      <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ cr.color }}; flex: none;"></span>{{ cr.label }}
+                    </span>
+                    <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: {{ cr.color }};">{{ cr.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
           <svg viewBox="0 0 1000 330" role="img" aria-labelledby="chart-desc" preserveAspectRatio="none" style="display: block; width: 100%; height: clamp(220px, 34vh, 340px); overflow: visible;">
             <title id="chart-title">Weekly trend</title>
             <desc id="chart-desc">{{ chartSummary }}</desc>
@@ -336,144 +424,155 @@
             <sc-for list="{{ series }}" as="s" hint-placeholder-count="3">
               <circle cx="{{ s.lastX }}" cy="{{ s.lastY }}" r="4" fill="{{ s.color }}"></circle>
             </sc-for>
+            <sc-for list="{{ chartDots }}" as="cd" hint-placeholder-count="0">
+              <circle cx="{{ cd.cx }}" cy="{{ cd.cy }}" r="5.5" fill="{{ cd.color }}" stroke="#06080a" stroke-width="2"></circle>
+            </sc-for>
           </svg>
           <div style="display: flex; justify-content: space-between; padding-top: 12px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
             <span>{{ firstWeek }}</span><span>{{ lastWeek }}</span>
           </div>
         </div>
-        <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ chartSummary }}</p>
-      </div>
-
-    </section>
-
-    <section data-screen-label="Timing" aria-labelledby="timing-title" style="padding: clamp(48px, 8vw, 110px) clamp(20px, 5vw, 80px) 0; display: flex; flex-direction: column; gap: clamp(28px, 4vw, 46px);">
-      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px;">
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <h2 id="timing-title" style="margin: 0; font-size: clamp(24px, 3.2vw, 40px); font-weight: 600; letter-spacing: -0.03em;">When roles open</h2>
-          <div style="font-size: 13px; line-height: 1.6; color: #808b93; max-width: 34em;">Volume is not spread evenly across the year. The calendar below reads the rhythm of the Israeli hiring year, month by month, then inside the month itself.</div>
-        </div>
-        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82;">100 = average period</div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
-        <sc-for list="{{ months }}" as="m" hint-placeholder-count="12">
-          <div style="background: {{ m.bg }}; padding: 14px 12px 12px; min-height: 168px; display: flex; flex-direction: column; gap: 10px; border-top: 2px solid {{ m.top }}; animation: fadeUp .8s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ m.d }}s;">
-            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
-              <span style="font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: {{ m.ink }};">{{ m.label }}</span>
-              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: {{ m.color }};">{{ m.idx }}</span>
-            </div>
-            <div style="flex: 1; display: flex; align-items: flex-end;">
-              <span style="display: block; width: 100%; height: {{ m.h }}%; background: {{ m.color }}; opacity: {{ m.op }}; transform-origin: bottom; animation: growY 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ m.d }}s;"></span>
-            </div>
-            <div style="font-size: 10.5px; line-height: 1.4; color: {{ m.noteInk }}; min-height: 2.8em;">{{ m.holidayLabel }}</div>
-          </div>
-        </sc-for>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
-        <sc-for list="{{ quarters }}" as="q" hint-placeholder-count="4">
-          <div style="background: #06080a; padding: clamp(18px, 2.2vw, 26px); display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
-              <span style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">{{ q.label }}</span>
-              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 22px; letter-spacing: -0.03em; color: {{ q.color }};">{{ q.idx }}</span>
-            </div>
-            <span style="display: block; height: 3px; background: rgba(255,255,255,.08);">
-              <span style="display: block; height: 3px; width: {{ q.h }}%; background: {{ q.color }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both;"></span>
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 26px;">
+          <span style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6f7a82;">Latest week</span>
+          <sc-for list="{{ lastReads }}" as="lr" hint-placeholder-count="3">
+            <span style="display: flex; align-items: baseline; gap: 9px; font-size: 12px; color: #99a4ab;">
+              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ lr.color }}; align-self: center; flex: none;"></span>{{ lr.label }}
+              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: {{ lr.color }};">{{ lr.value }}</span>
             </span>
-            <div style="font-size: 12.5px; line-height: 1.55; color: #8b969e;">{{ q.note }}</div>
-          </div>
-        </sc-for>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <h3 style="margin: 0; font-size: clamp(17px, 2vw, 22px); font-weight: 600; letter-spacing: -0.02em;">Inside the month</h3>
-        <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
-          <sc-for list="{{ intraMonth }}" as="p" hint-placeholder-count="3">
-            <li style="border-bottom: 1px solid rgba(255,255,255,.07); padding: 15px 0; display: flex; flex-direction: column; gap: 9px;">
-              <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
-                <span style="font-size: 14.5px; letter-spacing: -0.01em; color: #f0f4f6;">{{ p.label }}</span>
-                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: {{ p.color }};">{{ p.idx }}</span>
-              </span>
-              <span style="display: block; height: 5px; background: rgba(255,255,255,.07);">
-                <span style="display: block; height: 5px; width: {{ p.h }}%; background: {{ p.color }}; transform-origin: left; animation: growX 1.3s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ p.d }}s;"></span>
-              </span>
-              <span style="font-size: 12.5px; line-height: 1.55; color: #8b969e;">{{ p.note }}</span>
-            </li>
           </sc-for>
-        </ul>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px 26px;">
-          <h3 style="margin: 0; font-size: clamp(17px, 2vw, 22px); font-weight: 600; letter-spacing: -0.02em;">Holidays ahead</h3>
-          <span style="font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82;">{{ nextHolidayLabel }}</span>
         </div>
-        <ul style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
-          <sc-for list="{{ holidays }}" as="hd" hint-placeholder-count="5">
-            <li style="background: #06080a; padding: clamp(16px, 2vw, 22px); display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
-                <span style="display: flex; align-items: center; gap: 9px; font-size: 14.5px; letter-spacing: -0.01em; color: #f0f4f6;">
-                  <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ hd.color }}; flex: none;"></span>{{ hd.name }}
-                </span>
-                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: {{ hd.color }};">{{ hd.away }}</span>
-              </div>
-              <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #99a4ab;">{{ hd.range }}</div>
-              <div style="font-size: 12.5px; line-height: 1.55; color: #8b969e;">{{ hd.note }}</div>
-            </li>
-          </sc-for>
-        </ul>
-        <p style="margin: 0; font-size: 12px; line-height: 1.7; color: #6f7a82; max-width: 46em;">{{ seasonNote }} Holiday dates follow the Hebrew calendar and shift year to year, so treat them as the week rather than the day.</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ chartSummary }} Hover the chart to read any week.</p>
       </div>
+
     </section>
 
-    <section data-screen-label="IC vs managers" aria-labelledby="split-title" style="padding: clamp(48px, 8vw, 110px) clamp(20px, 5vw, 80px) 0; display: flex; flex-direction: column; gap: 26px;">
+    <section data-screen-label="IC vs managers" aria-labelledby="split-title" style="padding: clamp(48px, 8vw, 110px) clamp(20px, 5vw, 80px) 0; display: flex; flex-direction: column; gap: clamp(24px, 3.4vw, 40px);">
       <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 32px;">
         <h2 id="split-title" style="margin: 0; font-size: clamp(24px, 3.2vw, 40px); font-weight: 600; letter-spacing: -0.03em;">Individual contributors against managers</h2>
         <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82;">{{ splitCount }}</div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
-        <sc-for list="{{ splitCards }}" as="s" hint-placeholder-count="2">
-          <div style="background: #06080a; padding: clamp(20px, 2.4vw, 30px); display: flex; flex-direction: column; gap: 12px; animation: fadeUp .9s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ s.d }}s;">
-            <div style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">{{ s.label }}</div>
-            <div style="display: flex; align-items: baseline; gap: 14px;">
-              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(34px, 4vw, 52px); line-height: 1; letter-spacing: -0.04em; color: {{ s.color }};">{{ s.count }}</span>
-              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; color: #8b969e;">{{ s.pct }}%</span>
-            </div>
-            <div style="font-size: 12.5px; line-height: 1.55; color: #8b969e;">{{ s.detail }}</div>
-          </div>
-        </sc-for>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div role="img" aria-label="{{ splitSummary }}" style="display: flex; height: 12px; overflow: hidden;">
-          <span style="height: 12px; width: {{ icPct }}%; background: {{ accent }}; transform-origin: left; animation: growX 1.4s cubic-bezier(.16,.84,.24,1) both; animation-delay: .1s;"></span>
-          <span style="height: 12px; width: {{ mgrPct }}%; background: #7fb1ff; transform-origin: right; animation: growX 1.4s cubic-bezier(.16,.84,.24,1) both; animation-delay: .1s;"></span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6f7a82;">
-          <span>individual contributors</span><span>managers and above</span>
-        </div>
-      </div>
-
-      <sc-if value="{{ showSplitRows }}" hint-placeholder-val="{{ true }}">
-      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
-        <sc-for list="{{ splitRows }}" as="r" hint-placeholder-count="6">
-          <li style="border-bottom: 1px solid rgba(255,255,255,.07); padding: 15px 0; display: flex; flex-direction: column; gap: 9px;">
-            <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
-              <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; letter-spacing: -0.01em;">
-                <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{ r.dot }}; flex: none;"></span>{{ r.label }}
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: clamp(24px, 4vw, 56px);">
+        <sc-if value="{{ singleSplit }}" hint-placeholder-val="{{ false }}">
+          <ul style="list-style: none; margin: 0; padding: 0; flex: 1 1 0; min-width: 220px; max-width: 420px; order: {{ sideOrderL }}; display: flex; flex-direction: column; gap: 12px;">
+            <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.1);">
+              <span style="display: flex; align-items: center; gap: 9px; font-size: 13px; letter-spacing: .04em; color: {{ sideIC.color }};">
+                <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{ sideIC.color }}; flex: none;"></span>{{ sideIC.title }}
               </span>
-              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: #aab4ba;">{{ r.readout }}</span>
-            </span>
-            <span aria-label="{{ r.aria }}" style="display: flex; height: 6px; overflow: hidden; background: rgba(255,255,255,.06);">
-              <span style="height: 6px; width: {{ r.icPct }}%; background: {{ accent }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
-              <span style="height: 6px; width: {{ r.mgrPct }}%; background: #7fb1ff; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
-            </span>
-          </li>
-        </sc-for>
-      </ul>
-      </sc-if>
-      <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ splitSummary }}</p>
+              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #8b969e;">{{ sideIC.count }}</span>
+            </li>
+            <sc-for list="{{ sideIC.jobs }}" as="ij" hint-placeholder-count="4">
+              <li>
+                <button type="button" onClick="{{ ij.click }}" aria-label="{{ ij.aria }}" style="width: 100%; background: none; border: 0; padding: 4px 0; font: inherit; text-align: left; color: inherit; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 12px;" style-hover="opacity: .7;">
+                  <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 13.5px; color: #eef2f4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ ij.title }}</span>
+                    <span style="font-size: 11.5px; color: #7d878e;">{{ ij.company }}</span>
+                  </span>
+                  <span style="flex: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #7d878e;">{{ ij.age }}</span>
+                </button>
+              </li>
+            </sc-for>
+          </ul>
+        </sc-if>
+        <ul style="list-style: none; margin: 0; padding: 0; flex: {{ multiFlex }}; min-width: {{ multiMin }}; order: {{ sideOrderL }}; display: {{ multiDisplay }}; flex-direction: column; gap: 18px;">
+            <sc-for list="{{ splitLeft }}" as="r" hint-placeholder-count="3">
+              <li onMouseEnter="{{ r.enter }}" onMouseLeave="{{ r.leave }}" style="display: flex; flex-direction: column; gap: 8px; cursor: default; opacity: {{ r.op }}; transition: opacity .25s ease;">
+                <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px;">
+                  <span style="display: flex; align-items: center; gap: 9px; font-size: 13.5px; letter-spacing: -0.01em; color: #eef2f4;">
+                    <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ r.dot }}; flex: none;"></span>{{ r.label }}
+                  </span>
+                  <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #99a4ab;">{{ r.readout }}</span>
+                </span>
+                <span aria-label="{{ r.aria }}" style="display: flex; height: 5px; overflow: hidden; background: rgba(255,255,255,.06);">
+                  <span style="height: 5px; width: {{ r.icPct }}%; background: {{ accent }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
+                  <span style="height: 5px; width: {{ r.mgrPct }}%; background: #7fb1ff; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
+                </span>
+                <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                  <ul data-splitjobs="1" style="list-style: none; margin: 2px 0 0; padding: 0 0 0 17px; display: flex; flex-direction: column; gap: 6px; border-left: 1px solid rgba(255,255,255,.12); max-height: 132px; overflow-y: auto; overscroll-behavior: contain;">
+                    <sc-for list="{{ r.jobs }}" as="jb" hint-placeholder-count="3">
+                      <li>
+                        <button type="button" onClick="{{ jb.click }}" aria-label="{{ jb.aria }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 12px;" style-hover="opacity: .7;">
+                          <span style="font-size: 12.5px; color: #c3ccd2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ jb.title }}</span>
+                          <span style="flex: none; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: {{ jb.color }};">{{ jb.track }}</span>
+                        </button>
+                      </li>
+                    </sc-for>
+                  </ul>
+                </sc-if>
+              </li>
+            </sc-for>
+          </ul>
+        <div style="flex: none; display: flex; flex-direction: column; align-items: center; gap: 16px; order: {{ pieOrder }};">
+          <div style="position: relative; width: clamp(190px, 24vw, 260px);">
+            <svg viewBox="0 0 240 240" role="img" aria-label="{{ splitSummary }}" style="width: 100%; height: auto; display: block; transform: rotate(90deg) scaleX(-1);">
+              <circle cx="120" cy="120" r="{{ pieR }}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="{{ pieW }}"></circle>
+              <circle cx="120" cy="120" r="{{ pieR }}" fill="none" stroke="{{ accent }}" stroke-width="{{ pieW }}" pathLength="100" stroke-dasharray="{{ icDash }}" style="animation: pieIn 1.5s cubic-bezier(.16,.84,.24,1) both;"></circle>
+              <circle cx="120" cy="120" r="{{ pieR }}" fill="none" stroke="#7fb1ff" stroke-width="{{ pieW }}" pathLength="100" stroke-dasharray="{{ mgrDash }}" stroke-dashoffset="{{ mgrOffset }}" style="animation: pieIn 1.5s cubic-bezier(.16,.84,.24,1) both; animation-delay: .18s;"></circle>
+            </svg>
+            <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; pointer-events: none;">
+              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(26px, 3.4vw, 40px); line-height: 1; letter-spacing: -0.04em; color: #f2f5f7;">{{ splitTotal }}</span>
+              <span style="font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">tracked roles</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px;">
+            <sc-for list="{{ splitCards }}" as="s" hint-placeholder-count="2">
+              <span style="display: flex; align-items: center; gap: 11px; font-size: clamp(14px, 1.5vw, 18px); letter-spacing: -0.01em; color: #dfe6ea;">
+                <span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 50%; background: {{ s.color }}; flex: none;"></span>{{ s.label }} · <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: {{ s.color }};">{{ s.pct }}%</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ singleSplit }}" hint-placeholder-val="{{ false }}">
+          <ul style="list-style: none; margin: 0; padding: 0; flex: 1 1 0; min-width: 220px; max-width: 420px; order: {{ sideOrderR }}; display: flex; flex-direction: column; gap: 12px;">
+            <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.1);">
+              <span style="display: flex; align-items: center; gap: 9px; font-size: 13px; letter-spacing: .04em; color: {{ sideMGR.color }};">
+                <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{ sideMGR.color }}; flex: none;"></span>{{ sideMGR.title }}
+              </span>
+              <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #8b969e;">{{ sideMGR.count }}</span>
+            </li>
+            <sc-for list="{{ sideMGR.jobs }}" as="mj" hint-placeholder-count="4">
+              <li>
+                <button type="button" onClick="{{ mj.click }}" aria-label="{{ mj.aria }}" style="width: 100%; background: none; border: 0; padding: 4px 0; font: inherit; text-align: left; color: inherit; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 12px;" style-hover="opacity: .7;">
+                  <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 13.5px; color: #eef2f4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ mj.title }}</span>
+                    <span style="font-size: 11.5px; color: #7d878e;">{{ mj.company }}</span>
+                  </span>
+                  <span style="flex: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #7d878e;">{{ mj.age }}</span>
+                </button>
+              </li>
+            </sc-for>
+          </ul>
+        </sc-if>
+        <ul style="list-style: none; margin: 0; padding: 0; flex: {{ multiFlex }}; min-width: {{ multiMin }}; order: 3; display: {{ multiDisplay }}; flex-direction: column; gap: 18px;">
+            <sc-for list="{{ splitRight }}" as="r" hint-placeholder-count="3">
+              <li onMouseEnter="{{ r.enter }}" onMouseLeave="{{ r.leave }}" style="display: flex; flex-direction: column; gap: 8px; cursor: default; opacity: {{ r.op }}; transition: opacity .25s ease;">
+                <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px;">
+                  <span style="display: flex; align-items: center; gap: 9px; font-size: 13.5px; letter-spacing: -0.01em; color: #eef2f4;">
+                    <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ r.dot }}; flex: none;"></span>{{ r.label }}
+                  </span>
+                  <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #99a4ab;">{{ r.readout }}</span>
+                </span>
+                <span aria-label="{{ r.aria }}" style="display: flex; height: 5px; overflow: hidden; background: rgba(255,255,255,.06);">
+                  <span style="height: 5px; width: {{ r.icPct }}%; background: {{ accent }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
+                  <span style="height: 5px; width: {{ r.mgrPct }}%; background: #7fb1ff; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ r.d }}s;"></span>
+                </span>
+                <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                  <ul data-splitjobs="1" style="list-style: none; margin: 2px 0 0; padding: 0 0 0 17px; display: flex; flex-direction: column; gap: 6px; border-left: 1px solid rgba(255,255,255,.12); max-height: 132px; overflow-y: auto; overscroll-behavior: contain;">
+                    <sc-for list="{{ r.jobs }}" as="jb" hint-placeholder-count="3">
+                      <li>
+                        <button type="button" onClick="{{ jb.click }}" aria-label="{{ jb.aria }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 12px;" style-hover="opacity: .7;">
+                          <span style="font-size: 12.5px; color: #c3ccd2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ jb.title }}</span>
+                          <span style="flex: none; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: {{ jb.color }};">{{ jb.track }}</span>
+                        </button>
+                      </li>
+                    </sc-for>
+                  </ul>
+                </sc-if>
+              </li>
+            </sc-for>
+          </ul>
+      </div>
+      <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ splitSummary }} Hover a discipline to see the roles behind it.</p>
     </section>
 
     <section data-screen-label="All jobs" aria-labelledby="jobs-title" style=" padding: clamp(48px, 8vw, 110px) clamp(20px, 5vw, 80px) 0; display: flex; flex-direction: column; gap: 22px;">
@@ -485,11 +584,42 @@
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 11px 18px; max-width: 520px;">
           <span aria-hidden="true" style="font-size: 13px; color: #7d878e;">⌕</span>
-          <input type="search" value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search a title or a company" aria-label="Search jobs by title or company" style="flex: 1; min-width: 0; background: none; border: 0; outline: none; font: inherit; font-size: 14px; color: #f0f4f6;" />
+          <input type="search" value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search a title or a company" aria-label="Search jobs by title or company" style="flex: 1; min-width: 0; background: none; border: 0; outline: none; font: inherit; font-size: 14px; color: #f0f4f6;">
           <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
             <button type="button" onClick="{{ clearQuery }}" aria-label="Clear the search" style="flex: none; background: none; border: 0; padding: 0; font: inherit; font-size: 15px; line-height: 1; color: #9ba5ac; cursor: pointer;" style-hover="color: #ffffff;">×</button>
           </sc-if>
         </div>
+        <sc-if value="{{ isSmall }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <label style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Discipline</span>
+              <select value="{{ filterValue }}" onChange="{{ setFilterSelect }}" aria-label="Filter by discipline" style="background: #0a0d10; border: 1px solid rgba(255,255,255,.16); color: #eef2f4; font: inherit; font-size: 13px; padding: 10px 11px; border-radius: 8px;">
+                <sc-for list="{{ catOptions }}" as="o" hint-placeholder-count="7">
+                  <option value="{{ o.value }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Sort</span>
+              <select value="{{ sortValue }}" onChange="{{ setSortSelect }}" aria-label="Sort the jobs" style="background: #0a0d10; border: 1px solid rgba(255,255,255,.16); color: #eef2f4; font: inherit; font-size: 13px; padding: 10px 11px; border-radius: 8px;">
+                <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="3">
+                  <option value="{{ o.value }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+            </label>
+          </div>
+          <fieldset style="border: 1px solid rgba(255,255,255,.12); border-radius: 8px; margin: 0; padding: 12px 13px; display: flex; flex-direction: column; gap: 10px;">
+            <legend style="padding: 0 6px; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Level</legend>
+            <sc-for list="{{ senBoxes }}" as="sb" hint-placeholder-count="5">
+              <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: {{ sb.ink }};">
+                <input type="checkbox" checked="{{ sb.active }}" onChange="{{ sb.click }}" aria-label="{{ sb.aria }}" style="width: 17px; height: 17px; accent-color: {{ accent }};" />
+                <span style="text-transform: capitalize;">{{ sb.label }}</span>
+              </label>
+            </sc-for>
+          </fieldset>
+        </sc-if>
+        <sc-if value="{{ notSmall }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
         <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px;">
           <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="7">
             <li>
@@ -512,7 +642,29 @@
             </sc-for>
           </div>
         </div>
+          </div>
+        </sc-if>
       </div>
+
+      <sc-if value="{{ companyOn }}" hint-placeholder-val="{{ false }}">
+        <div style="border: 1px solid rgba(255,255,255,.12); display: flex; flex-direction: column; gap: 0;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 22px; padding: clamp(16px, 2vw, 22px);">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">Company</span>
+              <span style="font-size: clamp(20px, 2.4vw, 28px); font-weight: 600; letter-spacing: -0.02em; color: #f2f5f7;">{{ companyName }}</span>
+            </div>
+            <button type="button" onClick="{{ clearCompany }}" aria-label="Clear the company filter" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 9px 18px; font: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">Clear</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border-top: 1px solid rgba(255,255,255,.09);">
+            <sc-for list="{{ companyStats }}" as="cs" hint-placeholder-count="5">
+              <div style="background: #06080a; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">{{ cs.label }}</span>
+                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; letter-spacing: -0.02em; color: {{ cs.color }};">{{ cs.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
 
       <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.09);">
         <sc-for list="{{ list }}" as="j" hint-placeholder-count="12">
@@ -522,7 +674,7 @@
               <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 15px; letter-spacing: -0.01em; color: #f0f4f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ j.title }}</span>
                 <span style="display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: #a8b2b9;">
-                  <span>{{ j.company }}</span>
+                  <span role="button" tabIndex="0" onClick="{{ j.openCompany }}" aria-label="See all roles at {{ j.company }}" style="cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.16);" style-hover="color: #ffffff;">{{ j.company }}</span>
                   <span style="font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #767f87; align-self: center;">{{ j.sen }}</span>
                 </span>
               </span>
@@ -549,16 +701,16 @@
       <div style="display: flex; flex-direction: column; gap: 14px;">
         <h2 id="contact-title" style="margin: 0; font-size: clamp(24px, 3.2vw, 40px); font-weight: 600; letter-spacing: -0.03em;">Contact</h2>
         <p style="margin: 0; font-size: 14.5px; line-height: 1.7; color: #98a3aa; max-width: 30em;">A missing role, a correction, a discipline worth tracking, or a hiring team that wants its openings in the feed.</p>
-        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .04em; color: #7d878e;">{{ contactEmail }}</div>
+        
       </div>
       <div style="display: flex; flex-direction: column; gap: 14px; border: 1px solid rgba(255,255,255,.1); padding: clamp(18px, 2.4vw, 30px);">
         <label style="display: flex; flex-direction: column; gap: 7px;">
           <span style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">Name</span>
-          <input type="text" value="{{ cName }}" onChange="{{ setCName }}" aria-label="Your name" style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); outline: none; font: inherit; font-size: 14.5px; color: #f0f4f6; padding: 11px 13px;" style-focus="border-color: rgba(255,255,255,.42);" />
+          <input type="text" value="{{ cName }}" onChange="{{ setCName }}" aria-label="Your name" style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); outline: none; font: inherit; font-size: 14.5px; color: #f0f4f6; padding: 11px 13px;" style-focus="border-color: rgba(255,255,255,.42);">
         </label>
         <label style="display: flex; flex-direction: column; gap: 7px;">
           <span style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">Email</span>
-          <input type="email" value="{{ cMail }}" onChange="{{ setCMail }}" aria-label="Your email address" style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); outline: none; font: inherit; font-size: 14.5px; color: #f0f4f6; padding: 11px 13px;" style-focus="border-color: rgba(255,255,255,.42);" />
+          <input type="email" value="{{ cMail }}" onChange="{{ setCMail }}" aria-label="Your email address" style="background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); outline: none; font: inherit; font-size: 14.5px; color: #f0f4f6; padding: 11px 13px;" style-focus="border-color: rgba(255,255,255,.42);">
         </label>
         <label style="display: flex; flex-direction: column; gap: 7px;">
           <span style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">Message</span>
@@ -566,23 +718,24 @@
         </label>
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;">
           <button type="button" onClick="{{ sendContact }}" aria-label="Send this message" style="background: none; border: 1px solid {{ accent }}; color: {{ accent }}; border-radius: 999px; padding: 12px 24px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: background .25s ease, color .25s ease;" style-hover="background: rgba(255,255,255,.07); color: #ffffff;">Send</button>
-          <span style="font-size: 12px; color: #7d878e;">{{ contactNote }}</span>
+          
         </div>
       </div>
     </section>
 
     <footer style="margin-top: clamp(48px, 7vw, 110px); border-top: 1px solid rgba(255,255,255,.09); padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 80px) clamp(40px, 5vw, 72px); display: flex; flex-wrap: wrap; gap: 20px 48px; justify-content: space-between; align-items: flex-start;">
       <p style="margin: 0; font-size: 13px; line-height: 1.7; color: #7d888f; max-width: 44em;">Counts come from HR and Total Rewards roles listed publicly on LinkedIn in Israel, tracked from H2 2026. LinkedIn skews toward technology employers, so this reads the tech side of the market rather than the whole of it. Listings are matched by title and may be reposted, duplicated or left open after a hire, so treat every figure as an approximation. This page is an observation of the market, not career advice.</p>
-      <div style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6b767e; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">Collected {{ agoLabel }}</div>
+      
     </footer>
   </div>
   </sc-if>
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.2,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:6,&quot;max&quot;:400,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.2,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:400,&quot;min&quot;:6,&quot;max&quot;:600,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
 const HUES = { 'total-rewards': 152, 'hrbp': 205, 'talent-acquisition': 268, 'hr-ops': 32, 'learning': 330, 'hris': 186, 'leadership': 8, 'payroll': 288, 'analytics': 100 };
-const SIZES = { analyst: 42, specialist: 58, manager: 78, 'senior-manager': 98, director: 122 };
+const SIZES = { junior: 34, specialist: 58, senior: 70, manager: 78, 'senior-manager': 98, director: 122 };
+  const IC_LEVELS = { junior: 1, specialist: 1, senior: 1 };
 const STATES = {
   bull: { word: 'BULL', accent: '#3ddc9b', a: 'rgba(45,190,130,.34)', b: 'rgba(90,210,160,.18)', c: 'rgba(20,120,95,.3)' },
   bear: { word: 'BEAR', accent: '#ff6257', a: 'rgba(190,55,50,.32)', b: 'rgba(220,95,110,.17)', c: 'rgba(120,30,55,.3)' },
@@ -590,9 +743,157 @@ const STATES = {
 };
 
 class Component extends DCLogic {
-  state = { data: null, failed: false, filter: (function () { try { var d = new URLSearchParams(location.search).get('d'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, cName: '', cMail: '', cMsg: '', cNote: '' };
+  state = { data: null, failed: false, filter: (function () { try { var d = new URLSearchParams(location.search).get('d'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, tier: null, descOpen: false, cName: '', cMail: '', cMsg: '', cNote: '' };
+
+  readUrl() {
+    const p = new URLSearchParams(window.location.search);
+    const st = {};
+    if (p.get('cat')) st.filter = p.get('cat');
+    if (p.get('q')) st.q = p.get('q');
+    if (p.get('sen')) st.sen = p.get('sen');
+    if (p.get('sort')) st.sort = p.get('sort');
+    if (p.get('company')) st.company = p.get('company');
+    this._pendingJob = p.get('job');
+    return st;
+  }
+
+  syncUrl() {
+    const p = new URLSearchParams();
+    const s = this.state;
+    if (s.filter) p.set('cat', s.filter);
+    if (s.q) p.set('q', s.q);
+    if (s.sen && s.sen !== 'all') p.set('sen', s.sen);
+    if (s.sort && s.sort !== 'newest') p.set('sort', s.sort);
+    if (s.company) p.set('company', s.company);
+    if (s.job) p.set('job', s.job.id);
+    const qs = p.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+    if (url !== this._lastUrl) { this._lastUrl = url; window.history.replaceState(null, '', url); }
+  }
+
+  componentDidUpdate() { this.syncUrl(); }
+
+  fallbackDesc(j, cats) {
+    const c = (cats.find(x => x.key === j.category) || {});
+    const sen = j.seniority.replace(/-/g, ' ');
+    return 'The feed carries the listing itself rather than its text, so there is no description to show here.\n\nWhat is known: ' + (/^[aeiou]/i.test(sen) ? 'an ' : 'a ') + sen + ' level ' + (c.label || j.category) + ' role at ' + j.company + ', first seen ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago, one of ' + (c.open != null ? c.open : '—') + ' open in this discipline.\n\nOpen the listing for the full posting.';
+  }
 
   monthNames() { return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; }
+
+  keywordVals(scoped, accent, scopeLabel) {
+    const STOP = new Set(('a an and the of for to in on with at by or as is are be we you our your their this that from will who what all more most new other into over under out up down its it they them he she his her also can may than then there here about across within per via they\'re role roles job jobs position positions team teams company companies work working works experience experiences years year candidate candidates ability able strong excellent good great must should would could have has had having do does did doing want wants looking seeking join joining help helping ensure ensuring support supporting including include includes such well level levels plus etc israel tel aviv based full time part hybrid remote office day days week weeks month months you\'ll we\'re it\'s').split(' '));
+    const PHRASES = [
+      'total rewards','compensation','benefits','equity','job architecture','salary benchmarking','pay equity','stock options','rsu','payroll','global mobility',
+      'talent acquisition','sourcing','employer branding','technical recruiting','recruiting','interviewing','candidate experience','offer negotiation',
+      'hrbp','business partner','organizational development','change management','employee relations','performance management','succession planning','culture',
+      'hris','workday','hibob','greenhouse','comeet','sap successfactors','excel','sql','people analytics','dashboards','automation','ai','data driven','reporting',
+      'onboarding','offboarding','learning and development','training','leadership development','coaching','engagement','retention','wellbeing','dei','diversity',
+      'labour law','labor law','compliance','budget','headcount','scale up','startup','high tech','global','stakeholder management','english','hebrew','crossfunctional','cross functional'
+    ];
+    const GENERIC = ('hiring arrangement typically three site review every application shortlisted through screening call professional interviews exercise process weeks candidates essential advantage comfort look looks position based hybrid days usually short practical mentoring structured clear path within reporting into role level individual contributor senior management team teams direct exposure leadership budget headcount ownership owning strategy person multi').split(' ');
+    GENERIC.forEach(w => STOP.add(w));
+    const text = j => ((j.title || '') + ' ' + (j.description || '')).toLowerCase();
+    const recentSet = scoped.filter(j => j.postedDays <= 14);
+    const olderSet = scoped.filter(j => j.postedDays > 14);
+    const counts = {};
+    const bump = (term, j) => {
+      const e = counts[term] || (counts[term] = { term: term, n: 0, recent: 0, older: 0, cats: {} });
+      e.n++;
+      if (j.postedDays <= 14) e.recent++; else e.older++;
+      e.cats[j.category] = (e.cats[j.category] || 0) + 1;
+    };
+    scoped.forEach(j => {
+      const t = ' ' + text(j).replace(/[^a-z0-9+ ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+      const seen = new Set();
+      PHRASES.forEach(p => { if (t.indexOf(' ' + p + ' ') >= 0 && !seen.has(p)) { seen.add(p); bump(p, j); } });
+      const covered = Array.from(seen).join(' ');
+      t.split(' ').forEach(w => {
+        if (w.length < 4 || STOP.has(w) || /^\d+$/.test(w) || seen.has(w)) return;
+        if (covered.indexOf(w) >= 0) return;
+        seen.add(w); bump(w, j);
+      });
+    });
+    const n0 = Math.max(1, scoped.length);
+    const list = Object.keys(counts).map(k => counts[k])
+      .filter(e => e.n >= 2 && e.n / n0 < 0.92);
+    const nR = Math.max(1, recentSet.length), nO = Math.max(1, olderSet.length);
+    list.forEach(e => {
+      e.share = e.n / Math.max(1, scoped.length);
+      e.rShare = e.recent / nR; e.oShare = e.older / nO;
+      e.lift = e.oShare > 0 ? (e.rShare - e.oShare) / e.oShare : (e.rShare > 0 ? 1 : 0);
+    });
+    const nice = s => s.replace(/\b\w/g, c => c.toUpperCase()).replace(/\bHrbp\b/, 'HRBP').replace(/\bHris\b/, 'HRIS').replace(/\bAi\b/, 'AI').replace(/\bRsu\b/, 'RSU').replace(/\bSql\b/, 'SQL').replace(/\bDei\b/, 'DEI');
+    const byCount = list.slice().sort((a, b) => b.n - a.n);
+    const top = byCount.slice(0, 18);
+    const maxN = Math.max(1, ...top.map(e => e.n));
+    const rising = list.filter(e => e.n >= 3 && e.recent >= 2).sort((a, b) => b.lift - a.lift).slice(0, 6);
+    const cooling = list.filter(e => e.n >= 3 && e.older >= 2).sort((a, b) => a.lift - b.lift).slice(0, 6);
+    const trendMeta = e => {
+      const pct = Math.round(e.lift * 100);
+      if (e.recent === 0) return { label: '—', color: '#5f696f' };
+      if (pct >= 25) return { label: '▲ ' + pct + '%', color: accent };
+      if (pct <= -25) return { label: '▼ ' + Math.abs(pct) + '%', color: '#ff6257' };
+      return { label: '■', color: '#7d878e' };
+    };
+    const shareNote = e => Math.round(e.rShare * 100) + '% of recent roles against ' + Math.round(e.oShare * 100) + '% before';
+    const maxLift = Math.max(0.01, ...rising.map(e => e.lift));
+    const minLift = Math.min(-0.01, ...cooling.map(e => e.lift));
+    return {
+      kwScope: scoped.length + ' roles read' + (scopeLabel ? ' · ' + scopeLabel : ''),
+      kwCloud: top.map((e, i) => {
+        const t = trendMeta(e);
+        const f = e.n / maxN;
+        return {
+          term: nice(e.term), size: (12.5 + f * 6).toFixed(1), d: (i * 0.03).toFixed(2),
+          trendLabel: t.label, trendColor: t.color,
+          bg: f > 0.6 ? 'rgba(255,255,255,.05)' : 'none',
+          border: f > 0.6 ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.12)',
+          ink: f > 0.4 ? '#f0f4f6' : '#b3bcc2',
+          aria: 'Search the jobs for ' + e.term + '. Appears in ' + e.n + ' of ' + scoped.length + ' roles.',
+          click: () => { this.setState({ q: e.term, limit: 12 }); this.glideTo(this.sectionTop('All jobs')); }
+        };
+      }),
+      kwColumns: [
+        { title: 'Most asked for', unit: 'share of roles',
+          rows: byCount.slice(0, 6).map((e, i) => ({
+            term: nice(e.term), value: Math.round(e.share * 100) + '%', d: (0.05 + i * 0.07).toFixed(2),
+            w: Math.round((e.n / maxN) * 100), color: '#c8d0d6',
+            note: e.n + ' of ' + scoped.length + ' roles mention it'
+          })) },
+        { title: 'Rising', unit: 'last 14 days against older',
+          rows: rising.map((e, i) => ({
+            term: nice(e.term), value: '+' + Math.round(e.lift * 100) + '%', d: (0.05 + i * 0.07).toFixed(2),
+            w: Math.max(8, Math.round((e.lift / maxLift) * 100)), color: accent,
+            note: shareNote(e)
+          })) },
+        { title: 'Cooling', unit: 'last 14 days against older',
+          rows: cooling.map((e, i) => ({
+            term: nice(e.term), value: Math.round(e.lift * 100) + '%', d: (0.05 + i * 0.07).toFixed(2),
+            w: Math.max(8, Math.round((e.lift / minLift) * 100)), color: '#ff6257',
+            note: shareNote(e)
+          })) }
+      ].filter(c => c.rows.length),
+      kwSummary: (top.length
+        ? 'The feed reads ' + scoped.length + ' listings' + (scopeLabel ? ' in ' + scopeLabel : '') + '. ' + nice(byCount[0].term) + ' leads at ' + Math.round(byCount[0].share * 100) + '% of them'
+          + (rising.length ? ', and ' + nice(rising[0].term) + ' is the fastest riser in the last two weeks' : '') + '. Click any term to search the list for it.'
+        : 'Not enough description text in the feed yet to read keywords. Terms appear once listings carry their posting text.')
+    };
+  }
+
+  mobileCat() {
+    if (this.state.mcat) return this.state.mcat;
+    const cs = (this.state.data && this.state.data.categories) || [];
+    return cs.length ? cs.slice().sort((a, b) => b.open - a.open)[0].key : null;
+  }
+
+  sectionTop(label) {
+    const el = document.querySelector('[data-screen-label="' + label + '"]');
+    if (!el) return 0;
+    const hd = document.querySelector('[data-fixed-header="1"]');
+    const pad = (hd ? hd.offsetHeight : 70) + 8;
+    return Math.max(0, this.scrollerTop() + el.getBoundingClientRect().top - pad);
+  }
 
   timingVals(d, accent) {
     const s = d.seasonality;
@@ -653,17 +954,21 @@ class Component extends DCLogic {
   }
 
   sizeFor(days) {
-    // Steep falloff by age with a floor: today largest, a month old still legible.
     var d = Math.min(30, Math.max(0, days || 0));
-    var f = Math.pow(1 - d / 30, 1.6);
-    return 20 + f * 66;
+    var f = Math.pow(1 - d / 30, 1.5);
+    return 14 + f * 40;
   }
 
   componentDidMount() {
     this.small();
     const url = this.props.dataUrl || 'data.json';
     fetch(url).then(r => { if (!r.ok) throw new Error('bad'); return r.json(); })
-      .then(d => this.setState({ data: d }, () => {
+      .then(d => this.setState(Object.assign({ data: d }, this.readUrl()), () => {
+        if (this._pendingJob) {
+          const j = (d.jobs || []).find(x => String(x.id) === String(this._pendingJob));
+          this._pendingJob = null;
+          if (j) this.setState({ job: j, descOpen: false });
+        }
         this.build();
         this.startCountUp();
         setTimeout(() => {
@@ -795,28 +1100,10 @@ class Component extends DCLogic {
     const from = this.scrollerTop();
     const to = Math.max(0, Math.min(maxTop, top));
     if (Math.abs(to - from) < 2) return;
-    if (this._mq && this._mq.matches) { sc ? sc.scrollTo(0, to) : window.scrollTo(0, to); return; }
-    this._gliding = true;
-    const t0 = performance.now(), dur = 780;
-    const step = () => {
-      const p = Math.min(1, (performance.now() - t0) / dur);
-      const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-      const y = from + (to - from) * e;
-      if (sc) sc.scrollTop = y; else window.scrollTo(0, y);
-      if (p < 1) { requestAnimationFrame(step); return; }
-      this._gliding = false;
-      this._onScroll();
-      if (this._alignTo) {
-        const el = this._alignTo; this._alignTo = null;
-        const off = el.getBoundingClientRect().top;
-        if (Math.abs(off) > 4) {
-          const fix = this.scrollerTop() + off;
-          if (sc) sc.scrollTop = fix; else window.scrollTo(0, fix);
-          this._onScroll();
-        }
-      }
-    };
-    requestAnimationFrame(step);
+    this._alignTo = null;
+    const smooth = !(this._mq && this._mq.matches);
+    const opts = { top: to, left: 0, behavior: smooth ? 'smooth' : 'auto' };
+    if (sc) sc.scrollTo(opts); else window.scrollTo(opts);
   }
 
   sectionTops() {
@@ -895,8 +1182,13 @@ class Component extends DCLogic {
   jobs() {
     const d = this.state.data;
     if (!d || !Array.isArray(d.jobs)) return [];
-    const cap = this._isSmall ? 14 : (this.props.maxBubbles || 150);
-    return d.jobs.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, cap);
+    const cap = this._isSmall ? 12 : (this.props.maxBubbles || 400);
+    let pool = d.jobs;
+    if (this._isSmall) {
+      const key = this.state.filter || this.mobileCat();
+      if (key) pool = pool.filter(j => j.category === key);
+    }
+    return pool.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, cap);
   }
 
   build() {
@@ -905,7 +1197,14 @@ class Component extends DCLogic {
     if (!el) return;
     this._field = el;
     const w = el.clientWidth, h = el.clientHeight;
-    const scale = this._isSmall ? 0.45 : Math.min(1.0, Math.max(0.62, w / 1320));
+    let scale = this._isSmall ? 1.4 : Math.min(1.15, Math.max(0.72, w / 1320));
+    const list = this.jobs();
+    if (w > 0 && h > 0 && list.length) {
+      const area = list.reduce((a, j) => { const rr = this.sizeFor(j.postedDays) / 2; return a + Math.PI * rr * rr; }, 0);
+      const fill = (area * scale * scale) / (w * h);
+      const target = this._isSmall ? 0.3 : 0.26;
+      if (fill > target) scale *= Math.sqrt(target / fill);
+    }
     const prev = {};
     (this._parts || []).forEach(p => { prev[p.id] = p; });
     const keys = ((this.state.data && this.state.data.categories) || []).map(c => c.key);
@@ -914,7 +1213,7 @@ class Component extends DCLogic {
       const a = (i / Math.max(1, keys.length)) * Math.PI * 2 - Math.PI / 2;
       this._anchors[k] = { x: 0.5 + Math.cos(a) * 0.29, y: 0.5 + Math.sin(a) * 0.27 };
     });
-    this._parts = this.jobs().map((j, i) => {
+    this._parts = list.map((j, i) => {
       const r = this.sizeFor(j.postedDays) * scale / 2;
       const old = prev[j.id];
       const ang = (i * 2.399) + 0.4;
@@ -951,7 +1250,13 @@ class Component extends DCLogic {
     const tipEl = document.querySelector('[data-tip="1"]');
     if (tipEl && this.state.hover) {
       const p = (this._parts || []).find(q => q.id === this.state.hover.id);
-      if (p) tipEl.style.transform = 'translate3d(calc(' + p.x + 'px - 50%), calc(' + (p.y - p.r - 14) + 'px - 100%), 0)';
+      if (p) {
+        const above = (p.y - p.r - 14) > (tipEl.offsetHeight + 8);
+        const y = above ? (p.y - p.r - 14) : (p.y + p.r + 14);
+        const w = tipEl.offsetWidth, fw = (this._field ? this._field.clientWidth : 0);
+        const x = fw ? Math.max(w / 2 + 6, Math.min(fw - w / 2 - 6, p.x)) : p.x;
+        tipEl.style.transform = 'translate3d(calc(' + x + 'px - 50%), calc(' + y + 'px' + (above ? ' - 100%' : '') + '), 0)';
+      }
     }
   }
 
@@ -1042,13 +1347,17 @@ class Component extends DCLogic {
   }
 
   listVals(d, cats, filter) {
-    const SEN = ['all', 'analyst', 'specialist', 'manager', 'senior-manager', 'director'];
+    const SEN = ['all', 'junior', 'specialist', 'senior', 'manager', 'senior-manager', 'director'];
     const sen = this.state.sen, sort = this.state.sort, limit = this.state.limit;
     const catLabel = {}; cats.forEach(c => { catLabel[c.key] = c.label; });
     const q = (this.state.q || '').trim().toLowerCase();
+    const TIER = { junior: ['junior', 'specialist', 'senior'], senior: ['senior-manager', 'director'] };
+    const tier = this.state.tier, company = this.state.company;
     const all = (d.jobs || []).filter(j => (!filter || j.category === filter) && (sen === 'all' || j.seniority === sen)
+      && (!tier || TIER[tier].indexOf(j.seniority) >= 0)
+      && (!company || j.company === company)
       && (!q || j.title.toLowerCase().indexOf(q) >= 0 || j.company.toLowerCase().indexOf(q) >= 0));
-    const rank = { analyst: 0, specialist: 1, manager: 2, 'senior-manager': 3, director: 4 };
+    const rank = { junior: 0, specialist: 1, senior: 2, manager: 3, 'senior-manager': 4, director: 5 };
     all.sort((a, b) => sort === 'newest' ? a.postedDays - b.postedDays
       : sort === 'seniority' ? (rank[b.seniority] || 0) - (rank[a.seniority] || 0)
       : a.company.localeCompare(b.company));
@@ -1065,17 +1374,72 @@ class Component extends DCLogic {
       noResults: all.length === 0,
       setQuery: e => this.setState({ q: e.target.value, limit: 12 }),
       clearQuery: () => this.setState({ q: '', limit: 12 }),
-      resetFilters: () => this.setState({ q: '', filter: null, sen: 'all', limit: 12 }, () => this.build()),
+      resetFilters: () => this.setState({ q: '', filter: null, sen: 'all', tier: null, company: null, limit: 12 }, () => this.build()),
+      companyOn: !!company,
+      companyName: company || '',
+      clearCompany: () => this.setState({ company: null, limit: 12 }),
+      companyStats: (() => {
+        if (!company) return [];
+        const set = (d.jobs || []).filter(j => j.company === company);
+        if (!set.length) return [];
+        const fresh = set.filter(j => j.postedDays <= 7).length;
+        const avg = Math.round(set.reduce((a, j) => a + j.postedDays, 0) / set.length);
+        const mgr = set.filter(j => !IC_LEVELS[j.seniority]).length;
+        const catN = {};
+        set.forEach(j => { catN[j.category] = (catN[j.category] || 0) + 1; });
+        const topCat = Object.keys(catN).sort((a, b) => catN[b] - catN[a])[0];
+        return [
+          { label: 'Open in feed', value: String(set.length), color: '#eef2f4' },
+          { label: 'Posted this week', value: String(fresh), color: fresh ? accent : '#8b969e' },
+          { label: 'Average age', value: avg + 'd', color: avg <= 10 ? accent : '#c3ccd2' },
+          { label: 'Management roles', value: Math.round((mgr / set.length) * 100) + '%', color: '#7fb1ff' },
+          { label: 'Hiring most for', value: (catLabel[topCat] || topCat || '—'), color: '#eef2f4' }
+        ];
+      })(),
       catChips: [{ key: null, label: 'All disciplines' }].concat(cats.map(c => ({ key: c.key, label: c.label + '  ' + c.open })))
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
           click: () => this.setState({ filter: c.key, limit: 12 }, () => { this.build(); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} })
         }, chip(filter === c.key))),
+      tierBoxes: (() => {
+        const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
+        const jr = pool.filter(j => IC_LEVELS[j.seniority]);
+        const sr = pool.filter(j => j.seniority === 'senior-manager' || j.seniority === 'director');
+        const pc = n => pool.length ? Math.round((n / pool.length) * 100) : 0;
+        return [
+          { key: 'junior', label: 'Junior roles', count: jr.length, pct: pc(jr.length), color: accent,
+            detail: 'Analyst and specialist openings. Where volume sits and where the field is most crowded.' },
+          { key: 'senior', label: 'Senior and above', count: sr.length, pct: pc(sr.length), color: '#7fb1ff',
+            detail: 'Senior manager and director openings. Fewer, slower, and the clearest sign of real growth.' }
+        ].map(t => ({
+          label: t.label, count: t.count, pct: t.pct, detail: t.detail,
+          color: this.state.tier === t.key ? t.color : '#eef2f4',
+          active: this.state.tier === t.key,
+          bg: this.state.tier === t.key ? 'rgba(255,255,255,.05)' : '#06080a',
+          top: this.state.tier === t.key ? t.color : 'transparent',
+          aria: this.state.tier === t.key ? 'Clear the ' + t.label.toLowerCase() + ' filter' : 'Show only ' + t.label.toLowerCase(),
+          click: () => this.setState(s => ({ tier: s.tier === t.key ? null : t.key, sen: 'all', limit: 12 }))
+        }));
+      })(),
+      notSmall: !this.state.small,
+      filterValue: filter || 'all',
+      catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
+      setFilterSelect: e => { const v = e.target.value; this.setState({ filter: v === 'all' ? null : v, limit: 12 }, () => this.build()); },
+      sortValue: sort,
+      sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }, { value: 'company', label: 'Company' }],
+      setSortSelect: e => this.setState({ sort: e.target.value }),
+      senBoxes: SEN.filter(x => x !== 'all').map(x => ({
+        label: x.replace(/-/g, ' '),
+        active: sen === x,
+        ink: sen === x ? '#f0f4f6' : '#a8b2b9',
+        aria: sen === x ? 'Stop filtering to ' + x.replace(/-/g, ' ') + ' roles' : 'Show only ' + x.replace(/-/g, ' ') + ' roles',
+        click: () => this.setState(st2 => ({ sen: st2.sen === x ? 'all' : x, tier: null, limit: 12 }))
+      })),
       senChips: SEN.map(s => Object.assign({
         label: s === 'all' ? 'Any level' : s.replace(/-/g, ' '), active: sen === s,
         aria: s === 'all' ? 'Show every seniority level' : 'Show only ' + s.replace(/-/g, ' ') + ' roles',
-        click: () => this.setState({ sen: s, limit: 12 })
+        click: () => this.setState({ sen: s, tier: null, limit: 12 })
       }, chip(sen === s))),
       sorts: [['newest', 'Newest'], ['seniority', 'Seniority'], ['company', 'Company']].map(([k, l]) => ({
         label: l, active: sort === k, aria: 'Sort jobs by ' + l.toLowerCase(),
@@ -1090,7 +1454,8 @@ class Component extends DCLogic {
         age: j.postedDays + 'd',
         ageColor: j.postedDays <= 3 ? accent : j.postedDays <= 10 ? '#c3ccd2' : '#6f7a82',
         dot: 'hsl(' + (HUES[j.category] != null ? HUES[j.category] : 210) + ',72%,60%)',
-        open: () => this.setState({ job: j }),
+        open: () => this.setState({ job: j, descOpen: false }),
+        openCompany: e => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ company: j.company, limit: 12 }); },
         aria: j.title + ' at ' + j.company + ', posted ' + j.postedDays + ' days ago. Opens the details.'
       })),
       hasMore: all.length > shown.length,
@@ -1128,7 +1493,7 @@ class Component extends DCLogic {
       const hue = HUES[j.category] != null ? HUES[j.category] : 210;
       const f = Math.max(0.12, 1 - Math.min(30, j.postedDays) / 30);
       const dim = filter && j.category !== filter;
-      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.35 : 1));
+      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.4 : 1));
       return {
         id: j.id, url: j.url, size: size,
         name: j.company, font: Math.max(9, Math.min(14, Math.round(size / 8))),
@@ -1140,7 +1505,7 @@ class Component extends DCLogic {
         glow: dim ? 'none' : '0 0 ' + Math.round(14 + 44 * f) + 'px hsla(' + hue + ',85%,60%,' + (0.06 + 0.26 * f) + ')',
         op: dim ? 0.34 : 1,
         aria: j.title + ' at ' + j.company + ', ' + j.seniority.replace('-', ' ') + ' level, posted ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago. Opens the details.',
-        click: e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ job: j, hover: null }); },
+        click: e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ job: j, hover: null, descOpen: false }); },
         enter: () => this.setState({ hover: { id: j.id, title: j.title, company: j.company, days: j.postedDays, sen: j.seniority } }, () => {
           (this._parts || []).forEach(p => { p.hov = p.id === j.id; });
           this.paint();
@@ -1155,7 +1520,9 @@ class Component extends DCLogic {
     const t = d.totals || {};
     const h = ((filter && d.categoryHistory && d.categoryHistory[filter]) || d.history || []);
     const perCatHistory = !!(filter && d.categoryHistory && d.categoryHistory[filter]);
-    const prevOpen = h.length > 1 ? h[h.length - 2].open : null;
+    const prevOpen = (!filter && d.observedHistory && d.observedHistory.length > 1)
+      ? d.observedHistory[d.observedHistory.length - 2].open
+      : (filter && h.length > 1 ? h[h.length - 2].open : null);
     const senior = jobs.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const up = st.accent, down = '#ff6257', flat = '#8b969e';
     const pctChange = (a, b) => b ? Math.round(((a - b) / b) * 100) : null;
@@ -1173,9 +1540,7 @@ class Component extends DCLogic {
       { label: 'Posted in last 7 days', value: String(new7),
         arrow: '■', color: flat, delta: 'of ' + scoped.length + ' tracked ' + fcat.label + ' roles' },
       { label: 'Share of market', value: t.open ? Math.round((fcat.open / t.open) * 100) + '%' : '—',
-        arrow: '■', color: flat, delta: fcat.open + ' of ' + t.open + ' open roles' },
-      { label: 'Senior share', value: scoped.length ? Math.round((scopedSenior / scoped.length) * 100) + '%' : '—',
-        arrow: '■', color: flat, delta: scopedSenior + ' of ' + scoped.length + ' listed roles' }
+        arrow: '■', color: flat, delta: fcat.open + ' of ' + t.open + ' open roles' }
     ] : [
       { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '—'),
         arrow: openD > 0 ? '▲' : openD < 0 ? '▼' : '■', color: openD > 0 ? up : openD < 0 ? down : flat,
@@ -1185,9 +1550,7 @@ class Component extends DCLogic {
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
       { label: 'Median days to fill', value: String(t.medianDaysToFill != null ? LE(t.medianDaysToFillPrev, t.medianDaysToFill) : '—'),
         arrow: fillD < 0 ? '▼' : fillD > 0 ? '▲' : '■', color: fillD < 0 ? up : fillD > 0 ? down : flat,
-        delta: isNaN(fillD) ? 'no prior period' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before' },
-      { label: 'Senior share', value: jobs.length ? Math.round((senior / jobs.length) * 100) + '%' : '—',
-        arrow: '■', color: flat, delta: senior + ' of ' + jobs.length + ' listed roles' }
+        delta: (t.medianDaysToFill == null || t.medianDaysToFillPrev == null || isNaN(fillD)) ? 'not measurable until roles close' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before' },
     ];
     if (!fcat && t.addedThisWeek != null && t.removedThisWeek != null) {
       const net = t.addedThisWeek - t.removedThisWeek;
@@ -1209,6 +1572,9 @@ class Component extends DCLogic {
     };
     const series = n ? [mk('open', 'Openings', st.accent), mk('new', 'New per week', '#7fb1ff'), mk('daysToFill', 'Days to fill', '#e6b45c')] : [];
     series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
+    const hi = this.state.chartHover;
+    const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
+    const keysOf = [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
 
     const flowRows = h.filter(r => r.added != null || r.removed != null);
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
@@ -1221,19 +1587,20 @@ class Component extends DCLogic {
     const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
     const prior = h.slice(-5, -1);
     const avgOpen = prior.length ? prior.reduce((a, r) => a + r.open, 0) / prior.length : null;
-    const momPct = avgOpen ? ((t.open - avgOpen) / avgOpen) * 100 : 0;
+    const momPct = t.newPrevWeek ? ((t.newThisWeek - t.newPrevWeek) / t.newPrevWeek) * 100 : 0;
     const spdPct = t.medianDaysToFillPrev ? ((t.medianDaysToFillPrev - t.medianDaysToFill) / t.medianDaysToFillPrev) * 100 : 0;
     const flowRatio = (addedNow != null && removedNow != null && addedNow + removedNow) ? addedNow / (addedNow + removedNow) : null;
     const seniorShare = jobs.length ? senior / jobs.length : 0;
+    const icShareAll = jobs.length ? jobs.filter(j => IC_LEVELS[j.seniority]).length / jobs.length : 0;
     const parts = [
-      { label: 'Openings momentum', weight: '40%', w: 0.4, val: clamp(50 + momPct * 2.5),
-        detail: t.open + ' open against a trailing four week average of ' + (avgOpen ? avgOpen.toFixed(0) : '—') + ', ' + (momPct >= 0 ? 'up ' : 'down ') + Math.abs(momPct).toFixed(1) + '%' },
+      { label: 'New roles momentum', weight: '40%', w: 0.4, val: clamp(50 + momPct * 2.5),
+        detail: t.newThisWeek + ' roles posted this week against ' + t.newPrevWeek + ' last week, ' + (momPct >= 0 ? 'up ' : 'down ') + Math.abs(momPct).toFixed(1) + '%. Compared week on week rather than against a long average, because this feed only holds roles that were still listed when it started, so older weeks under-count.' },
       { label: 'Time to fill', weight: '25%', w: 0.25, val: clamp(50 + spdPct * 1.2),
         detail: t.medianDaysToFill + ' days versus ' + t.medianDaysToFillPrev + ' in the previous period, ' + (spdPct >= 0 ? 'faster' : 'slower') + ' by ' + Math.abs(spdPct).toFixed(0) + '%' },
       { label: 'Added against removed', weight: '20%', w: 0.2, val: flowRatio == null ? 50 : clamp(((flowRatio - 0.35) / 0.3) * 100),
         detail: flowRatio == null ? 'No flow data in this feed' : addedNow + ' added and ' + removedNow + ' removed, a ratio of ' + flowRatio.toFixed(2) + ' where 0.50 is a balanced market' },
-      { label: 'Senior share', weight: '15%', w: 0.15, val: clamp((seniorShare / 0.3) * 100),
-        detail: senior + ' of ' + jobs.length + ' tracked roles are senior manager or above, ' + Math.round(seniorShare * 100) + '% against a 30% ceiling' }
+      { label: 'IC against managers', weight: '15%', w: 0.15, val: clamp(icShareAll * 100 * 1.4),
+        detail: Math.round(icShareAll * 100) + '% of tracked roles are individual contributor positions. A market weighted towards IC openings is an easier market to enter, so a higher IC share lifts the score.' }
     ];
     parts.forEach((p, i) => {
       p.d = (0.12 + i * 0.1).toFixed(2);
@@ -1242,7 +1609,7 @@ class Component extends DCLogic {
     });
     const composite = Math.round(parts.reduce((a, p) => a + p.val * p.w, 0));
 
-    const IC = { analyst: 1, specialist: 1 };
+    const IC = { junior: 1, specialist: 1, senior: 1 };
     const allJobs = scoped;
     const icN = allJobs.filter(j => IC[j.seniority]).length;
     const mgrN = allJobs.length - icN;
@@ -1251,7 +1618,24 @@ class Component extends DCLogic {
       const set = aj.filter(j => j.category === c.key);
       const ic = set.filter(j => IC[j.seniority]).length;
       const mg = set.length - ic;
+      const openRow = this.state.splitHover === c.key;
       return {
+        key: c.key, open: openRow,
+        op: (this.state.splitHover && !openRow) ? 0.45 : 1,
+        enter: () => this.setState({ splitHover: c.key }),
+        leave: () => this.setState({ splitHover: null }),
+        jobs: set.slice().sort((a, b) => {
+          const icFirst = ic >= mg;
+          const ai = IC[a.seniority] ? 0 : 1, bi = IC[b.seniority] ? 0 : 1;
+          if (ai !== bi) return icFirst ? ai - bi : bi - ai;
+          return a.postedDays - b.postedDays;
+        }).map(j => ({
+          title: j.title,
+          track: IC[j.seniority] ? 'IC' : 'MGR',
+          color: IC[j.seniority] ? st.accent : '#7fb1ff',
+          aria: 'Open details for ' + j.title + ' at ' + j.company,
+          click: () => this.setState({ job: j, descOpen: false })
+        })),
         label: c.label, dot: 'hsl(' + (HUES[c.key] != null ? HUES[c.key] : 210) + ',72%,60%)',
         icPct: pctOf(ic, set.length), mgrPct: set.length ? 100 - pctOf(ic, set.length) : 0,
         readout: ic + ' / ' + mg, d: (0.1 + i * 0.07).toFixed(2),
@@ -1271,7 +1655,7 @@ class Component extends DCLogic {
       clamp(50 + momPrev * 2.5) * 0.4 +
       clamp(50 + spdPrev * 1.2) * 0.25 +
       (flowPrev == null ? 50 : clamp(((flowPrev - 0.35) / 0.3) * 100)) * 0.2 +
-      clamp((seniorShare / 0.3) * 100) * 0.15
+      clamp(icShareAll * 100 * 1.4) * 0.15
     );
     const publishedScore = d.verdict ? d.verdict.score : 0;
     const freshShare = jobs.length ? jobs.filter(j => j.postedDays <= 3).length / jobs.length : 0;
@@ -1288,7 +1672,7 @@ class Component extends DCLogic {
       heroAddedLabel: fcat ? 'posted in the last 7 days' : 'added this week',
       heroClosedLabel: (fcat || t.removedThisWeek == null) ? '' : 'closed this week',
       heroOpen: fcat ? fcat.open : L(prevOpen, t.open),
-      heroOpenLabel: '',
+      heroOpenLabel: fcat ? 'open ' + fcat.label + ' roles' : 'open roles tracked',
       pulseDur: (7 - freshShare * 4).toFixed(1) + 's',
       pulseOpacity: (0.1 + freshShare * 0.45).toFixed(2),
       freshNote: jobs.filter(j => j.postedDays <= 3).length + ' posted in the last three days',
@@ -1305,8 +1689,13 @@ class Component extends DCLogic {
       ],
       splitRows: splitRows,
       showSplitRows: !filter,
-      splitSummary: '',
+      splitSummary: allJobs.length ? (fcat ? 'In ' + fcat.label + ', ' : '') + icN + ' of ' + allJobs.length + ' tracked roles are individual contributor positions (' + pctOf(icN, allJobs.length) + '%) against ' + mgrN + ' at manager level or above (' + pctOf(mgrN, allJobs.length) + '%). ' + (!fcat && splitRows.length ? splitRows.slice().sort((a, b) => b.mgrPct - a.mgrPct)[0].label + ' is the most management heavy discipline, ' + splitRows.slice().sort((a, b) => b.icPct - a.icPct)[0].label + ' the most individual contributor heavy.' : '') : '',
       navWrap: this.state.small ? 'nowrap' : 'wrap',
+      navDisplay: this.state.small ? (this.state.menu ? 'flex' : 'none') : 'flex',
+      navDir: this.state.small ? 'column' : 'row',
+      navW: this.state.small ? '100%' : 'auto',
+      navAlign: this.state.small ? 'flex-start' : 'center',
+      navPad: this.state.small ? '8px' : '0px',
       toTop: e => { if (e && e.preventDefault) e.preventDefault(); this.glideTo(0); },
       jobOpen: !!this.state.job,
       closeJob: () => this.setState({ job: null }),
@@ -1315,6 +1704,33 @@ class Component extends DCLogic {
       jobUrl: this.state.job ? this.state.job.url : '#',
       jobCat: this.state.job ? ((cats.find(c => c.key === this.state.job.category) || {}).label || this.state.job.category) : '',
       jobDot: this.state.job ? 'hsl(' + (HUES[this.state.job.category] != null ? HUES[this.state.job.category] : 210) + ',72%,60%)' : 'transparent',
+      jobParas: (() => {
+        const j = this.state.job;
+        if (!j) return [];
+        const raw = j.description || this.fallbackDesc(j, cats);
+        return raw.split(/\n{2,}|\n(?=[-•*])/).map(s => s.trim()).filter(Boolean).map((text, i) => ({ text: text, i: i }));
+      })(),
+      descOpen: !!this.state.descOpen,
+      descLong: !!(this.state.job && (this.state.job.description || '').length > 420),
+      descMax: this.state.descOpen ? '46vh' : '190px',
+      descMask: this.state.descOpen || !(this.state.job && (this.state.job.description || '').length > 420)
+        ? 'none' : 'linear-gradient(#000 132px, rgba(0,0,0,.15))',
+      descToggle: this.state.descOpen ? 'Show less' : 'Show all',
+      descAria: this.state.descOpen ? 'Collapse the description' : 'Show the full description',
+      toggleDesc: () => this.setState(s => ({ descOpen: !s.descOpen })),
+      hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
+      jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
+      hasApplicants: !!(this.state.job && this.state.job.applicants != null),
+      applicantsLabel: (() => {
+        const n = this.state.job && this.state.job.applicants;
+        if (n == null) return '';
+        return n + (n === 1 ? ' applicant' : ' applicants');
+      })(),
+      applicantsColor: (() => {
+        const n = this.state.job && this.state.job.applicants;
+        return n == null ? '#7d878e' : n <= 12 ? st.accent : n >= 60 ? '#ff6257' : '#dcc07a';
+      })(),
+      applicantsAria: this.state.job && this.state.job.applicants != null ? this.state.job.applicants + ' people have applied so far' : '',
       jobDesc: (() => {
         const j = this.state.job;
         if (!j) return '';
@@ -1329,10 +1745,41 @@ class Component extends DCLogic {
         return [
           { label: 'Level', value: j.seniority.replace(/-/g, ' '), color: '#eef2f4' },
           { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? st.accent : j.postedDays <= 10 ? '#c3ccd2' : '#8b969e' },
-          { label: 'Track', value: (j.seniority === 'analyst' || j.seniority === 'specialist') ? 'Individual' : 'Management', color: (j.seniority === 'analyst' || j.seniority === 'specialist') ? st.accent : '#7fb1ff' }
+          { label: 'Track', value: (IC_LEVELS[j.seniority]) ? 'Individual' : 'Management', color: (IC_LEVELS[j.seniority]) ? st.accent : '#7fb1ff' }
         ];
       })(),
+      similarJobs: (() => {
+        const j = this.state.job;
+        if (!j) return [];
+        const IC2 = { junior: 1, specialist: 1, senior: 1 };
+        const rankOf = { junior: 0, specialist: 1, senior: 2, manager: 3, 'senior-manager': 4, director: 5 };
+        return (d.jobs || []).filter(x => x.id !== j.id).map(x => {
+          let sc = 0;
+          if (x.category === j.category) sc += 5;
+          if (x.seniority === j.seniority) sc += 3;
+          else if (!!IC2[x.seniority] === !!IC2[j.seniority]) sc += 1.5;
+          sc -= Math.abs((rankOf[x.seniority] || 0) - (rankOf[j.seniority] || 0)) * 0.4;
+          if (x.company === j.company) sc += 1;
+          sc -= Math.min(1.5, x.postedDays / 30);
+          return { j: x, sc: sc };
+        }).sort((a, b) => b.sc - a.sc).slice(0, 3).map(({ j: x }) => ({
+          title: x.title, company: x.company,
+          age: x.postedDays + 'd',
+          dot: 'hsl(' + (HUES[x.category] != null ? HUES[x.category] : 210) + ',72%,60%)',
+          aria: 'Open details for ' + x.title + ' at ' + x.company,
+          click: () => this.setState({ job: x, descOpen: false })
+        }));
+      })(),
       filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, limit: 12 }), () => this.build()),
+      companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12 }), () => { this.build(); this.glideTo(this.sectionTop('All jobs')); }),
+      copyLink: () => {
+        const j = this.state.job;
+        if (!j) return;
+        const url = window.location.origin + window.location.pathname + '?job=' + encodeURIComponent(j.id);
+        const done = () => this.setState({ copied: true }, () => { clearTimeout(this._ct); this._ct = setTimeout(() => this.setState({ copied: false }), 1800); });
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done); else done();
+      },
+      copyLabel: this.state.copied ? 'Link copied' : 'Copy link',
       contactEmail: '',
       cName: this.state.cName, cMail: this.state.cMail, cMsg: this.state.cMsg,
       contactNote: this.state.cNote || '',
@@ -1347,7 +1794,42 @@ class Component extends DCLogic {
         window.location.href = 'mailto:' + to + '?subject=' + encodeURIComponent('HRjobs.co.il · message from ' + cName) + '&body=' + encodeURIComponent(body);
         this.setState({ cNote: '' });
       },
-      navSections: ['Verdict', 'Field', 'Analytics', 'Timing', 'IC vs managers', 'All jobs', 'Contact'].map((label, i) => ({
+      pieR: 92, pieW: 34, splitTotal: allJobs.length,
+      splitLeft: fcat ? [] : splitRows.filter((r, i) => i % 2 === 0),
+      splitRight: fcat ? [] : splitRows.filter((r, i) => i % 2 === 1),
+      singleSplit: !!fcat,
+      pieOrder: this.state.small ? 0 : 2,
+      multiDisplay: fcat ? 'none' : 'flex',
+      multiFlex: fcat ? '0 0 0' : '1 1 0',
+      multiMin: fcat ? '0px' : '210px',
+      sideOrderL: this.state.small ? 1 : 1,
+      sideOrderR: this.state.small ? 2 : 3,
+      sideIC: {
+        title: 'Individual contributors', color: st.accent,
+        count: icN + (icN === 1 ? ' role' : ' roles'),
+        jobs: allJobs.filter(j => IC[j.seniority]).sort((a, b) => a.postedDays - b.postedDays).map(j => ({
+          title: j.title, company: j.company, age: j.postedDays + 'd',
+          aria: 'Open details for ' + j.title + ' at ' + j.company,
+          click: () => this.setState({ job: j, descOpen: false })
+        }))
+      },
+      sideMGR: {
+        title: 'Managers and above', color: '#7fb1ff',
+        count: mgrN + (mgrN === 1 ? ' role' : ' roles'),
+        jobs: allJobs.filter(j => !IC[j.seniority]).sort((a, b) => a.postedDays - b.postedDays).map(j => ({
+          title: j.title, company: j.company, age: j.postedDays + 'd',
+          aria: 'Open details for ' + j.title + ' at ' + j.company,
+          click: () => this.setState({ job: j, descOpen: false })
+        }))
+      },
+      icDash: pctOf(icN, allJobs.length) + ' 100',
+      mgrDash: pctOf(mgrN, allJobs.length) + ' 100',
+      mgrOffset: -pctOf(icN, allJobs.length),
+      goField: e => { if (e && e.preventDefault) e.preventDefault(); this.glideTo(this.sectionTop('Field')); },
+      goJobs: e => { if (e && e.preventDefault) e.preventDefault(); this.glideTo(this.sectionTop('All jobs')); },
+      menuOpen: !!this.state.menu,
+      toggleMenu: () => this.setState(s => ({ menu: !s.menu })),
+      navSections: ['Field', 'Analytics', 'IC vs managers', 'All jobs', 'Contact'].map((label, i) => ({
         label: label, aria: 'Jump to ' + label,
         ink: this.state.active === label ? '#ffffff' : '#8b959c',
         line: this.state.active === label ? st.accent : 'transparent',
@@ -1356,6 +1838,7 @@ class Component extends DCLogic {
           const tops = this.sectionTops();
           const idx = secs.findIndex(s => s.getAttribute('data-screen-label') === label);
           if (idx >= 0) { this._alignTo = secs[idx]; this.glideTo(tops[idx]); }
+          if (this.state.menu) this.setState({ menu: false });
         }
       })),
       word: st.word, score: rp == null ? publishedScore : L(compositePrev, publishedScore),
@@ -1366,16 +1849,21 @@ class Component extends DCLogic {
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {
-        const off = filter && filter !== c.key;
+        const shown = this.state.small ? ((filter || this.mobileCat()) === c.key) : !(filter && filter !== c.key);
+        const off = !shown;
         return {
           label: c.label,
           dot: off ? 'hsl(210,6%,42%)' : 'hsl(' + (HUES[c.key] != null ? HUES[c.key] : 210) + ',72%,60%)',
-          ink: off ? '#5d666c' : (filter === c.key ? '#ffffff' : '#99a4ab'),
-          active: filter === c.key,
-          aria: filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label,
-          click: () => this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
+          ink: off ? '#5d666c' : (shown ? '#ffffff' : '#99a4ab'),
+          active: shown,
+          aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
+          click: () => this.state.small
+            ? this.setState({ mcat: c.key }, () => this.build())
+            : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
+      fieldNoteMobile: this.state.small ? 'One discipline at a time on a small screen. Tap a colour below to switch.' : '',
+      isSmall: !!this.state.small,
       bubbles,
       ticker: (() => {
         const src = scoped.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, 16).map(j => ({
@@ -1419,9 +1907,31 @@ class Component extends DCLogic {
         return v == null ? '—' : (v > 0 ? '+' + v : String(v));
       })(),
       flowSummary: flowRows.length ? 'This week ' + addedNow + ' roles were added and ' + removedNow + ' closed or expired, a net change of ' + (netNow > 0 ? 'plus ' : '') + Math.abs(netNow) + ' roles. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + ' and removals from ' + Math.min(...flowRows.map(r => r.removed)) + ' to ' + Math.max(...flowRows.map(r => r.removed)) + '.' : '',
+      chartHot: n > 1,
+      chartMove: e => {
+        const box = e.currentTarget.getBoundingClientRect();
+        const f = (e.clientX - box.left) / Math.max(1, box.width);
+        const idx = Math.max(0, Math.min(n - 1, Math.round(f * (n - 1))));
+        if (idx !== this.state.chartHover) this.setState({ chartHover: idx });
+      },
+      chartLeave: () => this.setState({ chartHover: null }),
+      chartOn: hoverIdx != null,
+      chartX: hoverIdx != null ? xAt(hoverIdx).toFixed(1) : '0',
+      chartPct: hoverIdx != null ? ((xAt(hoverIdx) / W) * 100).toFixed(2) + '%' : '0%',
+      chartSide: hoverIdx != null && xAt(hoverIdx) > W * 0.62 ? 'translate(-104%, 0)' : 'translate(4%, 0)',
+      chartWeek: hoverIdx != null ? fmtWeek(h[hoverIdx].week) : '',
+      chartDots: hoverIdx != null ? series.map(s => {
+        const pt = s.points.split(' ')[hoverIdx].split(',');
+        return { cx: pt[0], cy: pt[1], color: s.color };
+      }) : [],
+      chartReads: hoverIdx != null ? keysOf.map(([k, label, color]) => ({
+        label: label, color: color,
+        value: h[hoverIdx][k] != null ? String(h[hoverIdx][k]) : '—'
+      })) : [],
+      lastReads: n ? keysOf.map(([k, label, color]) => ({ label: label, color: color, value: String(last[k]) })) : [],
       gridLines: [0, 1, 2, 3].map(i => ({ y: (pad + i * ((H - pad * 2) / 3)).toFixed(1) })),
       firstWeek: fmtWeek(first.week), lastWeek: fmtWeek(last.week),
-      chartSummary: n ? ((n < 2) ? ('One week recorded so far, ' + last.open + ' roles open and ' + last.new + ' new. The trend line needs a few more weeks.') : ('Over ' + n + ' weeks openings moved from ' + first.open + ' to ' + last.open + ', new roles per week from ' + first.new + ' to ' + last.new + (first.daysToFill != null && last.daysToFill != null ? ', and the median time to fill from ' + first.daysToFill + ' to ' + last.daysToFill + ' days.' : '. Time to fill is not measurable until roles start closing.'))) : '',
+      chartSummary: n ? ('Weeks are grouped by the date LinkedIn published each role, counting the ' + t.open + ' roles open today. Collection began recently, so a role posted months ago and since taken down was never recorded: earlier weeks show only what is still live. Read the rise as the age profile of what is open now rather than as market growth. ' + t.newThisWeek + ' roles were posted this week against ' + t.newPrevWeek + ' last week.') : '',
       filterLabel: filter ? 'Clear filter' : 'All disciplines',
       catMenuOpen: !!this.state.catMenu,
       toggleCatMenu: () => this.setState(s => ({ catMenu: !s.catMenu })),
@@ -1454,7 +1964,7 @@ class Component extends DCLogic {
       hirers: (d.topHirers || []).map((x, i) => ({ rank: String(i + 1).padStart(2, '0'), company: x.company, open: x.open })),
       letters: st.word.split('').map((ch, i) => ({ ch: ch, d: (0.12 + i * 0.07).toFixed(2) })),
       shownScore: this.state.shown != null ? this.state.shown : (d.verdict ? d.verdict.score : 0)
-    }, this.timingVals(d, st.accent), this.listVals(d, cats, filter));
+    }, this.listVals(d, cats, filter));
   }
 }
 

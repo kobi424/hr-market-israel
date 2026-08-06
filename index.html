@@ -422,7 +422,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke-dasharray="1" style="animation: drawLine 2.6s cubic-bezier(.3,.7,.3,1) both; animation-delay: {{ s.d }}s;"></polyline>
             </sc-for>
             <sc-for list="{{ series }}" as="s" hint-placeholder-count="3">
-              <circle cx="{{ s.lastX }}" cy="{{ s.lastY }}" r="4" fill="{{ s.color }}"></circle>
+              <circle cx="{{ s.lastX }}" cy="{{ s.lastY }}" r="4" fill="{{ s.color }}" style="opacity: 0; animation: fadeUp .3s ease {{ s.dotD }}s both;"></circle>
             </sc-for>
             <sc-for list="{{ chartDots }}" as="cd" hint-placeholder-count="0">
               <circle cx="{{ cd.cx }}" cy="{{ cd.cy }}" r="5.5" fill="{{ cd.color }}" stroke="#06080a" stroke-width="2"></circle>
@@ -955,8 +955,8 @@ class Component extends DCLogic {
 
   sizeFor(days) {
     var d = Math.min(30, Math.max(0, days || 0));
-    var f = Math.pow(1 - d / 30, 1.5);
-    return 14 + f * 40;
+    var f = Math.pow(1 - d / 30, 1.4);
+    return 24 + f * 58;
   }
 
   componentDidMount() {
@@ -1197,12 +1197,12 @@ class Component extends DCLogic {
     if (!el) return;
     this._field = el;
     const w = el.clientWidth, h = el.clientHeight;
-    let scale = this._isSmall ? 1.4 : Math.min(1.15, Math.max(0.72, w / 1320));
+    let scale = this._isSmall ? 1.3 : 1;
     const list = this.jobs();
     if (w > 0 && h > 0 && list.length) {
       const area = list.reduce((a, j) => { const rr = this.sizeFor(j.postedDays) / 2; return a + Math.PI * rr * rr; }, 0);
       const fill = (area * scale * scale) / (w * h);
-      const target = this._isSmall ? 0.3 : 0.26;
+      const target = this._isSmall ? 0.5 : 0.58;
       if (fill > target) scale *= Math.sqrt(target / fill);
     }
     const prev = {};
@@ -1211,7 +1211,8 @@ class Component extends DCLogic {
     this._anchors = {};
     keys.forEach((k, i) => {
       const a = (i / Math.max(1, keys.length)) * Math.PI * 2 - Math.PI / 2;
-      this._anchors[k] = { x: 0.5 + Math.cos(a) * 0.29, y: 0.5 + Math.sin(a) * 0.27 };
+      this._anchors[k] = this._isSmall ? { x: 0.5, y: 0.5 }
+        : { x: 0.5 + Math.cos(a) * 0.42, y: 0.5 + Math.sin(a) * 0.36 };
     });
     this._parts = list.map((j, i) => {
       const r = this.sizeFor(j.postedDays) * scale / 2;
@@ -1493,11 +1494,11 @@ class Component extends DCLogic {
       const hue = HUES[j.category] != null ? HUES[j.category] : 210;
       const f = Math.max(0.12, 1 - Math.min(30, j.postedDays) / 30);
       const dim = filter && j.category !== filter;
-      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.4 : 1));
+      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.3 : 1));
       return {
         id: j.id, url: j.url, size: size,
         name: j.company, font: Math.max(9, Math.min(14, Math.round(size / 8))),
-        ink: dim ? '0.42' : (0.55 + 0.4 * f).toFixed(2), labelOp: size >= 62 ? 1 : 0,
+        ink: dim ? '0.42' : (0.55 + 0.4 * f).toFixed(2), labelOp: size >= 40 ? 1 : 0,
         fill: dim
           ? 'radial-gradient(circle at 34% 30%, hsla(210,6%,72%,0.14), hsla(210,6%,40%,0.1))'
           : 'radial-gradient(circle at 34% 30%, hsla(' + hue + ',82%,72%,' + (0.16 + 0.5 * f) + '), hsla(' + hue + ',70%,42%,' + (0.1 + 0.34 * f) + '))',
@@ -1520,9 +1521,7 @@ class Component extends DCLogic {
     const t = d.totals || {};
     const h = ((filter && d.categoryHistory && d.categoryHistory[filter]) || d.history || []);
     const perCatHistory = !!(filter && d.categoryHistory && d.categoryHistory[filter]);
-    const prevOpen = (!filter && d.observedHistory && d.observedHistory.length > 1)
-      ? d.observedHistory[d.observedHistory.length - 2].open
-      : (filter && h.length > 1 ? h[h.length - 2].open : null);
+    const prevOpen = h.length > 1 ? h[h.length - 2].open : null;
     const senior = jobs.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const up = st.accent, down = '#ff6257', flat = '#8b969e';
     const pctChange = (a, b) => b ? Math.round(((a - b) / b) * 100) : null;
@@ -1570,8 +1569,10 @@ class Component extends DCLogic {
       return { label, color, points: pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
         lastX: pts.length ? pts[pts.length - 1][0].toFixed(1) : 0, lastY: pts.length ? pts[pts.length - 1][1].toFixed(1) : 0 };
     };
-    const series = n ? [mk('open', 'Openings', st.accent), mk('new', 'New per week', '#7fb1ff'), mk('daysToFill', 'Days to fill', '#e6b45c')] : [];
-    series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
+    const hasData = k => h.some(r => r[k] != null);
+    const series = n ? [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']]
+      .filter(([k]) => hasData(k)).map(([k, label, color]) => mk(k, label, color)) : [];
+    series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); s.dotD = (0.15 + i * 0.35 + 2.45).toFixed(2); });
     const hi = this.state.chartHover;
     const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
     const keysOf = [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
@@ -1906,7 +1907,7 @@ class Component extends DCLogic {
         const v = r ? r.added - r.removed : netNow;
         return v == null ? '—' : (v > 0 ? '+' + v : String(v));
       })(),
-      flowSummary: flowRows.length ? 'This week ' + addedNow + ' roles were added and ' + removedNow + ' closed or expired, a net change of ' + (netNow > 0 ? 'plus ' : '') + Math.abs(netNow) + ' roles. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + ' and removals from ' + Math.min(...flowRows.map(r => r.removed)) + ' to ' + Math.max(...flowRows.map(r => r.removed)) + '.' : '',
+      flowSummary: flowRows.length ? (removedNow == null ? ('This week ' + addedNow + ' roles were added. Closures are not counted yet: this feed treats a role as gone once it has been absent for five days, so the first ones become measurable about a fortnight after collection started. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + '.') : ('This week ' + addedNow + ' roles were added and ' + removedNow + ' closed or expired, a net change of ' + (netNow > 0 ? 'plus ' : '') + Math.abs(netNow) + ' roles. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + ' and removals from ' + Math.min(...flowRows.map(r => r.removed)) + ' to ' + Math.max(...flowRows.map(r => r.removed)) + '.')) : '',
       chartHot: n > 1,
       chartMove: e => {
         const box = e.currentTarget.getBoundingClientRect();
@@ -1928,7 +1929,7 @@ class Component extends DCLogic {
         label: label, color: color,
         value: h[hoverIdx][k] != null ? String(h[hoverIdx][k]) : '—'
       })) : [],
-      lastReads: n ? keysOf.map(([k, label, color]) => ({ label: label, color: color, value: String(last[k]) })) : [],
+      lastReads: n ? keysOf.filter(([k]) => h.some(r => r[k] != null)).map(([k, label, color]) => ({ label: label, color: color, value: last[k] == null ? '\u2014' : String(last[k]) })) : [],
       gridLines: [0, 1, 2, 3].map(i => ({ y: (pad + i * ((H - pad * 2) / 3)).toFixed(1) })),
       firstWeek: fmtWeek(first.week), lastWeek: fmtWeek(last.week),
       chartSummary: n ? ('Weeks are grouped by the date LinkedIn published each role, counting the ' + t.open + ' roles open today. Collection began recently, so a role posted months ago and since taken down was never recorded: earlier weeks show only what is still live. Read the rise as the age profile of what is open now rather than as market growth. ' + t.newThisWeek + ' roles were posted this week against ' + t.newPrevWeek + ' last week.') : '',
@@ -1970,7 +1971,7 @@ class Component extends DCLogic {
 
 </script>
 
-    <a href="#" onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
+    <a href="#" data-brand onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
               font: 700 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
               color: #e8ecef; padding: 9px 13px; border: 1px solid rgba(255,255,255,.14);
@@ -1978,18 +1979,6 @@ class Component extends DCLogic {
       HRjobs<span style="opacity:.45">.co.il</span>
     </a>
 
-    <div id="jr-herobtns" style="position: fixed; left: clamp(20px, 5vw, 80px); bottom: clamp(64px, 12vh, 130px);
-                z-index: 60; display: flex; gap: 12px; opacity: 0; pointer-events: none;
-                transition: opacity .35s ease;">
-      <button data-goto="Analytics" style="background: transparent; color: #e8ecef;
-              border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 13px 26px;
-              font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em;
-              text-transform: uppercase; cursor: pointer;">Analytics</button>
-      <button data-goto="All jobs" style="background: transparent; color: #e8ecef;
-              border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 13px 26px;
-              font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em;
-              text-transform: uppercase; cursor: pointer;">Jobs</button>
-    </div>
 
 <script>
 (function () {
@@ -2063,24 +2052,31 @@ class Component extends DCLogic {
     }, 350);
   }, true);
 
-  // Hero shortcuts.
-  var hb = document.getElementById('jr-herobtns');
-  if (hb) {
-    hb.querySelectorAll('[data-goto]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var dest = sectionTop(b.dataset.goto);
-        if (dest != null) glide(dest);
-      });
-    });
-    var heroWatch = function () {
-      var on = topOf(scroller()) < 300;
-      hb.style.opacity = on ? '1' : '0';
-      hb.style.pointerEvents = on ? 'auto' : 'none';
-    };
-    addEventListener('scroll', heroWatch, { passive: true });
-    setInterval(heroWatch, 600);
-    heroWatch();
+  // The design's own hero links are plain anchors to #field and #jobs, which
+  // the browser jumps to instantly. Nothing to speed up, so nothing here.
+
+  // The brand is fixed, the design's menu button sits in normal flow, and on a
+  // phone they landed on two different rows. Read the button's position rather
+  // than hard coding a offset, so a change in the design's header spacing
+  // cannot separate them again.
+  var brand = document.querySelector('[data-brand]');
+  function alignBrand() {
+    if (!brand) return;
+    var btn = document.querySelector('[aria-label="Open the section menu"]');
+    if (!btn || window.innerWidth >= 768) {
+      brand.style.top = '18px';
+      return;
+    }
+    var b = btn.getBoundingClientRect();
+    if (b.height < 4) return;                       // hidden, leave it alone
+    var mid = b.top + b.height / 2;
+    brand.style.top = Math.max(6, Math.round(mid - brand.offsetHeight / 2)) + 'px';
   }
+  alignBrand();
+  addEventListener('resize', alignBrand);
+  addEventListener('load', alignBrand);
+  setTimeout(alignBrand, 400);
+  setTimeout(alignBrand, 1400);
 
   // A hovered bubble was being clipped by the section above it.
   var lift = document.createElement('style');

@@ -1760,7 +1760,7 @@ class Component extends DCLogic {
       weight: p.measurable ? ('\u00b1' + p.cap) : 'no data yet',
       val: Math.round(((p.delta + p.cap) / (2 * p.cap)) * 100),
       contrib: p.measurable ? ((p.delta > 0 ? '+' : '') + p.delta) : '\u2014',
-      how: p.how || '',
+      how: (p.bands || []).map(function (b) { return b.range + '  \u2192  ' + b.points; }).join('\n') + (p.scaleNote ? '\n\n' + p.scaleNote : ''),
       color: p.delta > 0 ? up : p.delta < 0 ? down : '#c8d0d6',
       detail: p.detail,
       d: (0.12 + i * 0.1).toFixed(2)
@@ -1829,10 +1829,12 @@ class Component extends DCLogic {
       scoreSum: (function () {
         if (!published || dv.composite == null) return '';
         var bits = (dv.parts || []).map(function (p) {
-          return p.measurable ? ((p.delta > 0 ? '+' : p.delta < 0 ? '\u2212' : '') + (p.delta ? Math.abs(p.delta) : '0')) : '\u2014';
+          return p.measurable ? ((p.delta > 0 ? '+' : p.delta < 0 ? '\u2212' : '') + Math.abs(p.delta)) : '\u2014';
         });
         var c = dv.composite;
-        return bits.join('  ') + '  =  ' + (c > 0 ? '+' : '') + c + '  of \u00b16   \u00b7   ' + (dv.tier || '');
+        var pts = bits.join('   ') + '   =   ' + (c > 0 ? '+' : '') + c + ' points';
+        var conv = '50 neutral ' + (c >= 0 ? '+ ' : '\u2212 ') + Math.abs(Math.round(c * 10)) + '   =   ' + (dv.score != null ? dv.score : '') + '   \u00b7   ' + (dv.tier || '');
+        return pts + '\n' + conv;
       })(),
       replaying: rp != null,
       replayLabel: rp == null ? 'Replay last week to now' : 'Replaying',
@@ -1840,9 +1842,9 @@ class Component extends DCLogic {
       replayNote: rp == null ? '' : 'Showing last week moving to this week',
       heroAdded: fcat ? new7 : L(t.addedPrevWeek, t.addedThisWeek),
       heroClosed: fcat ? '' : L(t.removedPrevWeek, t.removedThisWeek),
-      heroClosedText: (fcat || t.removedThisWeek == null) ? '' : '−' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
+      heroClosedText: fcat ? '' : '\u2212' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
       heroAddedLabel: fcat ? 'posted in the last 7 days' : 'added this week',
-      heroClosedLabel: (fcat || t.removedThisWeek == null) ? '' : 'closed this week',
+      heroClosedLabel: fcat ? '' : 'closed this week',
       heroOpen: fcat ? fcat.open : L(prevOpen, t.open),
       heroOpenLabel: fcat ? 'open ' + fcat.label + ' roles' : 'open roles tracked',
       pulseDur: (7 - freshShare * 4).toFixed(1) + 's',
@@ -1955,19 +1957,11 @@ class Component extends DCLogic {
       hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
       noCompanyUrl: !(this.state.job && this.state.job.companyUrl),
       jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
-      hasApplicants: !!(this.state.job && (this.state.job.applicants != null || this.state.job.applicantsNote)),
+      hasApplicants: !!(this.state.job && this.state.job.applicants != null),
       applicantsLabel: (() => {
-        const j = this.state.job;
-        if (!j) return '';
-        const note = j.applicantsNote || '';
-        // 'Be among the first 25 applicants' is LinkedIn saying fewer than 25
-        // have applied. Three words carry that; seven just crowd the header.
-        const first = note.match(/first\s+([0-9][0-9,]*)/i);
-        if (first) return 'Under ' + first[1] + ' applicants';
-        // 'Over 200' stays as written: it is not the same claim as '200'.
-        if (/^over\s/i.test(note)) return note;
-        if (j.applicants != null) return j.applicants + (j.applicants === 1 ? ' applicant' : ' applicants');
-        return note;
+        const n = this.state.job && this.state.job.applicants;
+        if (n == null) return '';
+        return n + (n === 1 ? ' applicant' : ' applicants');
       })(),
       applicantsColor: (() => {
         const n = this.state.job && this.state.job.applicants;
@@ -2978,8 +2972,20 @@ class Component extends DCLogic {
     + 'background:none;color:#8b959c;font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;'
     + 'line-height:1;cursor:pointer;padding:0}'
     + '[data-howbtn]:hover{border-color:rgba(255,255,255,.5);color:#eef2f4}'
-    + '[data-how]{display:none;margin-top:6px;color:#7f8a91;font-size:12px;line-height:1.5}'
+    // The bands arrive as one line per range, so keep the breaks and lay them
+    // out in a monospaced column: it reads as a table without needing one.
+    + '[data-how]{display:none;margin-top:8px;color:#8b959c;font-size:11.5px;line-height:1.75;'
+    + 'white-space:pre-line;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
+    + 'border-left:2px solid rgba(255,255,255,.12);padding-left:11px}'
     + '[data-howopen] [data-how]{display:block}'
+    // The scale as a table: a range and what it is worth, no jargon.
+    + '[data-bandtable]{width:100%;max-width:340px;border-collapse:collapse;margin:2px 0 4px}'
+    + '[data-bandtable] td{padding:5px 8px;border-top:1px solid rgba(255,255,255,.08);'
+    + 'font:500 11.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:#a8b2b9}'
+    + '[data-bandtable] td:last-child{text-align:right;width:52px}'
+    + '[data-bandtable] tr:first-child td{border-top:0}'
+    + '[data-bandpos]{color:#3ddc9b}[data-bandneg]{color:#ff6b6b}'
+    + '[data-bandnote]{display:block;margin-top:6px;color:#6f7a82;font-size:11.5px;line-height:1.5}'
     + '[data-levelsel]{background:#0a0d10;border:1px solid rgba(255,255,255,.16);color:#eef2f4;font:inherit;font-size:13px;padding:10px 11px;border-radius:8px}'
     
     
@@ -3013,9 +3019,13 @@ class Component extends DCLogic {
     + '[data-bub][data-dim]{opacity:.07!important;filter:grayscale(1)}'
     // Same row as the zoom pill on a phone too: the zoom control scales to .92
     // and ends near 141px, so the search starts at 148.
-    + '@media (max-width:620px){[data-bubsearch]{left:148px;top:8px;transform:scale(.92);transform-origin:left top}'
-    + '[data-bubsearch] input{width:78px;padding:7px 0}'
-    + '[data-bubsearch]{padding:2px 3px 2px 9px}}'
+    // On a phone the zoom pill ends near 141px. Start at 156 so the two are not
+    // touching, and give the input room for the whole placeholder rather than
+    // cutting it to "COMPANY OR RO".
+    + '@media (max-width:620px){[data-bubsearch]{left:156px;top:8px;transform:scale(.88);transform-origin:left top;'
+    + 'padding:2px 3px 2px 10px}'
+    + '[data-bubsearch] input{width:118px;padding:8px 0;font-size:9.5px;letter-spacing:.02em}'
+    + '[data-bubsearch] input::placeholder{letter-spacing:.04em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'
     + '[data-size="up"]{font-size:12px!important}'

@@ -151,7 +151,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <div style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">The role</div>
             <div data-desc="1" style="max-height: {{ descMax }}; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 13px; mask-image: {{ descMask }}; -webkit-mask-image: {{ descMask }};">
               <sc-for list="{{ jobParas }}" as="p" hint-placeholder-count="3">
-                <p style="margin: 0; font-size: {{ p.size }}; line-height: 1.7; color: {{ p.colour }}; font-weight: {{ p.weight }}; margin-top: {{ p.top }}; letter-spacing: .005em;">{{ p.text }}</p>
+                <p style="margin: 0; font-size: {{ p.size }}; line-height: 1.72; color: {{ p.colour }}; font-weight: {{ p.weight }}; margin-top: {{ p.top }}; letter-spacing: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">{{ p.text }}</p>
               </sc-for>
             </div>
             <sc-if value="{{ descLong }}" hint-placeholder-val="{{ false }}">
@@ -2204,6 +2204,7 @@ class Component extends DCLogic {
 }
 
 </script>
+<script>console.info("hrjobs build 2026-08-07 12:44 UTC");</script>
 
     <a href="#" data-brand onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
@@ -2553,6 +2554,21 @@ class Component extends DCLogic {
   }
   setInterval(fadeFieldOnScopeChange, 200);
 
+  // Surface the build stamp in the footer. Without it, a cached page and a
+  // broken fix look identical from the outside.
+  function showBuild() {
+    var el = document.querySelector('[data-buildstamp]');
+    if (el) return;
+    var m = (document.body.innerHTML.match(/hrjobs build ([0-9 :-]+) UTC/) || [])[1];
+    if (!m) return;
+    var foot = document.querySelector('footer') || document.body;
+    var tag = document.createElement('div');
+    tag.setAttribute('data-buildstamp', '');
+    tag.textContent = 'build ' + m + ' UTC';
+    foot.appendChild(tag);
+  }
+  setTimeout(showBuild, 1200);
+
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
   // drawn at and zooming in can never make them overlap.
@@ -2573,8 +2589,10 @@ class Component extends DCLogic {
     var field = document.querySelector('[data-field="1"]');
     if (!field) return;
     var z = window.__bubbleZoom;
-    var overX = Math.max(0, (field.clientWidth * (z - 1)) / 2);
-    var overY = Math.max(0, (field.clientHeight * (z - 1)) / 2);
+    // Room to move even at rest, so the field can always be nudged: the
+    // overhang from the zoom, plus a fifth of the field either way.
+    var overX = Math.max(0, (field.clientWidth * (z - 1)) / 2) + field.clientWidth * 0.2;
+    var overY = Math.max(0, (field.clientHeight * (z - 1)) / 2) + field.clientHeight * 0.2;
     panX = Math.max(-overX, Math.min(overX, panX));
     panY = Math.max(-overY, Math.min(overY, panY));
   }
@@ -2623,6 +2641,20 @@ class Component extends DCLogic {
       field.parentNode.insertBefore(wrap, field);
       wrap.appendChild(field);
     }
+    var wrapEl = field.parentElement;
+    if (wrapEl && !wrapEl.hasAttribute('data-bg-moved')) {
+      var cs = getComputedStyle(field);
+      if (cs.backgroundImage && cs.backgroundImage !== 'none') {
+        wrapEl.style.backgroundImage = cs.backgroundImage;
+        wrapEl.style.backgroundColor = cs.backgroundColor;
+        wrapEl.style.borderTop = cs.borderTop;
+        wrapEl.style.borderBottom = cs.borderBottom;
+        field.style.background = 'transparent';
+        field.style.borderTop = '0';
+        field.style.borderBottom = '0';
+        wrapEl.setAttribute('data-bg-moved', '');
+      }
+    }
     if (document.querySelector('[data-zoomui]')) return;
     var box = document.createElement('div');
     box.setAttribute('data-zoomui', '');
@@ -2658,7 +2690,7 @@ class Component extends DCLogic {
     // opening a role still works.
     var drag = null, moved = 0;
     var startDrag = function (x, y) {
-      if (window.__bubbleZoom <= 1.01) return;   // nothing to pan to at or under 1
+      // panning is allowed at any zoom; clampPan decides how far it can go
       drag = { x: x, y: y, px: panX, py: panY }; moved = 0;
       field.style.cursor = 'grabbing';
     };
@@ -2755,7 +2787,9 @@ class Component extends DCLogic {
     // The menu panel is in normal flow at the top of the document, so opening
     // it from further down the page put it off screen above. Pin it under the
     // button that opened it.
-    + '@media (max-width:620px){nav{position:fixed!important;top:56px;left:12px;right:12px;z-index:120;max-height:70vh;overflow-y:auto}}'
+    + '@media (max-width:620px){nav{position:fixed!important;top:56px;left:12px;right:12px;z-index:120;max-height:70vh;overflow-y:auto;background:#0a0d10;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.6)}}'
+    + '[data-buildstamp]{padding:10px 0 24px;text-align:center;font:500 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:#4d565c}'
+    + '@media (max-width:620px){section[data-screen-label="Contact"] input,section[data-screen-label="Contact"] textarea{width:100%!important;max-width:100%!important;font-size:16px!important;padding:12px 14px!important}section[data-screen-label="Contact"] label,section[data-screen-label="Contact"] form > *{width:100%!important;max-width:100%!important}}'
 
     // ---- hero order ----
     // The state word and the score sit in one flex-wrap row with

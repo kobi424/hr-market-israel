@@ -1827,11 +1827,11 @@ class Component extends DCLogic {
     return Object.assign(base, {
       scoreParts: parts, composite: composite,
       scoreSum: (function () {
-        if (!published) return '';
+        if (!published || dv.composite == null) return '';
         var bits = (dv.parts || []).map(function (p) {
           return p.measurable ? ((p.delta > 0 ? '+' : p.delta < 0 ? '\u2212' : '') + (p.delta ? Math.abs(p.delta) : '0')) : '\u2014';
         });
-        var c = dv.composite == null ? 0 : dv.composite;
+        var c = dv.composite;
         return bits.join('  ') + '  =  ' + (c > 0 ? '+' : '') + c + '  of \u00b16   \u00b7   ' + (dv.tier || '');
       })(),
       replaying: rp != null,
@@ -2446,6 +2446,19 @@ class Component extends DCLogic {
     if (t && t.closest && t.closest('section[data-screen-label="All jobs"]')) holdJobsHeading();
   }, true);
 
+  // An i with nothing behind it is a button that does nothing when pressed, so
+  // hide it until the feed carries the scale text for that row.
+  function syncHowButtons() {
+    document.querySelectorAll('[data-howbtn]').forEach(function (b) {
+      var row = b.closest('li') || b.parentElement;
+      var how = row && row.querySelector('[data-how]');
+      var has = how && (how.textContent || '').trim().length > 0;
+      b.style.display = has ? '' : 'none';
+      if (!has && row) row.removeAttribute('data-howopen');
+    });
+  }
+  setInterval(syncHowButtons, 700);
+
   // The i beside each score row reveals the bands that row was judged on.
   // Toggled on the row's own wrapper, so one row opening does not open the rest.
   document.addEventListener('click', function (e) {
@@ -2998,8 +3011,11 @@ class Component extends DCLogic {
     // frame, so anything set directly would be painted over immediately.
     + '[data-bub]{transition:opacity .18s ease,filter .18s ease}'
     + '[data-bub][data-dim]{opacity:.07!important;filter:grayscale(1)}'
-    + '@media (max-width:620px){[data-bubsearch]{left:8px;top:46px;transform:scale(.92);transform-origin:left top}'
-    + '[data-bubsearch] input{width:112px}}'
+    // Same row as the zoom pill on a phone too: the zoom control scales to .92
+    // and ends near 141px, so the search starts at 148.
+    + '@media (max-width:620px){[data-bubsearch]{left:148px;top:8px;transform:scale(.92);transform-origin:left top}'
+    + '[data-bubsearch] input{width:78px;padding:7px 0}'
+    + '[data-bubsearch]{padding:2px 3px 2px 9px}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'
     + '[data-size="up"]{font-size:12px!important}'

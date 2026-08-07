@@ -1673,7 +1673,7 @@ class Component extends DCLogic {
     const perCatHistory = !!(filter && d.categoryHistory && d.categoryHistory[filter]);
     const prevOpen = h.length > 1 ? h[h.length - 2].open : null;
     const senior = jobs.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
-    const up = st.accent, down = '#ff6257', flat = '#8b969e';
+    const up = '#3ddc9b', down = '#ff6257', flat = '#8b969e';
     const pctChange = (a, b) => b ? Math.round(((a - b) / b) * 100) : null;
     const openD = prevOpen ? pctChange(t.open, prevOpen) : null;
     const newD = pctChange(t.newThisWeek, t.newPrevWeek);
@@ -2440,8 +2440,18 @@ class Component extends DCLogic {
       });
     });
   }
-  foldSplitLists();
-  setInterval(foldSplitLists, 1200);
+  function syncFolds() {
+    var small = window.innerWidth < 620;
+    if (small) { foldSplitLists(); }
+    document.querySelectorAll('[data-fold]').forEach(function (ul) {
+      // Desktop shows everything: drop the fold rather than leave a heading
+      // that opens a list which is already open.
+      if (!small) ul.setAttribute('data-open', '1');
+    });
+  }
+  syncFolds();
+  addEventListener('resize', syncFolds);
+  setInterval(syncFolds, 1200);
 
   // Switching discipline changes the verdict, but React reuses the letters when
   // the new word happens to share them, so BULL to BULL looked like nothing had
@@ -2479,6 +2489,35 @@ class Component extends DCLogic {
     }
   }
   setInterval(replayHero, 250);
+
+  // A posting's own section headings, "Responsibilities:", "Requirements:" and
+  // the like, are just lines of text once the markup is stripped. Mark them up
+  // again so the card reads the way the original does.
+  //
+  // The text is escaped before any tag goes in: a job description is text from
+  // a stranger, and it is never treated as markup.
+  function esc(t) {
+    return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function styleDescription() {
+    document.querySelectorAll('[data-desc="1"]').forEach(function (el) {
+      if (el.getAttribute('data-styled') === '1') return;
+      var text = el.textContent;
+      if (!text || text.indexOf('\n') < 0) return;
+      el.setAttribute('data-styled', '1');
+      el.innerHTML = text.split('\n').map(function (line) {
+        var t = line.trim();
+        // A heading is a short line ending in a colon, or one of the words a
+        // posting uses to open a section. Anything longer is a sentence that
+        // happens to contain one.
+        var heading = (t.length > 0 && t.length <= 60 && /:$/.test(t))
+          || /^(responsibilities|requirements|about (the )?(role|us|the company)|what you.{0,3}ll do|qualifications|nice to have|benefits|who you are)/i.test(t);
+        return heading ? '<b>' + esc(line) + '</b>' : esc(line);
+      }).join('\n');
+    });
+  }
+  styleDescription();
+  setInterval(styleDescription, 600);
 
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
@@ -2649,7 +2688,10 @@ class Component extends DCLogic {
     + 'section[data-screen-label="Verdict"]{z-index:1}'
     + 'section[data-screen-label="Field"] *{overflow:visible}'
     // The posting keeps the line breaks its author wrote; render them.
-    + '[data-desc="1"]{white-space:pre-line}'
+    + '[data-desc="1"]{white-space:pre-line;color:#e8ecef}'
+    // A posting's own section headings, marked up by the build so they lead
+    // the eye the way they do in the original.
+    + '[data-desc="1"] b{color:#ffffff;font-weight:650;display:inline-block;padding-top:4px}'
     // Either side of the pie listed every role in the discipline: with HR
     // Business Partner selected the left column ran to 1339px and the section
     // to 1610. Cap both columns at roughly five rows and let them scroll.

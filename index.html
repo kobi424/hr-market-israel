@@ -1005,7 +1005,7 @@ class Component extends DCLogic {
 
   componentDidMount() {
     this.small();
-    const url = this.props.dataUrl || 'data.json';
+    const url = (this.props.dataUrl || 'data.json') + '?v=' + Math.floor(Date.now() / 60000);
     fetch(url).then(r => { if (!r.ok) throw new Error('bad'); return r.json(); })
       .then(d => this.setState(Object.assign({ data: d }, this.readUrl()), () => {
         if (this._pendingJob) {
@@ -2316,7 +2316,16 @@ class Component extends DCLogic {
     });
   }
   pruneMenu();
-  setInterval(pruneMenu, 500);
+  // A 500ms timer meant every visitor saw all five entries appear and two of
+  // them vanish. Watch the nav itself so an entry is hidden in the same frame
+  // React adds it, and keep a slow timer only as a backstop.
+  (function watchNav() {
+    var nav = document.querySelector('nav');
+    if (!nav) { requestAnimationFrame(watchNav); return; }
+    new MutationObserver(pruneMenu).observe(nav, { childList: true, subtree: true });
+    pruneMenu();
+  })();
+  setInterval(pruneMenu, 2000);
 
   document.addEventListener('click', function (e) {
     var b = e.target && e.target.closest && e.target.closest('nav button');

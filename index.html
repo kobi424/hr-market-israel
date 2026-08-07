@@ -479,7 +479,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             </span>
           </sc-for>
         </div>
-        <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ chartSummary }} Hover the chart to read any week.</p>
+        
       </div>
 
     </section>
@@ -1922,14 +1922,16 @@ class Component extends DCLogic {
         const j = this.state.job;
         if (!j) return [];
         const raw = j.description || this.fallbackDesc(j, cats);
-        const HEAD = /^(responsibilities|requirements|about (the )?(role|us|company)|what you.{0,3}ll do|qualifications|nice to have|benefits|who you are|the role|your day)\b/i;
+        const HEAD = /^(key\s+)?(responsibilities|requirements|qualifications|preferred qualifications|about (the )?(role|us|company|team)|what you.{0,3}ll do|what we.{0,3}re looking for|why join|who you are|the role|job description|description|position summary|nice to have|benefits|what we offer|requirements? for the role)\b/i;
+        const HEAD_HE = /^(דרישות|דרישות התפקיד|תיאור התפקיד|תחומי אחריות|התפקיד כולל|מה אנחנו מחפשים|מה חשוב לנו|על התפקיד|מה מחפשים)/;
         return raw.split(/\n{2,}|\n(?=[-•*])/).map(s => s.trim()).filter(Boolean).map((text, i) => {
-          const head = (text.length <= 60 && /:$/.test(text)) || HEAD.test(text);
+          const short = text.length <= 60;
+          const head = (short && /[:?]$/.test(text)) || (short && (HEAD.test(text) || HEAD_HE.test(text)));
           return { text: text, i: i, head: head,
             weight: head ? '650' : '400',
             colour: head ? '#3ddc9b' : '#d7dee3',
             size: head ? '13px' : '13.5px',
-            top: head ? '10px' : '0' };
+            top: head ? '12px' : '0' };
         });
       })(),
       descOpen: !!this.state.descOpen,
@@ -2208,7 +2210,6 @@ class Component extends DCLogic {
 }
 
 </script>
-<script>console.info("hrjobs build 2026-08-07 15:57 UTC");</script>
 
     <a href="#" data-brand onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
@@ -2381,6 +2382,9 @@ class Component extends DCLogic {
       // The pie row in IC vs managers is a grid as well, and forcing three
       // equal columns on it squashed the chart.
       if (lbl === 'IC vs managers' || lbl === 'Field') return;
+      // A row of dropdowns is a grid of three as well, and three equal columns
+      // on a phone left each one too narrow to read its own selection.
+      if (e.querySelector('select, input, textarea')) return;
       if (n === 3 || n === 5) e.setAttribute('data-tiles', String(n));
     });
   }
@@ -2408,12 +2412,22 @@ class Component extends DCLogic {
   // discipline dropdown rather than beside it. It is now a select sitting next
   // to that dropdown. The checkboxes stay in the DOM but hidden: they are what
   // the design's own filtering reads, so the select simply drives them.
+  // The design labels the rung you are on "Stop filtering to X roles" and the
+  // rest "Show only X roles". Reading just the second form dropped whichever
+  // rung was active, so the options were rebuilt on every pick and the control
+  // fell back to "All levels" while the list stayed filtered.
   function levelBoxes() {
-    return [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'));
+    return [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label]'))
+      .filter(function (b) {
+        var a = b.getAttribute('aria-label') || '';
+        return (a.indexOf('Show only ') === 0 || a.indexOf('Stop filtering to ') === 0)
+          && a.lastIndexOf(' roles') === a.length - 6;
+      });
   }
   function levelName(b) {
     return (b.getAttribute('aria-label') || '')
       .split('Show only ').join('')
+      .split('Stop filtering to ').join('')
       .split(' roles').join('');
   }
   function buildLevelSelect() {
@@ -2433,7 +2447,13 @@ class Component extends DCLogic {
           if (b.checked !== want) b.click();          // click, so React sees it
         });
       });
-      discipline.parentNode.insertBefore(sel, discipline.nextSibling);
+      // one level up: the row that holds Discipline and Sort, so the new
+      // control lines up with them instead of nesting inside one of them
+      var cell = discipline.closest('label') || discipline.parentElement;
+      var row = cell.parentElement || cell;
+      row.insertBefore(sel, cell.nextSibling);
+      row.setAttribute('data-filterrow', '');
+      cell.setAttribute('data-filtercell', '');
     }
     // keep the options in step with whatever rungs the feed sends
     var names = boxes.map(levelName);
@@ -2458,6 +2478,10 @@ class Component extends DCLogic {
     var first = boxes[0].closest('label') || boxes[0].parentElement;
     var cap = first && first.previousElementSibling;
     if (cap && /^level/i.test((cap.textContent || '').trim())) cap.setAttribute('data-levelrow', '');
+    // Hiding the rows one by one left the group's own box behind: an empty
+    // bordered rectangle under the filters. Hide the container itself.
+    var group = boxes[0].closest('fieldset');
+    if (group) group.setAttribute('data-levelrow', '');
     var oldHead = document.querySelector('[data-levelhead]');
     if (oldHead) oldHead.remove();
   }
@@ -2558,20 +2582,7 @@ class Component extends DCLogic {
   }
   setInterval(fadeFieldOnScopeChange, 200);
 
-  // Surface the build stamp in the footer. Without it, a cached page and a
-  // broken fix look identical from the outside.
-  function showBuild() {
-    var el = document.querySelector('[data-buildstamp]');
-    if (el) return;
-    var m = (document.body.innerHTML.match(/hrjobs build ([0-9 :-]+) UTC/) || [])[1];
-    if (!m) return;
-    var foot = document.querySelector('footer') || document.body;
-    var tag = document.createElement('div');
-    tag.setAttribute('data-buildstamp', '');
-    tag.textContent = 'build ' + m + ' UTC';
-    foot.appendChild(tag);
-  }
-  setTimeout(showBuild, 1200);
+
 
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
@@ -2705,13 +2716,19 @@ class Component extends DCLogic {
     + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}'
     // The playback is out until there is real closure data to replay.
     + '[data-hidden-control]{display:none!important}'
+    // Added and removed sat above the chart it belongs under. The Analytics
+    // section is a flex column, so ordering moves it without touching a
+    // single node React owns.
+    + 'section[data-screen-label="Analytics"]{display:flex;flex-direction:column}'
+    + 'section[data-screen-label="Analytics"] > *:nth-child(1){order:1}'
+    + 'section[data-screen-label="Analytics"] > *:nth-child(2){order:3}'
+    + 'section[data-screen-label="Analytics"] > *:nth-child(3){order:2}'
     // Hidden only until the first prune runs, a frame or two.
     + 'nav{visibility:hidden}'
     // The menu panel is in normal flow at the top of the document, so opening
     // it from further down the page put it off screen above. Pin it under the
     // button that opened it.
     + '@media (max-width:620px){nav{position:fixed!important;top:56px;left:12px;right:12px;z-index:120;max-height:70vh;overflow-y:auto;background:#0a0d10;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.6)}}'
-    + '[data-buildstamp]{padding:10px 0 24px;text-align:center;font:500 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:#4d565c}'
     + '@media (max-width:620px){section[data-screen-label="Contact"] input,section[data-screen-label="Contact"] textarea{width:100%!important;max-width:100%!important;font-size:16px!important;padding:12px 14px!important}section[data-screen-label="Contact"] label,section[data-screen-label="Contact"] form > *{width:100%!important;max-width:100%!important}}'
 
     // ---- hero order ----
@@ -2744,6 +2761,25 @@ class Component extends DCLogic {
     
     
     + '[data-levelrow]{display:none!important}'
+    // The panel was 375px wide inside a 375px viewport with 12px insets, so
+    // its right edge landed at 387. Let the insets decide the width.
+    + '@media (max-width:620px){nav{width:auto!important;box-sizing:border-box}}'
+    // The three filters sit on one row at one size, and the captions go: the
+    // controls already read "All disciplines", "All levels", "Newest".
+    + '@media (max-width:620px){section[data-screen-label="All jobs"] select{width:100%!important;min-width:0;font-size:13px!important;padding:9px 10px!important;height:auto!important}}'
+    // Discipline and Level share a row at one width, Sort takes the next.
+    // Three controls abreast on a 375px screen leaves each too narrow to read
+    // its own value. The captions go: each control already names itself.
+    + '@media (max-width:620px){'
+    + '[data-filterrow]{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;align-items:end}'
+    + '[data-filterrow] > *{min-width:0;width:auto!important;padding:0!important}'
+    + '[data-filterrow] > *:nth-child(3){grid-column:1 / -1!important}'
+    + '[data-filtercell] > span:first-child,[data-filtercell] > div:first-child{display:none}'
+    // The 44px touch floor belongs on the control, not on the label around it:
+    // on the label it left the dropdown floating 9px above its neighbour.
+    + '[data-filterrow] label{min-height:0!important;align-items:stretch!important}'
+    + '[data-filterrow] select{min-height:44px!important}'
+    + '}'
     + '[data-levelsel]{background:#0a0d10;border:1px solid rgba(255,255,255,.16);color:#eef2f4;font:inherit;font-size:13px;padding:10px 11px;border-radius:8px}'
     
     

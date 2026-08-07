@@ -126,7 +126,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               </div>
               <h2 style="margin: 0; font-size: clamp(21px, 2.6vw, 30px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.18;">{{ jobTitle }}</h2>
               <sc-if value="{{ hasCompanyUrl }}" hint-placeholder-val="{{ false }}">
-                <a href="{{ jobCompanyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ jobCompany }} on LinkedIn" style="font-size: 15px; color: #b3bcc2; border-bottom: 1px solid rgba(255,255,255,.22); align-self: flex-start;" style-hover="color: #ffffff;">{{ jobCompany }} \u2197</a>
+                <a href="{{ jobCompanyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ jobCompany }} on LinkedIn" style="font-size: 15px; color: #b3bcc2; border-bottom: 1px solid rgba(255,255,255,.22); align-self: flex-start;" style-hover="color: #ffffff;">{{ jobCompany }} ↗</a>
               </sc-if>
               <sc-if value="{{ noCompanyUrl }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size: 15px; color: #b3bcc2;">{{ jobCompany }}</div>
@@ -787,7 +787,7 @@ const STATES = {
 };
 
 class Component extends DCLogic {
-  state = { data: null, failed: false, filter: (function () { try { var d = new URLSearchParams(location.search).get('d'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, tier: null, descOpen: false, cName: '', cMail: '', cMsg: '', cNote: '' };
+  state = { data: null, failed: false, filter: (function () { try { var q = new URLSearchParams(location.search); var d = q.get('d') || q.get('cat'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, tier: null, descOpen: false, cName: '', cMail: '', cMsg: '', cNote: '' };
 
   readUrl() {
     const p = new URLSearchParams(window.location.search);
@@ -2338,6 +2338,47 @@ class Component extends DCLogic {
   tagTiles();
   setInterval(tagTiles, 700);
 
+  // The level filter is six checkboxes stacked down the page, which on a phone
+  // is most of a screen for a control nobody has touched yet. Collapse it
+  // behind a summary that names what is selected, matching the discipline
+  // dropdown beside it. The checkboxes themselves are untouched, so the
+  // design's own filtering keeps working.
+  function collapseLevels() {
+    var boxes = [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'));
+    if (!boxes.length) return;
+    var group = boxes[0].closest('div');
+    while (group && group.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]').length < boxes.length) {
+      group = group.parentElement;
+    }
+    if (!group || group.hasAttribute('data-levelgroup')) { syncLevelSummary(); return; }
+    group.setAttribute('data-levelgroup', '');
+
+    var head = document.createElement('button');
+    head.type = 'button';
+    head.setAttribute('data-levelhead', '');
+    head.setAttribute('aria-expanded', 'false');
+    head.addEventListener('click', function (e) {
+      e.preventDefault();
+      var open = group.getAttribute('data-open') === '1';
+      group.setAttribute('data-open', open ? '0' : '1');
+      head.setAttribute('aria-expanded', open ? 'false' : 'true');
+    });
+    group.parentNode.insertBefore(head, group);
+    group.setAttribute('data-open', '0');
+    group.addEventListener('change', syncLevelSummary);
+    syncLevelSummary();
+  }
+  function syncLevelSummary() {
+    var head = document.querySelector('[data-levelhead]');
+    if (!head) return;
+    var on = [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'))
+      .filter(function (b) { return b.checked; })
+      .map(function (b) { return (b.getAttribute('aria-label') || '').replace(/^Show onlys+/, '').replace(/s+roles$/, ''); });
+    head.textContent = 'Level: ' + (on.length ? (on.length > 2 ? on.length + ' selected' : on.join(', ')) : 'any');
+  }
+  collapseLevels();
+  setInterval(collapseLevels, 900);
+
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
   // drawn at and zooming in can never make them overlap.
@@ -2363,22 +2404,26 @@ class Component extends DCLogic {
     box.innerHTML =
       '<button type="button" data-zoom="out" aria-label="Zoom out of the field">&minus;</button>'
       + '<span data-zoomlevel>100%</span>'
-      + '<button type="button" data-zoom="in" aria-label="Zoom into the field">+</button>';
+      + '<button type="button" data-zoom="in" aria-label="Zoom into the field">+</button>'
+      + '<button type="button" data-zoom="reset" aria-label="Reset the zoom">Reset</button>';
     box.addEventListener('click', function (e) {
       var b = e.target.closest('[data-zoom]');
       if (!b) return;
       e.preventDefault();
       e.stopPropagation();
-      applyZoom(window.__bubbleZoom * (b.dataset.zoom === 'in' ? 1.15 : 1 / 1.15));
+      if (b.dataset.zoom === 'reset') applyZoom(1);
+      else applyZoom(window.__bubbleZoom * (b.dataset.zoom === 'in' ? 1.15 : 1 / 1.15));
     });
     field.appendChild(box);
 
-    // Wheel over the field zooms, but only with a modifier held, so an ordinary
-    // scroll still moves the page past a full width element.
+    // Wheel over the field zooms. At either limit the event is left alone, so
+    // the page still scrolls past rather than trapping the reader in the field.
     field.addEventListener('wheel', function (e) {
-      if (!(e.ctrlKey || e.metaKey)) return;
+      var dir = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      var next = window.__bubbleZoom * dir;
+      if (next > ZMAX || next < ZMIN) return;
       e.preventDefault();
-      applyZoom(window.__bubbleZoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+      applyZoom(next);
     }, { passive: false });
   }
   mountZoom();
@@ -2395,17 +2440,26 @@ class Component extends DCLogic {
     // Business Partner selected the left column ran to 1339px and the section
     // to 1610. Cap both columns at roughly five rows and let them scroll.
     // Shorter lists are unaffected, since this only sets a ceiling.
-    + 'section[data-screen-label="IC vs managers"] ul{max-height:320px;overflow-y:auto}'
+    + 'section[data-screen-label="IC vs managers"] ul{max-height:320px;overflow-y:auto;scrollbar-width:none}'
+    + 'section[data-screen-label="IC vs managers"] ul:hover{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}'
+    + 'section[data-screen-label="IC vs managers"] ul::-webkit-scrollbar{width:0}'
+    + 'section[data-screen-label="IC vs managers"] ul:hover::-webkit-scrollbar{width:4px}'
+    + 'section[data-screen-label="IC vs managers"] ul:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:4px}'
     + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}'
     // The playback is out until there is real closure data to replay.
     + '[data-hidden-control]{display:none!important}'
+    // Level filter collapsed behind a summary, like the discipline dropdown.
+    + '[data-levelhead]{display:block;width:100%;text-align:left;background:none;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:7px 11px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c3ccd2;cursor:pointer;margin-bottom:6px}'
+    + '[data-levelhead]:hover{border-color:rgba(255,255,255,.4);color:#fff}'
+    + '[data-levelgroup][data-open="0"]{display:none}'
     // Zoom control: small, tucked into the bottom right of the field.
-    + '[data-zoomui]{position:absolute;right:12px;bottom:12px;z-index:8;display:flex;'
+    + '[data-zoomui]{position:absolute;left:12px;top:12px;z-index:8;display:flex;'
     + 'align-items:center;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.14);'
     + 'border-radius:999px;background:rgba(6,8,10,.72);backdrop-filter:blur(8px)}'
-    + '[data-zoomui] button{width:24px;height:24px;border:0;border-radius:50%;background:none;'
+    + '[data-zoomui] button{min-width:24px;height:24px;border:0;border-radius:999px;background:none;'
     + 'color:#cbd4d9;font:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0}'
     + '[data-zoomui] button:hover{background:rgba(255,255,255,.1);color:#fff}'
+    + '[data-zoom="reset"]{font-size:9px!important;letter-spacing:.1em;text-transform:uppercase;padding:0 8px}'
     + '[data-zoomlevel]{min-width:34px;text-align:center;font:600 10px ui-monospace,'
     + 'SFMono-Regular,Menlo,monospace;color:#8b959c;letter-spacing:.04em}'
 

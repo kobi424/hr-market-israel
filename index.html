@@ -246,7 +246,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 
       <header data-hero-top="1" style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.09); padding-bottom: 14px; margin-top: clamp(112px, 15vh, 150px);">
         <div style="font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: #cdd5da;">HR Market Israel</div>
-        <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">updated {{ agoLabel }}</div>
+        <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">updated {{ agoLabel }}{{ confidenceNote }}</div>
       </header>
 
       <div data-parallax="-0.12" style="position: relative; z-index: 1; display: flex; flex-direction: column; gap: clamp(20px, 3vw, 34px); padding: clamp(28px, 6vh, 72px) 0; will-change: transform;">
@@ -2121,6 +2121,13 @@ class Component extends DCLogic {
       why: (dv && dv.why) || [],
       whyChips: ((dv && dv.why) || []).map((text, i) => ({ text: text, d: (0.9 + i * 0.14).toFixed(2) })),
       agoLabel: (function (g) { var hrs = (Date.now() - Date.parse(g)) / 3600000; if (!isFinite(hrs)) return 'at an unknown time'; if (hrs > 168) return 'over a week ago · this feed has stopped updating'; if (hrs > 36) return 'over ' + Math.floor(hrs / 24) + ' days ago · update overdue'; return this.ago(g); }).call(this, d.generated),
+      confidenceNote: (function (v) {
+        if (!v) return '';
+        var w = v.weeksOfData || 0;
+        if (!w) return '';
+        var word = v.confidence === 'good' ? '' : (v.confidence === 'building' ? ' \u00b7 building' : ' \u00b7 early reading');
+        return word ? (word + ', ' + w + (w === 1 ? ' week' : ' weeks') + ' of history') : '';
+      })((this.state.filter && d.categoryVerdict && d.categoryVerdict[this.state.filter]) || d['verdict']),
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {

@@ -100,7 +100,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
                   <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; color: {{ p.color }};">{{ p.contrib }}</span>
                 </span>
                 
-                <span style="font-size: 12.5px; line-height: 1.55; color: #98a3aa;">{{ p.detail }}</span>
+                <span style="font-size: 12.5px; line-height: 1.55; color: #98a3aa;">{{ p.detail }} <button type="button" data-howbtn aria-label="How this row is scored">i</button><span data-how>{{ p.how }}</span></span>
               </li>
             </sc-for>
           </ul>
@@ -1762,7 +1762,7 @@ class Component extends DCLogic {
       contrib: p.measurable ? ((p.delta > 0 ? '+' : '') + p.delta) : '\u2014',
       how: p.how || '',
       color: p.delta > 0 ? up : p.delta < 0 ? down : '#c8d0d6',
-      detail: p.detail + (p.how ? '  ' + p.how : ''),
+      detail: p.detail,
       d: (0.12 + i * 0.1).toFixed(2)
     })) : null;
     if (published) { parts.length = 0; published.forEach(p => parts.push(p)); }
@@ -2013,7 +2013,7 @@ class Component extends DCLogic {
           click: () => this.setState({ job: x, descOpen: false }, () => { var d = document.querySelector('[role="dialog"][aria-label="Job details"]'); if (d) d.scrollTop = 0; })
         }));
       })(),
-      filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, limit: 12 }), () => this.build()),
+      filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => this.build()),
       companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12 }), () => { this.build(); this.glideTo(this.sectionTop('All jobs')); }),
       copyLink: () => {
         const j = this.state.job;
@@ -2255,7 +2255,9 @@ class Component extends DCLogic {
     var end = Math.max(0, Math.min(max, to));
     var dist = end - from;
     if (Math.abs(dist) < 2) return;
-    var dur = Math.min(650, Math.max(260, Math.abs(dist) * 0.22));
+    // Was 260-650ms, which from deep in the page always ran the full 650 and
+    // read as the button hesitating before anything moved.
+    var dur = Math.min(380, Math.max(150, Math.abs(dist) * 0.12));
     var t0 = performance.now();
     var id = ++animId;
     (function step(now) {
@@ -2442,6 +2444,19 @@ class Component extends DCLogic {
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (t && t.closest && t.closest('section[data-screen-label="All jobs"]')) holdJobsHeading();
+  }, true);
+
+  // The i beside each score row reveals the bands that row was judged on.
+  // Toggled on the row's own wrapper, so one row opening does not open the rest.
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-howbtn]');
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var row = b.closest('li') || b.parentElement;
+    if (!row) return;
+    if (row.hasAttribute('data-howopen')) row.removeAttribute('data-howopen');
+    else row.setAttribute('data-howopen', '');
   }, true);
 
   // Tile grids are laid out by the design for a wide screen and collapse to one
@@ -2764,6 +2779,53 @@ class Component extends DCLogic {
     });
     (field.parentElement || field).appendChild(box);
 
+    // A separate box beside the zoom pill: type a company or a role and the
+    // bubbles that do not match drop back, so the field answers "who is hiring
+    // for this" without leaving it. Dimming is by attribute, not inline style,
+    // because the physics rewrites every bubble's style on each frame and would
+    // paint over anything set directly.
+    var find = document.createElement('div');
+    find.setAttribute('data-bubsearch', '');
+    find.innerHTML = '<input type="search" data-bubq placeholder="Company or role" '
+      + 'aria-label="Highlight bubbles by company or role" autocomplete="off" spellcheck="false">'
+      + '<button type="button" data-bubclear aria-label="Clear the highlight">&times;</button>';
+    (field.parentElement || field).appendChild(find);
+
+    var applyFind = function () {
+      var input = document.querySelector('[data-bubq]');
+      var q = input ? String(input.value || '').trim().toLowerCase() : '';
+      var hits = 0;
+      document.querySelectorAll('[data-bub]').forEach(function (b) {
+        if (!q) { b.removeAttribute('data-dim'); return; }
+        var hay = ((b.getAttribute('aria-label') || '') + ' ' + (b.textContent || '')).toLowerCase();
+        // Spaces stripped as well, so "checkpoint" finds "Check Point".
+        var flat = hay.split(' ').join('');
+        var qflat = q.split(' ').join('');
+        if (hay.indexOf(q) > -1 || flat.indexOf(qflat) > -1) { b.removeAttribute('data-dim'); hits++; }
+        else b.setAttribute('data-dim', '');
+      });
+      if (find) find.setAttribute('data-on', q ? '1' : '0');
+      var badge = find.querySelector('[data-bubcount]');
+      if (q && !badge) {
+        badge = document.createElement('span');
+        badge.setAttribute('data-bubcount', '');
+        find.insertBefore(badge, find.querySelector('[data-bubclear]'));
+      }
+      if (badge) badge.textContent = q ? String(hits) : '';
+      if (badge && !q) badge.remove();
+    };
+    window.__bubFind = applyFind;
+    find.addEventListener('input', applyFind);
+    find.addEventListener('click', function (e) {
+      if (!e.target.closest('[data-bubclear]')) return;
+      var input = document.querySelector('[data-bubq]');
+      if (input) input.value = '';
+      applyFind();
+      if (input) input.focus();
+    });
+    // The field is rebuilt when the discipline changes, so re-apply.
+    setInterval(applyFind, 900);
+
     // No wheel zoom: over a full width field it stole the page scroll.
     field.addEventListener('touchend', function () { clearTimeout(holdTimer); endDrag(); }, { passive: true });
 
@@ -2897,6 +2959,14 @@ class Component extends DCLogic {
     + '[data-filterrow] label{min-height:0!important;align-items:stretch!important}'
     + '[data-filterrow] select{min-height:44px!important}'
     + '}'
+    // The per-row scale, behind a marker.
+    + '[data-howbtn]{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;'
+    + 'margin-left:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.22);border-radius:999px;'
+    + 'background:none;color:#8b959c;font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;'
+    + 'line-height:1;cursor:pointer;padding:0}'
+    + '[data-howbtn]:hover{border-color:rgba(255,255,255,.5);color:#eef2f4}'
+    + '[data-how]{display:none;margin-top:6px;color:#7f8a91;font-size:12px;line-height:1.5}'
+    + '[data-howopen] [data-how]{display:block}'
     + '[data-levelsel]{background:#0a0d10;border:1px solid rgba(255,255,255,.16);color:#eef2f4;font:inherit;font-size:13px;padding:10px 11px;border-radius:8px}'
     
     
@@ -2911,6 +2981,25 @@ class Component extends DCLogic {
     // Specific enough to beat the padding:0 on [data-zoomui] button above,
     // which was leaving RESET pressed against the right edge of the pill.
     + '[data-zoomui] button[data-zoom="reset"]{font-size:9px!important;letter-spacing:.1em;text-transform:uppercase;padding:0 11px}'
+    // Search box, its own pill beside the zoom one.
+    + '[data-bubsearch]{position:absolute;left:180px;top:12px;z-index:8;display:inline-flex;align-items:center;'
+    + 'gap:4px;padding:3px 4px 3px 11px;border:1px solid rgba(255,255,255,.14);border-radius:999px;'
+    + 'background:rgba(6,8,10,.72);backdrop-filter:blur(8px)}'
+    + '[data-bubsearch] input{width:132px;min-width:0;background:none;border:0;outline:none;color:#eef2f4;'
+    + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:8px 0}'
+    + '[data-bubsearch] input::placeholder{color:#6f7a82;letter-spacing:.08em;text-transform:uppercase}'
+    + '[data-bubsearch] input::-webkit-search-cancel-button{display:none}'
+    + '[data-bubcount]{font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#3ddc9b;padding:0 2px}'
+    + '[data-bubclear]{display:none;align-items:center;justify-content:center;width:22px;height:22px;border:0;'
+    + 'border-radius:999px;background:none;color:#cbd4d9;font-size:14px;line-height:1;cursor:pointer;padding:0}'
+    + '[data-bubsearch][data-on="1"] [data-bubclear]{display:inline-flex}'
+    + '[data-bubclear]:hover{background:rgba(255,255,255,.1);color:#fff}'
+    // Dim by attribute: the physics rewrites every bubble’s inline style each
+    // frame, so anything set directly would be painted over immediately.
+    + '[data-bub]{transition:opacity .18s ease,filter .18s ease}'
+    + '[data-bub][data-dim]{opacity:.07!important;filter:grayscale(1)}'
+    + '@media (max-width:620px){[data-bubsearch]{left:8px;top:46px;transform:scale(.92);transform-origin:left top}'
+    + '[data-bubsearch] input{width:112px}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'
     + '[data-size="up"]{font-size:12px!important}'

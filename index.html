@@ -1754,12 +1754,22 @@ class Component extends DCLogic {
       { label: 'IC against managers', weight: '15%', w: 0.15, val: clamp(icShareAll * 100 * 1.4),
         detail: Math.round(icShareAll * 100) + '% of tracked roles are individual contributor positions. A market weighted towards IC openings is an easier market to enter, so a higher IC share lifts the score.' }
     ];
-    parts.forEach((p, i) => {
+    const published = (dv && dv.parts) ? dv.parts.map((p, i) => ({
+      label: p.label,
+      weight: p.measurable ? ('\u00b1' + p.cap) : 'no data yet',
+      val: Math.round(((p.delta + p.cap) / (2 * p.cap)) * 100),
+      contrib: (p.delta > 0 ? '+' : '') + p.delta,
+      color: p.delta > 0 ? up : p.delta < 0 ? down : '#c8d0d6',
+      detail: p.detail,
+      d: (0.12 + i * 0.1).toFixed(2)
+    })) : null;
+    if (published) { parts.length = 0; published.forEach(p => parts.push(p)); }
+    else parts.forEach((p, i) => {
       p.d = (0.12 + i * 0.1).toFixed(2);
       p.contrib = (p.val * p.w).toFixed(1);
       p.color = p.val >= 66 ? up : p.val <= 33 ? down : '#c8d0d6';
     });
-    const composite = Math.round(parts.reduce((a, p) => a + p.val * p.w, 0));
+    const composite = published ? (dv ? dv.score : 0) : Math.round(parts.reduce((a, p) => a + p.val * p.w, 0));
 
     const IC = { junior: 1, specialist: 1, senior: 1 };
     const allJobs = scoped;

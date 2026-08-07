@@ -2857,7 +2857,7 @@ class Component extends DCLogic {
     // paint over anything set directly.
     var find = document.createElement('div');
     find.setAttribute('data-bubsearch', '');
-    find.innerHTML = '<input type="search" data-bubq placeholder="Company or role" '
+    find.innerHTML = '<input type="search" data-bubq placeholder="Company / role" '
       + 'aria-label="Highlight bubbles by company or role" autocomplete="off" spellcheck="false">'
       + '<button type="button" data-bubclear aria-label="Clear the highlight">&times;</button>';
     (field.parentElement || field).appendChild(find);
@@ -3101,9 +3101,9 @@ class Component extends DCLogic {
     // On a phone the zoom pill ends near 141px. Start at 156 so the two are not
     // touching, and give the input room for the whole placeholder rather than
     // cutting it to "COMPANY OR RO".
-    + '@media (max-width:620px){[data-bubsearch]{left:156px;top:8px;transform:scale(.88);transform-origin:left top;'
+    + '@media (max-width:620px){[data-bubsearch]{left:150px;top:12px;'
     + 'padding:2px 3px 2px 10px}'
-    + '[data-bubsearch] input{width:118px;padding:8px 0;font-size:9.5px;letter-spacing:.02em}'
+    + '[data-bubsearch] input{width:calc(100vw - 218px);min-width:96px;padding:7px 0;letter-spacing:.02em}'
     + '[data-bubsearch] input::placeholder{letter-spacing:.04em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'

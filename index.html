@@ -127,14 +127,12 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <h2 style="margin: 0; font-size: clamp(21px, 2.6vw, 30px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.18;">{{ jobTitle }}</h2>
               <div style="font-size: 15px; color: #b3bcc2;">{{ jobCompany }}</div>
             </div>
-            <div style="flex: none; display: flex; align-items: center; gap: 10px;">
-              <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
-                <span aria-label="{{ applicantsAria }}" style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-size: 11.5px; letter-spacing: .04em; color: #a8b2b9; white-space: nowrap;">
-                  <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ applicantsColor }};"></span>{{ applicantsLabel }}
-                </span>
-              </sc-if>
-              <button type="button" onClick="{{ closeJob }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
-            </div>
+            <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
+              <span data-jobchip aria-label="{{ applicantsAria }}" style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-size: 11.5px; letter-spacing: .04em; color: #a8b2b9; white-space: nowrap;">
+                <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ applicantsColor }}; flex: none;"></span>{{ applicantsLabel }}
+              </span>
+            </sc-if>
+            <button type="button" data-jobclose onClick="{{ closeJob }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
             <sc-for list="{{ jobFacts }}" as="f" hint-placeholder-count="3">
@@ -1919,11 +1917,15 @@ class Component extends DCLogic {
       applicantsLabel: (() => {
         const j = this.state.job;
         if (!j) return '';
-        // LinkedIn's own wording, because 'Over 200 applicants' is not the same
-        // claim as '200 applicants' and the number alone would understate it.
-        if (j.applicantsNote) return j.applicantsNote;
+        const note = j.applicantsNote || '';
+        // 'Be among the first 25 applicants' is LinkedIn saying fewer than 25
+        // have applied. Three words carry that; seven just crowd the header.
+        const first = note.match(/first\s+([0-9][0-9,]*)/i);
+        if (first) return 'Under ' + first[1] + ' applicants';
+        // 'Over 200' stays as written: it is not the same claim as '200'.
+        if (/^over\s/i.test(note)) return note;
         if (j.applicants != null) return j.applicants + (j.applicants === 1 ? ' applicant' : ' applicants');
-        return '';
+        return note;
       })(),
       applicantsColor: (() => {
         const n = this.state.job && this.state.job.applicants;
@@ -2295,7 +2297,42 @@ class Component extends DCLogic {
     // to 1610. Cap both columns at roughly five rows and let them scroll.
     // Shorter lists are unaffected, since this only sets a ceiling.
     + 'section[data-screen-label="IC vs managers"] ul{max-height:320px;overflow-y:auto}'
-    + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}';
+    + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}'
+
+    // ---- the job card ----
+    // The header row holds the title, the applicants chip and the close button
+    // as siblings. :has lets the row wrap without needing a hook on the row
+    // itself; where :has is missing the chip still cannot overflow, because it
+    // is allowed to shrink and clip.
+    + 'div:has(> [data-jobchip]){flex-wrap:wrap}'
+    // The title column must be allowed to shrink, or it claims the whole first
+    // row and pushes the close button onto a line of its own. Basis 0, not auto:
+    // with auto the basis is the heading text width, which is exactly the
+    // problem.
+    + 'div:has(> [data-jobchip]) > div:first-child{flex:1 1 0;min-width:0}'
+    + '[data-jobchip]{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}'
+    + '[data-jobclose]{flex:none;order:5}'
+    // The dialog scrolls down, never sideways.
+    + '[role="dialog"][aria-label="Job details"]{overflow-x:hidden}'
+    + '[role="dialog"][aria-label="Job details"] *{max-width:100%}'
+    + '@media (max-width:620px){'
+    // Phone: title and close share the top row, the chip takes its own line, so
+    // the name gets the full width and the X is always reachable.
+    + '  [data-jobchip]{order:9;flex:1 0 100%;margin-top:2px;justify-content:flex-start}'
+    // Smaller action buttons in the list and card, so the role itself leads.
+    + '  [role="dialog"][aria-label="Job details"] a,'
+    + '  [role="dialog"][aria-label="Job details"] button{font-size:11px;padding:8px 13px}'
+    + '  [data-jobclose]{width:30px;height:30px;padding:0}'
+    // The IC / managers readout measures inside the viewport at 375px here, but
+    // it is a single nowrap row whose width follows the discipline name, so a
+    // longer label or a wider font would push it past the edge. Make that
+    // impossible rather than rely on the measurement.
+    + '  section[data-screen-label="IC vs managers"]{overflow-x:hidden}'
+    + '  section[data-screen-label="IC vs managers"] *{max-width:100%}'
+    // Filter pills step back so the role titles carry the list.
+    + '  section[data-screen-label="All jobs"] button[aria-pressed],'
+    + '  section[data-screen-label="All jobs"] select{font-size:11px;padding:6px 11px}'
+    + '}';
   document.head.appendChild(lift);
 })();
 </script>

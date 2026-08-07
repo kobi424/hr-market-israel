@@ -97,20 +97,14 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <li style="border-bottom: 1px solid rgba(255,255,255,.07); padding: 16px 0; display: flex; flex-direction: column; gap: 9px;">
                 <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
                   <span style="font-size: 15px; letter-spacing: -0.01em; color: #f0f4f6;">{{ p.label }}</span>
-                  <span style="display: flex; align-items: baseline; gap: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">
-                    <span style="color: #6f7a82; font-size: 11px;">weight {{ p.weight }}</span>
-                    <span style="color: #eef2f4;">{{ p.val }}</span>
-                    <span style="color: {{ p.color }}; font-size: 12px;">{{ p.contrib }}</span>
-                  </span>
+                  <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; color: {{ p.color }};">{{ p.contrib }}</span>
                 </span>
-                <span style="display: block; height: 3px; background: rgba(255,255,255,.08);">
-                  <span style="display: block; height: 3px; width: {{ p.val }}%; background: {{ p.color }}; transform-origin: left; animation: growX 1.2s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ p.d }}s;"></span>
-                </span>
+                
                 <span style="font-size: 12.5px; line-height: 1.55; color: #98a3aa;">{{ p.detail }}</span>
               </li>
             </sc-for>
           </ul>
-          
+          <div style="padding-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: #cbd4d9; letter-spacing: .02em;">{{ scoreSum }}</div>
         </div>
       </div>
     </sc-if>
@@ -1117,7 +1111,7 @@ class Component extends DCLogic {
   }
 
   startCountUp() {
-    const target = (this.state.data && this.state.data.verdict && this.state.data.verdict.score) || 0;
+    const target = (function (s) { var d = s.data; if (!d) return 0; var v = (s.filter && d.categoryVerdict && d.categoryVerdict[s.filter]) || d['verdict']; return (v && v.score) || 0; })(this.state);
     if (this._mq && this._mq.matches) { this.setState({ shown: target }); return; }
     const t0 = performance.now(), dur = 1500;
     const step = () => {
@@ -1541,7 +1535,7 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: () => this.setState({ filter: c.key, limit: 12 }, () => { this.build(); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} })
+          click: () => this.setState({ filter: c.key, limit: 12, shown: null }, () => { this.build(); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} })
         }, chip(filter === c.key))),
       tierBoxes: (() => {
         const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
@@ -1566,7 +1560,7 @@ class Component extends DCLogic {
       notSmall: !this.state.small,
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
-      setFilterSelect: e => { const v = e.target.value; var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: v === 'all' ? null : v, limit: 12 }, function () { self.build(); restore(); }); },
+      setFilterSelect: e => { const v = e.target.value; var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: v === 'all' ? null : v, limit: 12, shown: null }, function () { self.build(); restore(); }); },
       sortValue: sort,
       sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }, { value: 'company', label: 'Company' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
@@ -1674,6 +1668,7 @@ class Component extends DCLogic {
     const prevOpen = h.length > 1 ? h[h.length - 2].open : null;
     const senior = jobs.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const up = '#3ddc9b', down = '#ff6257', flat = '#8b969e';
+    const wowD = t.newPrevWeek ? Math.round(((t.newThisWeek - t.newPrevWeek) / t.newPrevWeek) * 100) : null;
     const pctChange = (a, b) => b ? Math.round(((a - b) / b) * 100) : null;
     const openD = prevOpen ? pctChange(t.open, prevOpen) : null;
     const newD = pctChange(t.newThisWeek, t.newPrevWeek);
@@ -1684,17 +1679,17 @@ class Component extends DCLogic {
     const scopedSenior = scoped.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const stats = fcat ? [
       { label: 'Open roles', value: String(fcat.open),
-        arrow: '\u25a0', color: flat,
-        delta: (fcat.newCount || 0) + ' of them posted this week' },
+        arrow: fcat.delta > 0 ? '\u25b2' : fcat.delta < 0 ? '\u25bc' : '\u25a0', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
+        delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' by this day last week') : ((fcat.newCount || 0) + ' posted this week') },
       { label: 'New this week', value: String(fcat.newCount != null ? fcat.newCount : new7),
         arrow: fcat.delta > 0 ? '\u25b2' : fcat.delta < 0 ? '\u25bc' : '\u25a0', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
-        delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' last week') : (fcat.newCount + ' posted, no prior week to compare') },
+        delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' by this day last week') : (fcat.newCount + ' posted, no prior week to compare') },
       { label: 'Share of market', value: t.open ? Math.round((fcat.open / t.open) * 100) + '%' : '—',
         arrow: '■', color: flat, delta: fcat.open + ' of ' + t.open + ' open roles' }
     ] : [
       { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '\u2014'),
-        arrow: '\u25a0', color: flat,
-        delta: (t.newThisWeek || 0) + ' of them posted this week' },
+        arrow: wowD > 0 ? '\u25b2' : wowD < 0 ? '\u25bc' : '\u25a0', color: wowD > 0 ? up : wowD < 0 ? down : flat,
+        delta: wowD == null ? (t.newThisWeek || 0) + ' posted this week' : (Math.abs(wowD) + '% vs ' + t.newPrevWeek + ' by this day last week') },
       { label: 'New this week', value: String(t.newThisWeek != null ? LE(t.newPrevWeek, t.newThisWeek) : '—'),
         arrow: newD > 0 ? '▲' : newD < 0 ? '▼' : '■', color: newD > 0 ? up : newD < 0 ? down : flat,
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
@@ -1824,6 +1819,15 @@ class Component extends DCLogic {
 
     return Object.assign(base, {
       scoreParts: parts, composite: composite,
+      scoreSum: (function () {
+        if (!published) return '';
+        var line = '50 neutral';
+        (dv.parts || []).forEach(function (p) {
+          if (!p.delta) return;
+          line += (p.delta > 0 ? '  +' : '  \u2212') + Math.abs(p.delta);
+        });
+        return line + '  =  ' + (dv ? dv.score : 0);
+      })(),
       replaying: rp != null,
       replayLabel: rp == null ? 'Replay last week to now' : 'Replaying',
       startReplay: () => this.startReplay(),
@@ -2084,7 +2088,7 @@ class Component extends DCLogic {
           active: shown,
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
-            ? this.setState({ filter: this.state.filter === c.key ? null : c.key, mcat: null, limit: 12 }, () => this.build())
+            ? this.setState({ filter: this.state.filter === c.key ? null : c.key, mcat: null, limit: 12, shown: null }, () => this.build())
             : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
@@ -2182,7 +2186,7 @@ class Component extends DCLogic {
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
         bg: filter === c.key ? 'rgba(255,255,255,.09)' : 'transparent',
         aria: c.key ? 'Filter to ' + c.label + ', ' + c.open + ' open roles' : 'Show every discipline',
-        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, limit: 12, catMenu: false }, function () { self.build(); restore(); }); }
+        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, limit: 12, catMenu: false, shown: null }, function () { self.build(); restore(); }); }
       })),
       cats: cats.map((c, i) => ({
         label: c.label,
@@ -2204,7 +2208,7 @@ class Component extends DCLogic {
 }
 
 </script>
-<script>console.info("hrjobs build 2026-08-07 12:44 UTC");</script>
+<script>console.info("hrjobs build 2026-08-07 15:57 UTC");</script>
 
     <a href="#" data-brand onclick="window.__jrTop&&window.__jrTop();return false;" aria-label="HRjobs.co.il, back to top"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
@@ -2575,54 +2579,22 @@ class Component extends DCLogic {
   // Zoom magnifies the field, the way a map zooms: the whole picture gets
   // closer, including the gaps. Scaling each bubble instead just made the
   // circles fatter in the same space, which is not what looking closer means.
-  // The field element itself is transformed inside a clipping wrapper, so the
-  // section keeps its place on the page and the physics is left alone.
+  // Zoom draws the roles larger or smaller rather than magnifying the picture.
+  // Nothing is transformed, so the backdrop behind the field never moves, and
+  // the same factor feeds the physics as the renderer, so growing the circles
+  // can never make them overlap.
   window.__bubbleZoom = 1;
   window.__bubbleSize = 1;
-  var panX = 0, panY = 0;
+  var ZMIN = 0.5, ZMAX = 2.4;
 
-  // Zoomed in, there is more field than window, so the view can be dragged.
-  // The offset is clamped to the overhang, which is how far the scaled field
-  // sticks out past its box: at 100% there is none, so dragging does nothing
-  // and the page scrolls normally instead.
-  function clampPan() {
-    var field = document.querySelector('[data-field="1"]');
-    if (!field) return;
-    var z = window.__bubbleZoom;
-    // Room to move even at rest, so the field can always be nudged: the
-    // overhang from the zoom, plus a fifth of the field either way.
-    var overX = Math.max(0, (field.clientWidth * (z - 1)) / 2) + field.clientWidth * 0.2;
-    var overY = Math.max(0, (field.clientHeight * (z - 1)) / 2) + field.clientHeight * 0.2;
-    panX = Math.max(-overX, Math.min(overX, panX));
-    panY = Math.max(-overY, Math.min(overY, panY));
-  }
-  function paint() {
-    var field = document.querySelector('[data-field="1"]');
-    if (!field) return;
-    clampPan();
-    var z = window.__bubbleZoom;
-    field.style.transformOrigin = 'center center';
-    field.style.transform = (z === 1 && !panX && !panY)
-      ? ''
-      : 'translate(' + panX + 'px,' + panY + 'px) scale(' + z + ')';
-    field.style.willChange = z === 1 ? '' : 'transform';
-  }
-  var ZMIN = 0.5, ZMAX = 3, SMIN = 0.6, SMAX = 1.8;
-
-  // Size is separate from zoom: zoom brings the picture closer, size changes
-  // how large each role is drawn within it. The patched resize handler
-  // re-renders as well as re-lays-out, which is what makes this take effect.
-  function applySize(next) {
-    var v = Math.max(SMIN, Math.min(SMAX, Math.round(next * 20) / 20));
-    if (v === window.__bubbleSize) return;
-    window.__bubbleSize = v;
-    dispatchEvent(new Event('resize'));
-  }
   function applyZoom(next) {
     var z = Math.max(ZMIN, Math.min(ZMAX, Math.round(next * 20) / 20));
     window.__bubbleZoom = z;
-    if (z === 1) { panX = 0; panY = 0; }
-    paint();
+    window.__bubbleSize = z;
+    var out = document.querySelector('[data-zoomlevel]');
+    var pct = Math.round(z * 100) + '%';
+    if (out && out.textContent !== pct) out.textContent = pct;
+    dispatchEvent(new Event('resize'));   // the patched handler re-renders
     var out = document.querySelector('[data-zoomlevel]');
     var pct = Math.round(z * 100) + '%';
     if (out && out.textContent !== pct) out.textContent = pct;
@@ -2662,10 +2634,7 @@ class Component extends DCLogic {
       '<button type="button" data-zoom="out" aria-label="Zoom out of the field">&minus;</button>'
       + '<span data-zoomlevel>100%</span>'
       + '<button type="button" data-zoom="in" aria-label="Zoom into the field">+</button>'
-      + '<button type="button" data-zoom="reset" aria-label="Reset the view">Reset</button>'
-      + '<span data-zoomsep></span>'
-      + '<button type="button" data-size="down" aria-label="Draw the roles smaller">&#9679;</button>'
-      + '<button type="button" data-size="up" aria-label="Draw the roles larger">&#11044;</button>';
+      + '<button type="button" data-zoom="reset" aria-label="Reset the view">Reset</button>';
     box.addEventListener('click', function (e) {
       var sz = e.target.closest('[data-size]');
       if (sz) {
@@ -2683,47 +2652,7 @@ class Component extends DCLogic {
     });
     (field.parentElement || field).appendChild(box);
 
-    // Wheel over the field zooms. At either limit the event is left alone, so
-    // the page still scrolls past rather than trapping the reader in the field.
-    // Dragging pans the view. It only engages above 100%, where there is
-    // something to pan to, and a drag under a few pixels is treated as a tap so
-    // opening a role still works.
-    var drag = null, moved = 0;
-    var startDrag = function (x, y) {
-      // panning is allowed at any zoom; clampPan decides how far it can go
-      drag = { x: x, y: y, px: panX, py: panY }; moved = 0;
-      field.style.cursor = 'grabbing';
-    };
-    var moveDrag = function (x, y, ev) {
-      if (!drag) return;
-      var dx = x - drag.x, dy = y - drag.y;
-      moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
-      if (moved > 4 && ev && ev.cancelable) ev.preventDefault();
-      panX = drag.px + dx; panY = drag.py + dy;
-      paint();
-    };
-    var endDrag = function () { drag = null; field.style.cursor = window.__bubbleZoom > 1 ? 'grab' : ''; };
-
-    field.addEventListener('mousedown', function (e) { startDrag(e.clientX, e.clientY); });
-    addEventListener('mousemove', function (e) { moveDrag(e.clientX, e.clientY, e); });
-    addEventListener('mouseup', endDrag);
-    field.addEventListener('click', function (e) {
-      if (moved > 4) { e.preventDefault(); e.stopPropagation(); moved = 0; }
-    }, true);
-
-    var holdTimer = null;
-    field.addEventListener('touchstart', function (e) {
-      if (e.touches.length !== 1) return;
-      // Wait a beat before taking the gesture. A quick flick stays a page
-      // scroll; a finger held still on the field is someone meaning to pan.
-      var x = e.touches[0].clientX, y = e.touches[0].clientY;
-      clearTimeout(holdTimer);
-      holdTimer = setTimeout(function () { startDrag(x, y); }, 220);
-    }, { passive: true });
-    field.addEventListener('touchmove', function (e) {
-      if (e.touches.length !== 1 || !drag) return;
-      moveDrag(e.touches[0].clientX, e.touches[0].clientY, e);
-    }, { passive: false });
+    // No wheel zoom: over a full width field it stole the page scroll.
     field.addEventListener('touchend', function () { clearTimeout(holdTimer); endDrag(); }, { passive: true });
 
     var pinch0 = null, zoom0 = 1;
@@ -2742,13 +2671,7 @@ class Component extends DCLogic {
     }, { passive: false });
     field.addEventListener('touchend', function () { pinch0 = null; }, { passive: true });
 
-    field.addEventListener('wheel', function (e) {
-      var dir = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-      var next = window.__bubbleZoom * dir;
-      if (next > ZMAX || next < ZMIN) return;
-      e.preventDefault();
-      applyZoom(next);
-    }, { passive: false });
+    // No wheel zoom: over a full width field it stole the page scroll.
   }
   mountZoom();
   setInterval(mountZoom, 900);

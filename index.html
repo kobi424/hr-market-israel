@@ -151,7 +151,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <div style="font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #78838b;">The role</div>
             <div data-desc="1" style="max-height: {{ descMax }}; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 13px; mask-image: {{ descMask }}; -webkit-mask-image: {{ descMask }};">
               <sc-for list="{{ jobParas }}" as="p" hint-placeholder-count="3">
-                <p style="margin: 0; font-size: 14px; line-height: 1.75; color: #a3adb4;">{{ p.text }}</p>
+                <p style="margin: 0; font-size: {{ p.size }}; line-height: 1.7; color: {{ p.colour }}; font-weight: {{ p.weight }}; margin-top: {{ p.top }}; letter-spacing: .005em;">{{ p.text }}</p>
               </sc-for>
             </div>
             <sc-if value="{{ descLong }}" hint-placeholder-val="{{ false }}">
@@ -1566,7 +1566,7 @@ class Component extends DCLogic {
       notSmall: !this.state.small,
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
-      setFilterSelect: e => { const v = e.target.value; var self = this; var a = document.querySelector('[data-screen-label="All jobs"]'); var before = a ? a.getBoundingClientRect().top : null; self.setState({ filter: v === 'all' ? null : v, limit: 12 }, function () { self.build(); if (before == null) return; requestAnimationFrame(function () { var a2 = document.querySelector('[data-screen-label="All jobs"]'); if (!a2) return; var shift = a2.getBoundingClientRect().top - before; if (!shift) return; var sc = self._scroller; if (sc) sc.scrollTop += shift; else window.scrollBy(0, shift); }); }); },
+      setFilterSelect: e => { const v = e.target.value; var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: v === 'all' ? null : v, limit: 12 }, function () { self.build(); restore(); }); },
       sortValue: sort,
       sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }, { value: 'company', label: 'Company' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
@@ -1918,7 +1918,15 @@ class Component extends DCLogic {
         const j = this.state.job;
         if (!j) return [];
         const raw = j.description || this.fallbackDesc(j, cats);
-        return raw.split(/\n{2,}|\n(?=[-•*])/).map(s => s.trim()).filter(Boolean).map((text, i) => ({ text: text, i: i }));
+        const HEAD = /^(responsibilities|requirements|about (the )?(role|us|company)|what you.{0,3}ll do|qualifications|nice to have|benefits|who you are|the role|your day)\b/i;
+        return raw.split(/\n{2,}|\n(?=[-•*])/).map(s => s.trim()).filter(Boolean).map((text, i) => {
+          const head = (text.length <= 60 && /:$/.test(text)) || HEAD.test(text);
+          return { text: text, i: i, head: head,
+            weight: head ? '650' : '400',
+            colour: head ? '#3ddc9b' : '#d7dee3',
+            size: head ? '13px' : '13.5px',
+            top: head ? '10px' : '0' };
+        });
       })(),
       descOpen: !!this.state.descOpen,
       descLong: !!(this.state.job && (this.state.job.description || '').length > 420),
@@ -2174,7 +2182,7 @@ class Component extends DCLogic {
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
         bg: filter === c.key ? 'rgba(255,255,255,.09)' : 'transparent',
         aria: c.key ? 'Filter to ' + c.label + ', ' + c.open + ' open roles' : 'Show every discipline',
-        click: () => { var self = this; var anchor = document.querySelector('[data-screen-label="All jobs"]'); var before = anchor ? anchor.getBoundingClientRect().top : null; self.setState({ filter: c.key, limit: 12, catMenu: false }, function () { self.build(); if (before == null) return; requestAnimationFrame(function () { var a2 = document.querySelector('[data-screen-label="All jobs"]'); if (!a2) return; var shift = a2.getBoundingClientRect().top - before; if (!shift) return; var sc = self._scroller; if (sc) sc.scrollTop += shift; else window.scrollBy(0, shift); }); }); }
+        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, limit: 12, catMenu: false }, function () { self.build(); restore(); }); }
       })),
       cats: cats.map((c, i) => ({
         label: c.label,
@@ -2391,47 +2399,65 @@ class Component extends DCLogic {
   }).observe(document.body, { childList: true, subtree: true });
   setInterval(tagTiles, 1200);
 
-  // The level filter is six checkboxes stacked down the page, which on a phone
-  // is most of a screen for a control nobody has touched yet. Collapse it
-  // behind a summary that names what is selected, matching the discipline
-  // dropdown beside it. The checkboxes themselves are untouched, so the
-  // design's own filtering keeps working.
-  function collapseLevels() {
-    var boxes = [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'));
+  // The level filter shipped as six checkboxes stacked down the page, above the
+  // discipline dropdown rather than beside it. It is now a select sitting next
+  // to that dropdown. The checkboxes stay in the DOM but hidden: they are what
+  // the design's own filtering reads, so the select simply drives them.
+  function levelBoxes() {
+    return [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'));
+  }
+  function levelName(b) {
+    return (b.getAttribute('aria-label') || '')
+      .split('Show only ').join('')
+      .split(' roles').join('');
+  }
+  function buildLevelSelect() {
+    var boxes = levelBoxes();
     if (!boxes.length) return;
-    var group = boxes[0].closest('div');
-    while (group && group.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]').length < boxes.length) {
-      group = group.parentElement;
-    }
-    if (!group || group.hasAttribute('data-levelgroup')) { syncLevelSummary(); return; }
-    group.setAttribute('data-levelgroup', '');
+    var discipline = document.querySelector('select[aria-label="Filter by discipline"]');
+    if (!discipline) return;
 
-    var head = document.createElement('button');
-    head.type = 'button';
-    head.setAttribute('data-levelhead', '');
-    head.setAttribute('aria-expanded', 'false');
-    head.addEventListener('click', function (e) {
-      e.preventDefault();
-      var open = group.getAttribute('data-open') === '1';
-      group.setAttribute('data-open', open ? '0' : '1');
-      head.setAttribute('aria-expanded', open ? 'false' : 'true');
+    var sel = document.querySelector('[data-levelsel]');
+    if (!sel) {
+      sel = document.createElement('select');
+      sel.setAttribute('data-levelsel', '');
+      sel.setAttribute('aria-label', 'Filter by level');
+      sel.addEventListener('change', function () {
+        levelBoxes().forEach(function (b) {
+          var want = sel.value !== 'all' && levelName(b) === sel.value;
+          if (b.checked !== want) b.click();          // click, so React sees it
+        });
+      });
+      discipline.parentNode.insertBefore(sel, discipline.nextSibling);
+    }
+    // keep the options in step with whatever rungs the feed sends
+    var names = boxes.map(levelName);
+    var want = 'all|' + names.join('|');
+    if (sel.getAttribute('data-opts') !== want) {
+      sel.setAttribute('data-opts', want);
+      sel.innerHTML = '<option value="all">All levels</option>'
+        + names.map(function (n) {
+            return '<option value="' + n + '">' + n.charAt(0).toUpperCase() + n.slice(1) + '</option>';
+          }).join('');
+    }
+    var on = boxes.filter(function (b) { return b.checked; });
+    var v = on.length === 1 ? levelName(on[0]) : 'all';
+    if (sel.value !== v) sel.value = v;
+
+    // hide the original group and the header the earlier version added
+    boxes.forEach(function (b) {
+      var row = b.closest('label') || b.parentElement;
+      if (row) row.setAttribute('data-levelrow', '');
     });
-    group.parentNode.insertBefore(head, group);
-    group.setAttribute('data-open', '0');
-    group.addEventListener('change', syncLevelSummary);
-    syncLevelSummary();
+    // the group's own caption, if it has one, goes with the rows
+    var first = boxes[0].closest('label') || boxes[0].parentElement;
+    var cap = first && first.previousElementSibling;
+    if (cap && /^level/i.test((cap.textContent || '').trim())) cap.setAttribute('data-levelrow', '');
+    var oldHead = document.querySelector('[data-levelhead]');
+    if (oldHead) oldHead.remove();
   }
-  function syncLevelSummary() {
-    var head = document.querySelector('[data-levelhead]');
-    if (!head) return;
-    var on = [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'))
-      .filter(function (b) { return b.checked; })
-      .map(function (b) { return (b.getAttribute('aria-label') || '').replace(/^Show onlys+/, '').replace(/s+roles$/, ''); });
-    var next = 'Level: ' + (on.length ? (on.length > 2 ? on.length + ' selected' : on.join(', ')) : 'any');
-    if (head.textContent !== next) head.textContent = next;
-  }
-  collapseLevels();
-  setInterval(collapseLevels, 1200);
+  buildLevelSelect();
+  setInterval(buildLevelSelect, 900);
 
   // "Individual contributors" and "Managers and above" head their own lists,
   // but sat inside the scrolling box so they slid away with the roles. Pin the
@@ -2503,34 +2529,29 @@ class Component extends DCLogic {
   }
   setInterval(replayHero, 200);
 
-  // A posting's own section headings, "Responsibilities:", "Requirements:" and
-  // the like, are just lines of text once the markup is stripped. Mark them up
-  // again so the card reads the way the original does.
-  //
-  // The text is escaped before any tag goes in: a job description is text from
-  // a stranger, and it is never treated as markup.
-  function esc(t) {
-    return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Section headings are marked up by the design's own paragraph loop now.
+  // Rewriting innerHTML inside React's tree broke its reconciliation: opening a
+  // similar role threw "Failed to execute removeChild on Node", after which the
+  // app stopped updating and the score appeared frozen for every discipline.
+
+
+  // Changing discipline replaces every bubble in one frame, which reads as a
+  // jump. A brief fade over the field turns it into a transition. The scope
+  // label is what marks the change, since the bubbles themselves are replaced.
+  var scopeLast = null;
+  function fadeFieldOnScopeChange() {
+    var wrap = document.querySelector('[data-fieldwrap]');
+    if (!wrap) return;
+    var pill = document.querySelector('[aria-label="Filter by discipline"]');
+    var scope = pill ? (pill.textContent || '').trim() : '';
+    if (scopeLast === null) { scopeLast = scope; return; }
+    if (scope === scopeLast) return;
+    scopeLast = scope;
+    wrap.style.animation = 'none';
+    void wrap.offsetWidth;
+    wrap.style.animation = 'fadeUp .45s cubic-bezier(.16,.84,.24,1) both';
   }
-  function styleDescription() {
-    document.querySelectorAll('[data-desc="1"]').forEach(function (el) {
-      if (el.getAttribute('data-styled') === '1') return;
-      var text = el.textContent;
-      if (!text || text.indexOf('\n') < 0) return;
-      el.setAttribute('data-styled', '1');
-      el.innerHTML = text.split('\n').map(function (line) {
-        var t = line.trim();
-        // A heading is a short line ending in a colon, or one of the words a
-        // posting uses to open a section. Anything longer is a sentence that
-        // happens to contain one.
-        var heading = (t.length > 0 && t.length <= 60 && /:$/.test(t))
-          || /^(responsibilities|requirements|about (the )?(role|us|the company)|what you.{0,3}ll do|qualifications|nice to have|benefits|who you are)/i.test(t);
-        return heading ? '<b>' + esc(line) + '</b>' : esc(line);
-      }).join('\n');
-    });
-  }
-  styleDescription();
-  setInterval(styleDescription, 600);
+  setInterval(fadeFieldOnScopeChange, 200);
 
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
@@ -2568,7 +2589,7 @@ class Component extends DCLogic {
       : 'translate(' + panX + 'px,' + panY + 'px) scale(' + z + ')';
     field.style.willChange = z === 1 ? '' : 'transform';
   }
-  var ZMIN = 1, ZMAX = 3, SMIN = 0.6, SMAX = 1.8;
+  var ZMIN = 0.5, ZMAX = 3, SMIN = 0.6, SMAX = 1.8;
 
   // Size is separate from zoom: zoom brings the picture closer, size changes
   // how large each role is drawn within it. The patched resize handler
@@ -2637,7 +2658,7 @@ class Component extends DCLogic {
     // opening a role still works.
     var drag = null, moved = 0;
     var startDrag = function (x, y) {
-      if (window.__bubbleZoom <= 1) return;
+      if (window.__bubbleZoom <= 1.01) return;   // nothing to pan to at or under 1
       drag = { x: x, y: y, px: panX, py: panY }; moved = 0;
       field.style.cursor = 'grabbing';
     };
@@ -2658,15 +2679,20 @@ class Component extends DCLogic {
       if (moved > 4) { e.preventDefault(); e.stopPropagation(); moved = 0; }
     }, true);
 
+    var holdTimer = null;
     field.addEventListener('touchstart', function (e) {
       if (e.touches.length !== 1) return;
-      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      // Wait a beat before taking the gesture. A quick flick stays a page
+      // scroll; a finger held still on the field is someone meaning to pan.
+      var x = e.touches[0].clientX, y = e.touches[0].clientY;
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(function () { startDrag(x, y); }, 220);
     }, { passive: true });
     field.addEventListener('touchmove', function (e) {
       if (e.touches.length !== 1 || !drag) return;
       moveDrag(e.touches[0].clientX, e.touches[0].clientY, e);
     }, { passive: false });
-    field.addEventListener('touchend', endDrag, { passive: true });
+    field.addEventListener('touchend', function () { clearTimeout(holdTimer); endDrag(); }, { passive: true });
 
     var pinch0 = null, zoom0 = 1;
     var span = function (t) {
@@ -2726,6 +2752,10 @@ class Component extends DCLogic {
     + '[data-hidden-control]{display:none!important}'
     // Hidden only until the first prune runs, a frame or two.
     + 'nav{visibility:hidden}'
+    // The menu panel is in normal flow at the top of the document, so opening
+    // it from further down the page put it off screen above. Pin it under the
+    // button that opened it.
+    + '@media (max-width:620px){nav{position:fixed!important;top:56px;left:12px;right:12px;z-index:120;max-height:70vh;overflow-y:auto}}'
 
     // ---- hero order ----
     // The state word and the score sit in one flex-wrap row with
@@ -2754,11 +2784,12 @@ class Component extends DCLogic {
     + '@media (max-width:620px){[aria-label="Filter by discipline"]{max-width:44vw;font-size:9px!important;letter-spacing:.08em!important}}'
     
     // Level filter collapsed behind a summary, like the discipline dropdown.
-    + '[data-levelhead]{display:block;width:100%;text-align:left;background:none;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:7px 11px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c3ccd2;cursor:pointer;margin-bottom:6px}'
-    + '[data-levelhead]:hover{border-color:rgba(255,255,255,.4);color:#fff}'
-    + '[data-levelgroup][data-open="0"]{display:none}'
-    + '[data-levelgroup] legend{display:none}'
-    + '[data-levelgroup]{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;margin-bottom:6px}'
+    
+    
+    + '[data-levelrow]{display:none!important}'
+    + '[data-levelsel]{background:#0a0d10;border:1px solid rgba(255,255,255,.16);color:#eef2f4;font:inherit;font-size:13px;padding:10px 11px;border-radius:8px}'
+    
+    
     // Zoom control: small, tucked into the bottom right of the field.
     + 'section[data-screen-label="Field"] [data-fieldwrap]{position:relative;overflow:hidden}'
     + '[data-zoomui]{position:absolute;left:12px;top:12px;z-index:8;display:inline-flex;'

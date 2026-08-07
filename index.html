@@ -1535,7 +1535,7 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: () => this.setState({ filter: c.key, limit: 12, shown: null }, () => { this.build(); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} })
+          click: function () { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); self.setState({ filter: c.key, limit: 12, shown: null }, function () { self.build(); requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} }); }.bind(this)
         }, chip(filter === c.key))),
       tierBoxes: (() => {
         const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
@@ -1679,8 +1679,11 @@ class Component extends DCLogic {
     const scopedSenior = scoped.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const stats = fcat ? [
       { label: 'Open roles', value: String(fcat.open),
-        arrow: '\u25a0', color: flat,
-        delta: (fcat.newCount || 0) + ' posted this week' },
+        arrow: fcat.openDelta == null ? '\u25a0' : (fcat.openDelta > 0 ? '\u25b2' : fcat.openDelta < 0 ? '\u25bc' : '\u25a0'),
+        color: fcat.openDelta == null ? flat : (fcat.openDelta > 0 ? up : fcat.openDelta < 0 ? down : flat),
+        delta: fcat.openDelta == null
+          ? 'no snapshot from last week yet'
+          : (Math.abs(fcat.openDelta) + '% vs ' + fcat.openPrev + ' last week') },
       { label: 'New this week', value: String(fcat.newCount != null ? fcat.newCount : new7),
         arrow: fcat.delta > 0 ? '\u25b2' : fcat.delta < 0 ? '\u25bc' : '\u25a0', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
         delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' last week') : (fcat.newCount + ' posted, no prior week to compare') },
@@ -1688,8 +1691,11 @@ class Component extends DCLogic {
         arrow: '■', color: flat, delta: fcat.open + ' of ' + t.open + ' open roles' }
     ] : [
       { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '\u2014'),
-        arrow: '\u25a0', color: flat,
-        delta: (t.newThisWeek || 0) + ' posted this week' },
+        arrow: (function (o, p) { if (p == null || !p) return '\u25a0'; return o > p ? '\u25b2' : o < p ? '\u25bc' : '\u25a0'; })(t.open, t.openPrevWeek),
+        color: (function (o, p) { if (p == null || !p) return flat; return o > p ? up : o < p ? down : flat; })(t.open, t.openPrevWeek),
+        delta: (t.openPrevWeek == null || !t.openPrevWeek)
+          ? 'no snapshot from last week yet'
+          : (Math.abs(Math.round((t.open - t.openPrevWeek) / t.openPrevWeek * 100)) + '% vs ' + t.openPrevWeek + ' last week') },
       { label: 'New this week', value: String(t.newThisWeek != null ? LE(t.newPrevWeek, t.newThisWeek) : '—'),
         arrow: newD > 0 ? '▲' : newD < 0 ? '▼' : '■', color: newD > 0 ? up : newD < 0 ? down : flat,
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
@@ -1922,11 +1928,15 @@ class Component extends DCLogic {
         const j = this.state.job;
         if (!j) return [];
         const raw = j.description || this.fallbackDesc(j, cats);
-        const HEAD = /^(key\s+)?(responsibilities|requirements|qualifications|preferred qualifications|about (the )?(role|us|company|team)|what you.{0,3}ll do|what we.{0,3}re looking for|why join|who you are|the role|job description|description|position summary|nice to have|benefits|what we offer|requirements? for the role)\b/i;
-        const HEAD_HE = /^(דרישות|דרישות התפקיד|תיאור התפקיד|תחומי אחריות|התפקיד כולל|מה אנחנו מחפשים|מה חשוב לנו|על התפקיד|מה מחפשים)/;
+        const HEAD = /^(key\s+)?(responsibilities|requirements|qualifications|preferred qualifications|role description|company description|about (the )?(role|us|company|team|position|opportunity)|what you.{0,3}ll do|what you.{0,3}ll be doing|what we.{0,3}re looking for|what is this opportunity|what qualifications|why join|who you are|your impact|the role|the opportunity|job description|description|position summary|nice to have|benefits|perks|what we offer|requirements? for the role)\b/i;
+        const HEAD_HE = /^(דרישות|דרישות התפקיד|תיאור התפקיד|תיאור החברה|תחומי אחריות|התפקיד כולל|מה אנחנו מחפשים|מה חשוב לנו|על התפקיד|על החברה|מה מחפשים)/;
         return raw.split(/\n{2,}|\n(?=[-•*])/).map(s => s.trim()).filter(Boolean).map((text, i) => {
           const short = text.length <= 60;
-          const head = (short && /[:?]$/.test(text)) || (short && (HEAD.test(text) || HEAD_HE.test(text)));
+          // A question can be a heading and still run long: "What qualifications
+          // and skills will help you to be successful?" is 62 characters, so the
+          // 60 cap was dropping the very headings it was meant to catch.
+          const asks = text.length <= 95 && /[:?]$/.test(text);
+          const head = asks || (short && (HEAD.test(text) || HEAD_HE.test(text)));
           return { text: text, i: i, head: head,
             weight: head ? '650' : '400',
             colour: head ? '#3ddc9b' : '#d7dee3',
@@ -2196,7 +2206,7 @@ class Component extends DCLogic {
         pct: Math.round((L(Math.round(c.open / (1 + (c.delta || 0) / 100)), c.open) / maxOpen) * 100),
         d: (0.1 + i * 0.08).toFixed(2),
         dot: 'hsl(' + (HUES[c.key] != null ? HUES[c.key] : 210) + ',72%,60%)',
-        deltaLabel: (c.delta > 0 ? '+' : '') + c.delta + '%',
+        deltaLabel: '',
         deltaColor: c.delta > 0 ? up : c.delta < 0 ? down : flat,
         active: filter === c.key, op: !filter || filter === c.key ? 1 : 0.42,
         aria: 'Filter the field above to ' + c.label + ', ' + c.open + ' open roles',

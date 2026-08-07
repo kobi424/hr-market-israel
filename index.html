@@ -125,7 +125,14 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <h2 style="margin: 0; font-size: clamp(21px, 2.6vw, 30px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.18;">{{ jobTitle }}</h2>
               <div style="font-size: 15px; color: #b3bcc2;">{{ jobCompany }}</div>
             </div>
-            <button type="button" onClick="{{ closeJob }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
+            <div style="flex: none; display: flex; align-items: center; gap: 10px;">
+              <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
+                <span aria-label="{{ applicantsAria }}" style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-size: 11.5px; letter-spacing: .04em; color: #a8b2b9; white-space: nowrap;">
+                  <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ applicantsColor }};"></span>{{ applicantsLabel }}
+                </span>
+              </sc-if>
+              <button type="button" onClick="{{ closeJob }}" aria-label="Close" style="flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #cbd4d9; font: inherit; font-size: 16px; line-height: 1; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.5); color: #fff;">×</button>
+            </div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.09);">
             <sc-for list="{{ jobFacts }}" as="f" hint-placeholder-count="3">
@@ -151,13 +158,9 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <sc-if value="{{ hasCompanyUrl }}" hint-placeholder-val="{{ false }}">
               <a href="{{ jobCompanyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Visit the {{ jobCompany }} site in a new tab" style="border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="border-color: rgba(255,255,255,.45); color: #ffffff;">Company site ↗</a>
             </sc-if>
-            <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
-              <span aria-label="{{ applicantsAria }}" style="display: flex; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 11px 18px; font-size: 12px; letter-spacing: .04em; color: #a8b2b9;">
-                <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ applicantsColor }};"></span>{{ applicantsLabel }}
-              </span>
-            </sc-if>
+            
             <button type="button" onClick="{{ companyFromJob }}" aria-label="See every open role at this company" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">All {{ jobCompany }} roles</button>
-            <button type="button" onClick="{{ copyLink }}" aria-label="Copy a direct link to this role" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">{{ copyLabel }}</button>
+            
             <button type="button" onClick="{{ filterFromJob }}" aria-label="See every role in this discipline" style="background: none; border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.45); color: #fff;">All {{ jobCat }} roles</button>
           </div>
           <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -419,10 +422,10 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <line x1="0" x2="1000" y1="{{ g.y }}" y2="{{ g.y }}" stroke="rgba(255,255,255,0.07)" stroke-width="1"></line>
             </sc-for>
             <sc-for list="{{ series }}" as="s" hint-placeholder-count="3">
-              <polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke-dasharray="1" style="animation: drawLine 2.6s cubic-bezier(.3,.7,.3,1) both; animation-delay: {{ s.d }}s;"></polyline>
+              <polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1"></polyline>
             </sc-for>
             <sc-for list="{{ series }}" as="s" hint-placeholder-count="3">
-              <circle cx="{{ s.lastX }}" cy="{{ s.lastY }}" r="4" fill="{{ s.color }}" style="opacity: 0; animation: fadeUp .3s ease {{ s.dotD }}s both;"></circle>
+              <circle cx="{{ s.lastX }}" cy="{{ s.lastY }}" r="4" fill="{{ s.color }}"></circle>
             </sc-for>
             <sc-for list="{{ chartDots }}" as="cd" hint-placeholder-count="0">
               <circle cx="{{ cd.cx }}" cy="{{ cd.cy }}" r="5.5" fill="{{ cd.color }}" stroke="#06080a" stroke-width="2"></circle>
@@ -1348,6 +1351,7 @@ class Component extends DCLogic {
   }
 
   listVals(d, cats, filter) {
+    const dv = (d && filter && d.categoryVerdict && d.categoryVerdict[filter]) || (d && d['verdict']) || null;
     const SEN = ['all', 'junior', 'specialist', 'senior', 'manager', 'senior-manager', 'director'];
     const sen = this.state.sen, sort = this.state.sort, limit = this.state.limit;
     const catLabel = {}; cats.forEach(c => { catLabel[c.key] = c.label; });
@@ -1363,7 +1367,7 @@ class Component extends DCLogic {
       : sort === 'seniority' ? (rank[b.seniority] || 0) - (rank[a.seniority] || 0)
       : a.company.localeCompare(b.company));
     const shown = all.slice(0, limit);
-    const accent = (STATES[(d.verdict && d.verdict.state) || 'neutral'] || STATES.neutral).accent;
+    const accent = (STATES[(dv && dv.state) || 'neutral'] || STATES.neutral).accent;
     const chip = (active) => ({
       bg: active ? 'rgba(255,255,255,.1)' : 'transparent',
       border: active ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.14)',
@@ -1467,7 +1471,8 @@ class Component extends DCLogic {
 
   renderVals() {
     const d = this.state.data;
-    const st = STATES[(d && d.verdict && d.verdict.state) || 'neutral'] || STATES.neutral;
+    const dv = (d && this.state.filter && d.categoryVerdict && d.categoryVerdict[this.state.filter]) || (d && d['verdict']) || null;
+    const st = STATES[(d && dv && dv.state) || 'neutral'] || STATES.neutral;
     const base = {
       ready: !!d, failed: this.state.failed,
       accent: st.accent, blobA: st.a, blobB: st.b, blobC: st.c,
@@ -1534,16 +1539,17 @@ class Component extends DCLogic {
     const scopedSenior = scoped.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const stats = fcat ? [
       { label: 'Open roles', value: String(fcat.open),
-        arrow: fcat.delta > 0 ? '▲' : fcat.delta < 0 ? '▼' : '■', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
-        delta: (fcat.delta > 0 ? '+' : '') + fcat.delta + '% vs last week' },
-      { label: 'Posted in last 7 days', value: String(new7),
-        arrow: '■', color: flat, delta: 'of ' + scoped.length + ' tracked ' + fcat.label + ' roles' },
+        arrow: '\u25a0', color: flat,
+        delta: (fcat.newCount || 0) + ' of them posted this week' },
+      { label: 'New this week', value: String(fcat.newCount != null ? fcat.newCount : new7),
+        arrow: fcat.delta > 0 ? '\u25b2' : fcat.delta < 0 ? '\u25bc' : '\u25a0', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
+        delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' last week') : (fcat.newCount + ' posted, no prior week to compare') },
       { label: 'Share of market', value: t.open ? Math.round((fcat.open / t.open) * 100) + '%' : '—',
         arrow: '■', color: flat, delta: fcat.open + ' of ' + t.open + ' open roles' }
     ] : [
-      { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '—'),
-        arrow: openD > 0 ? '▲' : openD < 0 ? '▼' : '■', color: openD > 0 ? up : openD < 0 ? down : flat,
-        delta: openD == null ? 'no prior week' : Math.abs(openD) + '% vs last week' },
+      { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '\u2014'),
+        arrow: '\u25a0', color: flat,
+        delta: (t.newThisWeek || 0) + ' of them posted this week' },
       { label: 'New this week', value: String(t.newThisWeek != null ? LE(t.newPrevWeek, t.newThisWeek) : '—'),
         arrow: newD > 0 ? '▲' : newD < 0 ? '▼' : '■', color: newD > 0 ? up : newD < 0 ? down : flat,
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
@@ -1572,7 +1578,7 @@ class Component extends DCLogic {
     const hasData = k => h.some(r => r[k] != null);
     const series = n ? [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']]
       .filter(([k]) => hasData(k)).map(([k, label, color]) => mk(k, label, color)) : [];
-    series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); s.dotD = (0.15 + i * 0.35 + 2.45).toFixed(2); });
+    series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
     const hi = this.state.chartHover;
     const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
     const keysOf = [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
@@ -1658,7 +1664,7 @@ class Component extends DCLogic {
       (flowPrev == null ? 50 : clamp(((flowPrev - 0.35) / 0.3) * 100)) * 0.2 +
       clamp(icShareAll * 100 * 1.4) * 0.15
     );
-    const publishedScore = d.verdict ? d.verdict.score : 0;
+    const publishedScore = dv ? dv.score : 0;
     const freshShare = jobs.length ? jobs.filter(j => j.postedDays <= 3).length / jobs.length : 0;
 
     return Object.assign(base, {
@@ -1721,11 +1727,15 @@ class Component extends DCLogic {
       toggleDesc: () => this.setState(s => ({ descOpen: !s.descOpen })),
       hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
       jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
-      hasApplicants: !!(this.state.job && this.state.job.applicants != null),
+      hasApplicants: !!(this.state.job && (this.state.job.applicants != null || this.state.job.applicantsNote)),
       applicantsLabel: (() => {
-        const n = this.state.job && this.state.job.applicants;
-        if (n == null) return '';
-        return n + (n === 1 ? ' applicant' : ' applicants');
+        const j = this.state.job;
+        if (!j) return '';
+        // LinkedIn's own wording, because 'Over 200 applicants' is not the same
+        // claim as '200 applicants' and the number alone would understate it.
+        if (j.applicantsNote) return j.applicantsNote;
+        if (j.applicants != null) return j.applicants + (j.applicants === 1 ? ' applicant' : ' applicants');
+        return '';
       })(),
       applicantsColor: (() => {
         const n = this.state.job && this.state.job.applicants;
@@ -1843,9 +1853,9 @@ class Component extends DCLogic {
         }
       })),
       word: st.word, score: rp == null ? publishedScore : L(compositePrev, publishedScore),
-      headline: d.verdict ? d.verdict.headline : '',
-      why: (d.verdict && d.verdict.why) || [],
-      whyChips: ((d.verdict && d.verdict.why) || []).map((text, i) => ({ text: text, d: (0.9 + i * 0.14).toFixed(2) })),
+      headline: dv ? dv.headline : '',
+      why: (dv && dv.why) || [],
+      whyChips: ((dv && dv.why) || []).map((text, i) => ({ text: text, d: (0.9 + i * 0.14).toFixed(2) })),
       agoLabel: (function (g) { var hrs = (Date.now() - Date.parse(g)) / 3600000; if (!isFinite(hrs)) return 'at an unknown time'; if (hrs > 168) return 'over a week ago · this feed has stopped updating'; if (hrs > 36) return 'over ' + Math.floor(hrs / 24) + ' days ago · update overdue'; return this.ago(g); }).call(this, d.generated),
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
@@ -1948,7 +1958,7 @@ class Component extends DCLogic {
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
         bg: filter === c.key ? 'rgba(255,255,255,.09)' : 'transparent',
         aria: c.key ? 'Filter to ' + c.label + ', ' + c.open + ' open roles' : 'Show every discipline',
-        click: () => this.setState({ filter: c.key, limit: 12, catMenu: false }, () => this.build())
+        click: () => { var self = this; var anchor = document.querySelector('[data-screen-label="All jobs"]'); var before = anchor ? anchor.getBoundingClientRect().top : null; self.setState({ filter: c.key, limit: 12, catMenu: false }, function () { self.build(); if (before == null) return; requestAnimationFrame(function () { var a2 = document.querySelector('[data-screen-label="All jobs"]'); if (!a2) return; var shift = a2.getBoundingClientRect().top - before; if (!shift) return; var sc = self._scroller; if (sc) sc.scrollTop += shift; else window.scrollBy(0, shift); }); }); }
       })),
       cats: cats.map((c, i) => ({
         label: c.label,
@@ -1964,7 +1974,7 @@ class Component extends DCLogic {
       })),
       hirers: (d.topHirers || []).map((x, i) => ({ rank: String(i + 1).padStart(2, '0'), company: x.company, open: x.open })),
       letters: st.word.split('').map((ch, i) => ({ ch: ch, d: (0.12 + i * 0.07).toFixed(2) })),
-      shownScore: this.state.shown != null ? this.state.shown : (d.verdict ? d.verdict.score : 0)
+      shownScore: this.state.shown != null ? this.state.shown : (dv ? dv.score : 0)
     }, this.listVals(d, cats, filter));
   }
 }
@@ -2082,7 +2092,15 @@ class Component extends DCLogic {
   var lift = document.createElement('style');
   lift.textContent = 'section[data-screen-label="Field"]{position:relative;z-index:5;overflow:visible}'
     + 'section[data-screen-label="Verdict"]{z-index:1}'
-    + 'section[data-screen-label="Field"] *{overflow:visible}';
+    + 'section[data-screen-label="Field"] *{overflow:visible}'
+    // The posting keeps the line breaks its author wrote; render them.
+    + '[data-desc="1"]{white-space:pre-line}'
+    // Either side of the pie listed every role in the discipline: with HR
+    // Business Partner selected the left column ran to 1339px and the section
+    // to 1610. Cap both columns at roughly five rows and let them scroll.
+    // Shorter lists are unaffected, since this only sets a ceiling.
+    + 'section[data-screen-label="IC vs managers"] ul{max-height:320px;overflow-y:auto}'
+    + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}';
   document.head.appendChild(lift);
 })();
 </script>

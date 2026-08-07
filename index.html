@@ -1223,10 +1223,7 @@ class Component extends DCLogic {
     if (!d || !Array.isArray(d.jobs)) return [];
     const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
-    if (this._isSmall) {
-      const key = this.state.filter || this.state.mcat || this.mobileCat();
-      if (key) pool = pool.filter(j => j.category === key);
-    }
+    if (this.state.filter) pool = pool.filter(j => j.category === this.state.filter);
     const cur = this.state.cursor;
     if (cur == null) return pool.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, cap);
     const named = pool.filter(j => j.postedDays >= cur)
@@ -1759,7 +1756,7 @@ class Component extends DCLogic {
       label: p.label,
       weight: p.measurable ? ('\u00b1' + p.cap) : 'no data yet',
       val: Math.round(((p.delta + p.cap) / (2 * p.cap)) * 100),
-      contrib: p.measurable ? (function (v) { return (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v); })(Math.round(p.delta * (50 / 6))) : '\u2014',
+      contrib: p.measurable ? (function (v) { return (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v); })(Math.round(p.delta)) : '\u2014',
       how: (p.bands || []).map(function (b) { return b.range + '  \u2192  ' + b.points; }).join('\n') + (p.scaleNote ? '\n\n' + p.scaleNote : ''),
       color: p.delta > 0 ? up : p.delta < 0 ? down : '#c8d0d6',
       detail: p.detail,
@@ -1835,7 +1832,7 @@ class Component extends DCLogic {
         var pts = bits.join('   ') + '   =   ' + (c > 0 ? '+' : '') + c + ' points';
         var each = (dv.parts || []).map(function (p) {
           if (!p.measurable) return '\u00b1 0';
-          var v = Math.round(p.delta * (50 / 6));
+          var v = Math.round(p.delta);
           return (v > 0 ? '+ ' : v < 0 ? '\u2212 ' : '\u00b1 ') + Math.abs(v);
         });
         var conv = '50 (neutral)   ' + each.join('   ') + '   =   ' + (dv.score != null ? dv.score : '');
@@ -3101,9 +3098,9 @@ class Component extends DCLogic {
     // On a phone the zoom pill ends near 141px. Start at 156 so the two are not
     // touching, and give the input room for the whole placeholder rather than
     // cutting it to "COMPANY OR RO".
-    + '@media (max-width:620px){[data-bubsearch]{left:150px;top:12px;'
+    + '@media (max-width:620px){[data-bubsearch]{left:150px;top:12px;align-items:center;'
     + 'padding:2px 3px 2px 10px}'
-    + '[data-bubsearch] input{width:calc(100vw - 218px);min-width:96px;padding:7px 0;letter-spacing:.02em}'
+    + '[data-bubsearch] input{width:calc(100vw - 214px);min-width:96px;padding:3px 0;letter-spacing:.02em}'
     + '[data-bubsearch] input::placeholder{letter-spacing:.04em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'

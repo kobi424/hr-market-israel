@@ -2192,7 +2192,7 @@ class Component extends DCLogic {
         label: c.label, open: c.open,
         dot: c.key ? 'hsl(' + (HUES[c.key] != null ? HUES[c.key] : 210) + ',72%,60%)' : 'rgba(255,255,255,.35)',
         pct: c.key ? Math.round((c.open / maxOpen) * 100) : 100,
-        deltaLabel: c.delta == null ? '' : (c.delta > 0 ? '+' : '') + c.delta + '%',
+        deltaLabel: '',
         deltaColor: c.delta == null ? flat : c.delta > 0 ? up : c.delta < 0 ? down : flat,
         active: filter === c.key,
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
@@ -2383,6 +2383,65 @@ class Component extends DCLogic {
     e.stopPropagation();
     var top = sectionTop(dest);
     if (top != null) glide(top);
+  }, true);
+
+  // Restoring the scroll offset was not enough. Filtering changes the height of
+  // the tiles and the summary above the job list, so the list slides even though
+  // the scroll position never moved. Pin the All jobs heading to the same place
+  // on screen instead, which absorbs whatever reflows above it.
+  function jobsHeading() {
+    var sec = null;
+    document.querySelectorAll('section[data-screen-label]').forEach(function (s) {
+      if (s.getAttribute('data-screen-label') === 'All jobs') sec = s;
+    });
+    return sec ? (sec.querySelector('h2') || sec.querySelector('h1') || sec) : null;
+  }
+  function holdJobsHeading() {
+    var h = jobsHeading();
+    if (!h) return;
+    var before = h.getBoundingClientRect().top;
+    // This page scrolls BODY, not the document, so window.scrollBy silently did
+    // nothing. Try each candidate and stop at the one that actually moves.
+    // Judged by whether the heading actually moved, not by whether scrollTop
+    // accepted the value: html reports a scrollTop change here while body is
+    // what is really scrolling, so the obvious check passes and nothing moves.
+    var nudge = function (d) {
+      var h0 = jobsHeading();
+      if (!h0) return;
+      var start = h0.getBoundingClientRect().top;
+      var cands = [document.scrollingElement, document.documentElement, document.body];
+      for (var i = 0; i < cands.length; i++) {
+        var c = cands[i];
+        if (!c) continue;
+        var t0 = c.scrollTop;
+        c.scrollTop = t0 + d;
+        var h1 = jobsHeading();
+        if (h1 && Math.abs(h1.getBoundingClientRect().top - start) > 1) return;
+        c.scrollTop = t0;
+      }
+      window.scrollBy(0, d);
+    };
+    var fix = function () {
+      var h2 = jobsHeading();
+      if (!h2) return;
+      var d = h2.getBoundingClientRect().top - before;
+      if (Math.abs(d) < 1) return;
+      nudge(d);
+    };
+    requestAnimationFrame(function () { fix(); requestAnimationFrame(fix); });
+    setTimeout(fix, 140);
+    setTimeout(fix, 300);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (!t.closest('section[data-screen-label="All jobs"]')) return;
+    if (!t.closest('button')) return;
+    holdJobsHeading();
+  }, true);
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t && t.closest && t.closest('section[data-screen-label="All jobs"]')) holdJobsHeading();
   }, true);
 
   // Tile grids are laid out by the design for a wide screen and collapse to one
@@ -2809,9 +2868,16 @@ class Component extends DCLogic {
     + '@media (max-width:620px){[data-ticker]{display:none!important}}'
     // The three filters sit on one row at one size, and the captions go: the
     // controls already read "All disciplines", "All levels", "Newest".
-    // The chevron is the browser's own, drawn at the right edge of the content
-    // box, so padding-right is what holds it off the border.
-    + '@media (max-width:620px){section[data-screen-label="All jobs"] select{width:100%!important;min-width:0;font-size:13px!important;padding:9px 16px 9px 12px!important;height:auto!important}}'
+    // The browser's own chevron sits wherever it likes inside the padding box
+    // and no amount of padding-right moved it far enough off the border. Draw
+    // it instead: appearance:none, and a chevron placed at an exact inset.
+    // URL-encoded rather than quoted, so the markup carries no backslashes.
+    + 'section[data-screen-label="All jobs"] select,[data-levelsel]{'
+    + 'appearance:none;-webkit-appearance:none;-moz-appearance:none;'
+    + "background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23aab4bb' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");"
+    + 'background-repeat:no-repeat;background-position:right 15px center;background-size:11px 8px;'
+    + 'padding-right:38px!important}'
+    + '@media (max-width:620px){section[data-screen-label="All jobs"] select{width:100%!important;min-width:0;font-size:13px!important;padding:9px 38px 9px 13px!important;height:auto!important}}'
     // Discipline and Level share a row at one width, Sort takes the next.
     // Three controls abreast on a 375px screen leaves each too narrow to read
     // its own value. The captions go: each control already names itself.

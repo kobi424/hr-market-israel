@@ -1756,7 +1756,7 @@ class Component extends DCLogic {
         detail: Math.round(icShareAll * 100) + '% of tracked roles are individual contributor positions. A market weighted towards IC openings is an easier market to enter, so a higher IC share lifts the score.' }
     ];
     const published = (dv && dv.parts) ? dv.parts.map((p, i) => ({
-      label: p.label + (p.jump ? '  \u00b7  jump ' + p.jump + ', ' + p.tier : ''),
+      label: p.label,
       weight: p.measurable ? ('\u00b1' + p.cap) : 'no data yet',
       val: Math.round(((p.delta + p.cap) / (2 * p.cap)) * 100),
       contrib: p.measurable ? ((p.delta > 0 ? '+' : '') + p.delta) : '\u2014',
@@ -1833,7 +1833,12 @@ class Component extends DCLogic {
         });
         var c = dv.composite;
         var pts = bits.join('   ') + '   =   ' + (c > 0 ? '+' : '') + c + ' points';
-        var conv = '50 neutral ' + (c >= 0 ? '+ ' : '\u2212 ') + Math.abs(Math.round(c * 10)) + '   =   ' + (dv.score != null ? dv.score : '') + '   \u00b7   ' + (dv.tier || '');
+        var each = (dv.parts || []).map(function (p) {
+          if (!p.measurable) return '\u00b1 0';
+          var v = Math.round(p.delta * (50 / 6));
+          return (v > 0 ? '+ ' : v < 0 ? '\u2212 ' : '\u00b1 ') + Math.abs(v);
+        });
+        var conv = '50 (neutral)   ' + each.join('   ') + '   =   ' + (dv.score != null ? dv.score : '');
         return pts + '\n' + conv;
       })(),
       replaying: rp != null,

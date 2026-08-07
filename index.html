@@ -1230,7 +1230,7 @@ class Component extends DCLogic {
     const cap = this._isSmall ? 12 : (this.props.maxBubbles || 400);
     let pool = d.jobs;
     if (this._isSmall) {
-      const key = this.state.mcat || this.state.filter || this.mobileCat();
+      const key = this.state.filter || this.state.mcat || this.mobileCat();
       if (key) pool = pool.filter(j => j.category === key);
     }
     const cur = this.state.cursor;
@@ -2076,7 +2076,7 @@ class Component extends DCLogic {
           active: shown,
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
-            ? this.setState({ mcat: this.state.mcat === c.key ? null : c.key }, () => this.build())
+            ? this.setState({ filter: this.state.filter === c.key ? null : c.key, mcat: null, limit: 12 }, () => this.build())
             : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
@@ -2407,6 +2407,33 @@ class Component extends DCLogic {
   collapseLevels();
   setInterval(collapseLevels, 1200);
 
+  // "Individual contributors" and "Managers and above" head their own lists,
+  // but sat inside the scrolling box so they slid away with the roles. Pin the
+  // heading and let it fold the roles under it, closed to begin with, so the
+  // section opens as two lines rather than seventy.
+  function foldSplitLists() {
+    document.querySelectorAll('section[data-screen-label="IC vs managers"] ul').forEach(function (ul) {
+      if (ul.children.length < 3 || ul.hasAttribute('data-fold')) return;
+      var head = ul.children[0];
+      if (!/individual contributors|managers and above/i.test(head.textContent || '')) return;
+      ul.setAttribute('data-fold', '');
+      ul.setAttribute('data-open', '0');
+      head.setAttribute('data-foldhead', '');
+      head.setAttribute('role', 'button');
+      head.setAttribute('tabindex', '0');
+      var toggle = function () {
+        var open = ul.getAttribute('data-open') === '1';
+        ul.setAttribute('data-open', open ? '0' : '1');
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+  }
+  foldSplitLists();
+  setInterval(foldSplitLists, 1200);
+
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
   // drawn at and zooming in can never make them overlap.
@@ -2417,6 +2444,32 @@ class Component extends DCLogic {
   // section keeps its place on the page and the physics is left alone.
   window.__bubbleZoom = 1;
   window.__bubbleSize = 1;
+  var panX = 0, panY = 0;
+
+  // Zoomed in, there is more field than window, so the view can be dragged.
+  // The offset is clamped to the overhang, which is how far the scaled field
+  // sticks out past its box: at 100% there is none, so dragging does nothing
+  // and the page scrolls normally instead.
+  function clampPan() {
+    var field = document.querySelector('[data-field="1"]');
+    if (!field) return;
+    var z = window.__bubbleZoom;
+    var overX = Math.max(0, (field.clientWidth * (z - 1)) / 2);
+    var overY = Math.max(0, (field.clientHeight * (z - 1)) / 2);
+    panX = Math.max(-overX, Math.min(overX, panX));
+    panY = Math.max(-overY, Math.min(overY, panY));
+  }
+  function paint() {
+    var field = document.querySelector('[data-field="1"]');
+    if (!field) return;
+    clampPan();
+    var z = window.__bubbleZoom;
+    field.style.transformOrigin = 'center center';
+    field.style.transform = (z === 1 && !panX && !panY)
+      ? ''
+      : 'translate(' + panX + 'px,' + panY + 'px) scale(' + z + ')';
+    field.style.willChange = z === 1 ? '' : 'transform';
+  }
   var ZMIN = 1, ZMAX = 3, SMIN = 0.6, SMAX = 1.8;
 
   // Size is separate from zoom: zoom brings the picture closer, size changes
@@ -2431,12 +2484,8 @@ class Component extends DCLogic {
   function applyZoom(next) {
     var z = Math.max(ZMIN, Math.min(ZMAX, Math.round(next * 20) / 20));
     window.__bubbleZoom = z;
-    var field = document.querySelector('[data-field="1"]');
-    if (field) {
-      field.style.transformOrigin = 'center center';
-      field.style.transform = z === 1 ? '' : 'scale(' + z + ')';
-      field.style.willChange = z === 1 ? '' : 'transform';
-    }
+    if (z === 1) { panX = 0; panY = 0; }
+    paint();
     var out = document.querySelector('[data-zoomlevel]');
     var pct = Math.round(z * 100) + '%';
     if (out && out.textContent !== pct) out.textContent = pct;
@@ -2485,6 +2534,42 @@ class Component extends DCLogic {
 
     // Wheel over the field zooms. At either limit the event is left alone, so
     // the page still scrolls past rather than trapping the reader in the field.
+    // Dragging pans the view. It only engages above 100%, where there is
+    // something to pan to, and a drag under a few pixels is treated as a tap so
+    // opening a role still works.
+    var drag = null, moved = 0;
+    var startDrag = function (x, y) {
+      if (window.__bubbleZoom <= 1) return;
+      drag = { x: x, y: y, px: panX, py: panY }; moved = 0;
+      field.style.cursor = 'grabbing';
+    };
+    var moveDrag = function (x, y, ev) {
+      if (!drag) return;
+      var dx = x - drag.x, dy = y - drag.y;
+      moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+      if (moved > 4 && ev && ev.cancelable) ev.preventDefault();
+      panX = drag.px + dx; panY = drag.py + dy;
+      paint();
+    };
+    var endDrag = function () { drag = null; field.style.cursor = window.__bubbleZoom > 1 ? 'grab' : ''; };
+
+    field.addEventListener('mousedown', function (e) { startDrag(e.clientX, e.clientY); });
+    addEventListener('mousemove', function (e) { moveDrag(e.clientX, e.clientY, e); });
+    addEventListener('mouseup', endDrag);
+    field.addEventListener('click', function (e) {
+      if (moved > 4) { e.preventDefault(); e.stopPropagation(); moved = 0; }
+    }, true);
+
+    field.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    field.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 1 || !drag) return;
+      moveDrag(e.touches[0].clientX, e.touches[0].clientY, e);
+    }, { passive: false });
+    field.addEventListener('touchend', endDrag, { passive: true });
+
     var pinch0 = null, zoom0 = 1;
     var span = function (t) {
       var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
@@ -2524,6 +2609,13 @@ class Component extends DCLogic {
     // to 1610. Cap both columns at roughly five rows and let them scroll.
     // Shorter lists are unaffected, since this only sets a ceiling.
     + 'section[data-screen-label="IC vs managers"] ul{max-height:320px;overflow-y:auto;scrollbar-width:none}'
+    // The heading stays put while its roles scroll under it.
+    + '[data-foldhead]{position:sticky;top:0;z-index:2;background:#06080a;cursor:pointer;padding:6px 0}'
+    + '[data-foldhead]:after{content:"▾";float:right;opacity:.5;transition:transform .2s ease}'
+    + '[data-fold][data-open="1"] [data-foldhead]:after{transform:rotate(180deg)}'
+    // Closed to begin with: the section opens as two lines, not seventy.
+    + '[data-fold][data-open="0"]{max-height:none;overflow:visible}'
+    + '[data-fold][data-open="0"] > *:not([data-foldhead]){display:none}'
     + 'section[data-screen-label="IC vs managers"] ul:hover{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}'
     + 'section[data-screen-label="IC vs managers"] ul::-webkit-scrollbar{width:0}'
     + 'section[data-screen-label="IC vs managers"] ul:hover::-webkit-scrollbar{width:4px}'

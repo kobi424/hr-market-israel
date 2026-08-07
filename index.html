@@ -116,7 +116,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;">
             <div style="display: flex; flex-direction: column; gap: 10px;">
               <div style="display: flex; align-items: center; gap: 9px; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #8b959c;">
-                <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ jobDot }}; flex: none;"></span>{{ jobCat }}
+                <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ jobDot }}; flex: none;"></span>{{ jobCats }}
               </div>
               <h2 style="margin: 0; font-size: clamp(21px, 2.6vw, 30px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.18;">{{ jobTitle }}</h2>
               <sc-if value="{{ hasCompanyUrl }}" hint-placeholder-val="{{ false }}">
@@ -774,6 +774,18 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 const HUES = { 'total-rewards': 152, 'hrbp': 205, 'talent-acquisition': 268, 'hr-ops': 32, 'learning': 330, 'hris': 186, 'leadership': 8, 'payroll': 288, 'analytics': 100 };
 const SIZES = { junior: 34, specialist: 58, senior: 70, manager: 78, 'senior-manager': 98, director: 122 };
   const IC_LEVELS = { junior: 1, specialist: 1, senior: 1 };
+  // A role can sit in two disciplines. "Global Compensation & People
+  // Analytics Manager" is Total Rewards and People Analytics, and the feed
+  // already counts it under both — the SQL rollup unnests the categories
+  // column. The page did not: it matched j.category, the primary one only,
+  // so the chip read "Total Rewards 15" and filtering the list showed 13,
+  // and People Operations lost 16 of its 53. Membership, not equality,
+  // everywhere a discipline is matched.
+  const inCat = function (j, k) {
+    if (!k) return true;
+    if (j.category === k) return true;
+    return !!(j.categories && j.categories.indexOf(k) > -1);
+  };
 const STATES = {
   bull: { word: 'BULL', accent: '#3ddc9b', a: 'rgba(45,190,130,.34)', b: 'rgba(90,210,160,.18)', c: 'rgba(20,120,95,.3)' },
   bear: { word: 'BEAR', accent: '#ff6257', a: 'rgba(190,55,50,.32)', b: 'rgba(220,95,110,.17)', c: 'rgba(120,30,55,.3)' },
@@ -1236,8 +1248,8 @@ class Component extends DCLogic {
     const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
     if (this._isSmall) {
-      const key = this.state.mcat || this.state.filter || this.mobileCat();
-      if (key) pool = pool.filter(j => j.category === key);
+      const key = this.state.filter || this.mobileCat();
+      if (key) pool = pool.filter(j => inCat(j, key));
     }
     const cur = this.state.cursor;
     if (cur == null) return pool.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, cap);
@@ -1494,15 +1506,13 @@ class Component extends DCLogic {
 
   listVals(d, cats, filter) {
     const dv = (d && filter && d.categoryVerdict && d.categoryVerdict[filter]) || (d && d['verdict']) || null;
-    const jc = this.state.small ? this.state.jcat : null;
-    filter = (jc == null) ? filter : (jc === '_all' ? null : jc);
     const SEN = ['all', 'junior', 'specialist', 'senior', 'manager', 'senior-manager', 'director'];
     const sen = this.state.sen, sort = this.state.sort, limit = this.state.limit;
     const catLabel = {}; cats.forEach(c => { catLabel[c.key] = c.label; });
     const q = (this.state.q || '').trim().toLowerCase();
     const TIER = { junior: ['junior', 'specialist', 'senior'], senior: ['senior-manager', 'director'] };
     const tier = this.state.tier, company = this.state.company;
-    const all = (d.jobs || []).filter(j => (!filter || j.category === filter) && (sen === 'all' || j.seniority === sen)
+    const all = (d.jobs || []).filter(j => inCat(j, filter) && (sen === 'all' || j.seniority === sen)
       && (!tier || TIER[tier].indexOf(j.seniority) >= 0)
       && (!company || j.company === company)
       && (!q || j.title.toLowerCase().indexOf(q) >= 0 || j.company.toLowerCase().indexOf(q) >= 0));
@@ -1523,10 +1533,7 @@ class Component extends DCLogic {
       noResults: all.length === 0,
       setQuery: e => this.setState({ q: e.target.value, limit: 12 }),
       clearQuery: () => this.setState({ q: '', limit: 12 }),
-      resetFilters: () => this.setState(s => (s.small
-        ? { q: '', jcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }
-        : { q: '', filter: null, jcat: null, mcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }
-      ), () => this.build()),
+      resetFilters: () => this.setState({ q: '', filter: null, sen: 'all', tier: null, company: null, limit: 12 }, () => this.build()),
       companyOn: !!company,
       companyName: company || '',
       clearCompany: () => this.setState({ company: null, limit: 12 }),
@@ -1538,7 +1545,10 @@ class Component extends DCLogic {
         const avg = Math.round(set.reduce((a, j) => a + j.postedDays, 0) / set.length);
         const mgr = set.filter(j => !IC_LEVELS[j.seniority]).length;
         const catN = {};
-        set.forEach(j => { catN[j.category] = (catN[j.category] || 0) + 1; });
+        set.forEach(j => {
+          var ks = (j.categories && j.categories.length) ? j.categories : [j.category];
+          ks.forEach(function (k) { catN[k] = (catN[k] || 0) + 1; });
+        });
         const topCat = Object.keys(catN).sort((a, b) => catN[b] - catN[a])[0];
         return [
           { label: 'Open in feed', value: String(set.length), color: '#eef2f4' },
@@ -1552,10 +1562,10 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: () => this.setState({ filter: c.key, jcat: null, mcat: null, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); })
+          click: () => this.setState({ filter: c.key, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); })
         }, chip(filter === c.key))),
       tierBoxes: (() => {
-        const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
+        const pool = (d.jobs || []).filter(j => inCat(j, filter));
         const jr = pool.filter(j => IC_LEVELS[j.seniority]);
         const sr = pool.filter(j => j.seniority === 'senior-manager' || j.seniority === 'director');
         const pc = n => pool.length ? Math.round((n / pool.length) * 100) : 0;
@@ -1577,7 +1587,7 @@ class Component extends DCLogic {
       notSmall: !this.state.small,
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
-      setFilterSelect: e => { const v = e.target.value; this.setState({ jcat: v === 'all' ? '_all' : v, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); }); },
+      setFilterSelect: e => { const v = e.target.value; this.setState({ filter: v === 'all' ? null : v, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); }); },
       sortValue: sort,
       sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
@@ -1638,7 +1648,7 @@ class Component extends DCLogic {
     const hov = this.state.hover;
     const aj = d.jobs || [];
     const fcat = filter ? cats.find(c => c.key === filter) : null;
-    const scoped = filter ? aj.filter(j => j.category === filter) : aj;
+    const scoped = filter ? aj.filter(j => inCat(j, filter)) : aj;
     const new7 = scoped.filter(j => j.postedDays <= 7).length;
     const scopeLabel = fcat ? fcat.label : 'Whole market';
 
@@ -1796,7 +1806,7 @@ class Component extends DCLogic {
     const mgrN = allJobs.length - icN;
     const pctOf = (a, b) => b ? Math.round((a / b) * 100) : 0;
     const splitRows = (fcat ? cats.filter(c => c.key === filter) : cats).map((c, i) => {
-      const set = aj.filter(j => j.category === c.key);
+      const set = aj.filter(j => inCat(j, c.key));
       const ic = set.filter(j => IC[j.seniority]).length;
       const mg = set.length - ic;
       const openRow = this.state.splitHover === c.key;
@@ -1947,6 +1957,11 @@ class Component extends DCLogic {
       jobCompany: this.state.job ? this.state.job.company : '',
       jobUrl: this.state.job ? this.state.job.url : '#',
       jobCat: this.state.job ? ((cats.find(c => c.key === this.state.job.category) || {}).label || this.state.job.category) : '',
+      jobCats: (function (j) {
+        if (!j) return '';
+        var ks = (j.categories && j.categories.length) ? j.categories : [j.category];
+        return ks.map(function (k) { return (cats.find(c => c.key === k) || {}).label || k; }).join(' · ');
+      })(this.state.job),
       jobDot: this.state.job ? 'hsl(' + (HUES[this.state.job.category] != null ? HUES[this.state.job.category] : 210) + ',72%,60%)' : 'transparent',
       jobParas: (() => {
         const j = this.state.job;
@@ -2014,7 +2029,9 @@ class Component extends DCLogic {
         const rankOf = { junior: 0, specialist: 1, senior: 2, manager: 3, 'senior-manager': 4, director: 5 };
         return (d.jobs || []).filter(x => x.id !== j.id).map(x => {
           let sc = 0;
-          if (x.category === j.category) sc += 5;
+          var xs = (x.categories && x.categories.length) ? x.categories : [x.category];
+          var js = (j.categories && j.categories.length) ? j.categories : [j.category];
+          if (xs.some(function (k) { return js.indexOf(k) > -1; })) sc += 5;
           if (x.seniority === j.seniority) sc += 3;
           else if (!!IC2[x.seniority] === !!IC2[j.seniority]) sc += 1.5;
           sc -= Math.abs((rankOf[x.seniority] || 0) - (rankOf[j.seniority] || 0)) * 0.4;
@@ -2029,11 +2046,7 @@ class Component extends DCLogic {
           click: () => this.setState({ job: x, descOpen: false }, () => { var d = document.querySelector('[role="dialog"][aria-label="Job details"]'); if (d) d.scrollTop = 0; })
         }));
       })(),
-      filterFromJob: () => this.setState(s => Object.assign(
-        { job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null },
-        s.small ? { jcat: s.job ? s.job.category : '_all' }
-                : { filter: s.job ? s.job.category : null, jcat: null, mcat: null }
-      ), () => { this.build(); this.jobsTop(); }),
+      filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       copyLink: () => {
         const j = this.state.job;
@@ -2111,7 +2124,7 @@ class Component extends DCLogic {
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {
-        const shown = this.state.small ? ((this.state.mcat || filter || this.mobileCat()) === c.key) : !(filter && filter !== c.key);
+        const shown = this.state.small ? ((filter || this.mobileCat()) === c.key) : !(filter && filter !== c.key);
         const off = !shown;
         return {
           label: c.label,
@@ -2120,8 +2133,8 @@ class Component extends DCLogic {
           active: shown,
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
-            ? this.setState(s => ({ mcat: s.mcat === c.key ? null : c.key }), () => this.build())
-            : this.setState({ filter: filter === c.key ? null : c.key, jcat: null, mcat: null, limit: 12, shown: null }, () => this.build())
+            ? this.setState({ filter: filter === c.key ? null : c.key, mcat: null, limit: 12, shown: null }, () => this.build())
+            : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
       fieldNoteMobile: this.state.small ? 'One discipline at a time on a small screen. Tap a colour below to switch.' : '',
@@ -2218,7 +2231,7 @@ class Component extends DCLogic {
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
         bg: filter === c.key ? 'rgba(255,255,255,.09)' : 'transparent',
         aria: c.key ? 'Filter to ' + c.label + ', ' + c.open + ' open roles' : 'Show every discipline',
-        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, jcat: null, mcat: null, limit: 12, catMenu: false, shown: null }, function () { self.build(); restore(); }); }
+        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, mcat: null, limit: 12, catMenu: false, shown: null }, function () { self.build(); restore(); }); }
       })),
       cats: cats.map((c, i) => ({
         label: c.label,
@@ -3166,12 +3179,18 @@ class Component extends DCLogic {
     // Specific enough to beat the padding:0 on [data-zoomui] button above,
     // which was leaving RESET pressed against the right edge of the pill.
     + '[data-zoomui] button[data-zoom="reset"]{font-size:9px!important;letter-spacing:.1em;text-transform:uppercase;padding:0 11px}'
-    // Search box, its own pill beside the zoom one.
+    // Search box, its own pill beside the zoom one. Same pill: the two sit side
+    // by side on the same row, so any difference in height reads as a mistake.
+    // It was 35px against the zoom pill's 33, because the input reported 27px
+    // of line box where the zoom buttons are a flat 26 and the left padding was
+    // 11 against 3. Both boxes now take the same 3px and both contents the same
+    // 26px, so the pills match without either being measured against the other.
     + '[data-bubsearch]{position:absolute;left:180px;top:12px;z-index:8;display:inline-flex;align-items:center;'
-    + 'gap:4px;padding:3px 4px 3px 11px;border:1px solid rgba(255,255,255,.14);border-radius:999px;'
-    + 'background:rgba(6,8,10,.72);backdrop-filter:blur(8px)}'
+    + 'gap:4px;padding:3px;border:1px solid rgba(255,255,255,.14);border-radius:999px;'
+    + 'background:rgba(6,8,10,.72);backdrop-filter:blur(8px);box-sizing:border-box}'
+    + '[data-zoomui] button,[data-bubsearch] input,[data-bubclear]{height:26px;box-sizing:border-box}'
     + '[data-bubsearch] input{width:132px;min-width:0;background:none;border:0;outline:none;color:#eef2f4;'
-    + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:8px 0}'
+    + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:0 0 0 8px}'
     + '[data-bubsearch] input::placeholder{color:#6f7a82;letter-spacing:.08em;text-transform:uppercase}'
     + '[data-bubsearch] input::-webkit-search-cancel-button{display:none}'
     + '[data-bubcount]{font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#3ddc9b;padding:0 2px}'
@@ -3183,14 +3202,14 @@ class Component extends DCLogic {
     // frame, so anything set directly would be painted over immediately.
     + '[data-bub]{transition:opacity .18s ease,filter .18s ease}'
     + '[data-bub][data-dim]{opacity:.07!important;filter:grayscale(1)}'
-    // Same row as the zoom pill on a phone too: the zoom control scales to .92
-    // and ends near 141px, so the search starts at 148.
-    // On a phone the zoom pill ends near 141px. Start at 156 so the two are not
-    // touching, and give the input room for the whole placeholder rather than
-    // cutting it to "COMPANY OR RO".
-    + '@media (max-width:620px){[data-bubsearch]{left:178px;top:12px;align-items:center;transform:scale(.72);transform-origin:left top;'
-    + 'padding:2px 3px 2px 10px}'
-    + '[data-bubsearch] input{width:150px;padding:4px 0;letter-spacing:.02em}'
+    // On a phone the two pills share a row, so they must share a scale. The
+    // search was at .72 against the zoom pill's .92, which is the whole reason
+    // "COMPANY / ROLE" sat smaller and 4px lower than "− 100% + RESET" — not
+    // padding, not font size. Same scale, same origin, same top.
+    // The zoom pill starts at 8 and is 143 wide at .92, so it ends near 151.
+    + '@media (max-width:620px){[data-bubsearch]{left:158px;top:8px;align-items:center;'
+    + 'transform:scale(.92);transform-origin:left top;padding:3px}'
+    + '[data-bubsearch] input{width:118px;padding:0 0 0 8px;letter-spacing:.02em}'
     + '[data-bubsearch] input::placeholder{letter-spacing:.04em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'

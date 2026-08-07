@@ -1566,7 +1566,7 @@ class Component extends DCLogic {
       notSmall: !this.state.small,
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
-      setFilterSelect: e => { const v = e.target.value; this.setState({ filter: v === 'all' ? null : v, limit: 12 }, () => this.build()); },
+      setFilterSelect: e => { const v = e.target.value; var self = this; var a = document.querySelector('[data-screen-label="All jobs"]'); var before = a ? a.getBoundingClientRect().top : null; self.setState({ filter: v === 'all' ? null : v, limit: 12 }, function () { self.build(); if (before == null) return; requestAnimationFrame(function () { var a2 = document.querySelector('[data-screen-label="All jobs"]'); if (!a2) return; var shift = a2.getBoundingClientRect().top - before; if (!shift) return; var sc = self._scroller; if (sc) sc.scrollTop += shift; else window.scrollBy(0, shift); }); }); },
       sortValue: sort,
       sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }, { value: 'company', label: 'Company' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
@@ -2241,7 +2241,7 @@ class Component extends DCLogic {
       if (s.getAttribute('data-screen-label') === label) sec = s;
     });
     if (!sec) return null;
-    return topOf(scroller()) + sec.getBoundingClientRect().top - 64;
+    return topOf(scroller()) + sec.getBoundingClientRect().top - 104;
   }
 
   // The design's back-to-top glides slowly. Intercept it in the capture phase,
@@ -2336,7 +2336,24 @@ class Component extends DCLogic {
     });
   }
   tagTiles();
-  setInterval(tagTiles, 700);
+  // A poll meant the job card and the company view visibly re-flowed a second
+  // after opening. React to the insertion instead, in the same frame.
+  // Only the job card and the company view need laying out the moment they
+  // appear; everything else can wait for the next tick. Watching every mutation
+  // and rescanning the document was running a getComputedStyle over thousands
+  // of elements on each frame of the bubble physics, which locked the renderer.
+  new MutationObserver(function (recs) {
+    for (var i = 0; i < recs.length; i++) {
+      var added = recs[i].addedNodes;
+      for (var k = 0; k < added.length; k++) {
+        var el = added[k];
+        if (el.nodeType !== 1) continue;
+        if (el.getAttribute && el.getAttribute('role') === 'dialog') { tagTiles(); return; }
+        if (el.querySelector && el.querySelector('[role="dialog"]')) { tagTiles(); return; }
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  setInterval(tagTiles, 1200);
 
   // The level filter is six checkboxes stacked down the page, which on a phone
   // is most of a screen for a control nobody has touched yet. Collapse it
@@ -2374,10 +2391,11 @@ class Component extends DCLogic {
     var on = [].slice.call(document.querySelectorAll('input[type="checkbox"][aria-label^="Show only"]'))
       .filter(function (b) { return b.checked; })
       .map(function (b) { return (b.getAttribute('aria-label') || '').replace(/^Show onlys+/, '').replace(/s+roles$/, ''); });
-    head.textContent = 'Level: ' + (on.length ? (on.length > 2 ? on.length + ' selected' : on.join(', ')) : 'any');
+    var next = 'Level: ' + (on.length ? (on.length > 2 ? on.length + ' selected' : on.join(', ')) : 'any');
+    if (head.textContent !== next) head.textContent = next;
   }
   collapseLevels();
-  setInterval(collapseLevels, 900);
+  setInterval(collapseLevels, 1200);
 
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
@@ -2410,7 +2428,8 @@ class Component extends DCLogic {
       field.style.willChange = z === 1 ? '' : 'transform';
     }
     var out = document.querySelector('[data-zoomlevel]');
-    if (out) out.textContent = Math.round(z * 100) + '%';
+    var pct = Math.round(z * 100) + '%';
+    if (out && out.textContent !== pct) out.textContent = pct;
   }
 
   function mountZoom() {
@@ -2456,6 +2475,22 @@ class Component extends DCLogic {
 
     // Wheel over the field zooms. At either limit the event is left alone, so
     // the page still scrolls past rather than trapping the reader in the field.
+    var pinch0 = null, zoom0 = 1;
+    var span = function (t) {
+      var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+    field.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 2) return;
+      pinch0 = span(e.touches); zoom0 = window.__bubbleZoom;
+    }, { passive: true });
+    field.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 2 || !pinch0) return;
+      e.preventDefault();
+      applyZoom(zoom0 * (span(e.touches) / pinch0));
+    }, { passive: false });
+    field.addEventListener('touchend', function () { pinch0 = null; }, { passive: true });
+
     field.addEventListener('wheel', function (e) {
       var dir = e.deltaY < 0 ? 1.1 : 1 / 1.1;
       var next = window.__bubbleZoom * dir;
@@ -2486,10 +2521,16 @@ class Component extends DCLogic {
     + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}'
     // The playback is out until there is real closure data to replay.
     + '[data-hidden-control]{display:none!important}'
+    // The discipline pill must not move the menu button when the name is long.
+    + '[aria-label="Filter by discipline"]{max-width:min(46vw,240px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}'
+    + '@media (max-width:620px){[aria-label="Filter by discipline"]{max-width:44vw;font-size:9px!important;letter-spacing:.08em!important}}'
+    + '@media (max-width:620px){section[data-screen-label="Verdict"] [data-heroblock]{display:flex;flex-direction:column;align-items:flex-start}}'
     // Level filter collapsed behind a summary, like the discipline dropdown.
     + '[data-levelhead]{display:block;width:100%;text-align:left;background:none;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:7px 11px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c3ccd2;cursor:pointer;margin-bottom:6px}'
     + '[data-levelhead]:hover{border-color:rgba(255,255,255,.4);color:#fff}'
     + '[data-levelgroup][data-open="0"]{display:none}'
+    + '[data-levelgroup] legend{display:none}'
+    + '[data-levelgroup]{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;margin-bottom:6px}'
     // Zoom control: small, tucked into the bottom right of the field.
     + 'section[data-screen-label="Field"] [data-fieldwrap]{position:relative;overflow:hidden}'
     + '[data-zoomui]{position:absolute;left:12px;top:12px;z-index:8;display:inline-flex;'

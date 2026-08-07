@@ -919,6 +919,18 @@ class Component extends DCLogic {
     };
   }
 
+  jobsTop() {
+    window.__jrJobsTop = (window.performance && performance.now) ? performance.now() : Date.now();
+    var self = this;
+    var go = function () {
+      var t = self.sectionTop('All jobs');
+      if (t == null) return;
+      if (window.__jrGlide) window.__jrGlide(t); else self.glideTo(t);
+    };
+    requestAnimationFrame(go);
+    setTimeout(go, 220);
+  }
+
   mobileCat() {
     if (this.state.mcat) return this.state.mcat;
     const cs = (this.state.data && this.state.data.categories) || [];
@@ -1224,7 +1236,7 @@ class Component extends DCLogic {
     const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
     if (this._isSmall) {
-      const key = this.state.filter || this.state.mcat || this.mobileCat();
+      const key = this.state.mcat || this.state.filter || this.mobileCat();
       if (key) pool = pool.filter(j => j.category === key);
     }
     const cur = this.state.cursor;
@@ -1482,6 +1494,8 @@ class Component extends DCLogic {
 
   listVals(d, cats, filter) {
     const dv = (d && filter && d.categoryVerdict && d.categoryVerdict[filter]) || (d && d['verdict']) || null;
+    const jc = this.state.jcat;
+    filter = (jc == null) ? filter : (jc === '_all' ? null : jc);
     const SEN = ['all', 'junior', 'specialist', 'senior', 'manager', 'senior-manager', 'director'];
     const sen = this.state.sen, sort = this.state.sort, limit = this.state.limit;
     const catLabel = {}; cats.forEach(c => { catLabel[c.key] = c.label; });
@@ -1509,7 +1523,7 @@ class Component extends DCLogic {
       noResults: all.length === 0,
       setQuery: e => this.setState({ q: e.target.value, limit: 12 }),
       clearQuery: () => this.setState({ q: '', limit: 12 }),
-      resetFilters: () => this.setState({ q: '', filter: null, sen: 'all', tier: null, company: null, limit: 12 }, () => this.build()),
+      resetFilters: () => this.setState({ q: '', jcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }, () => this.build()),
       companyOn: !!company,
       companyName: company || '',
       clearCompany: () => this.setState({ company: null, limit: 12 }),
@@ -1535,7 +1549,7 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: function () { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); self.setState({ filter: c.key, limit: 12, shown: null }, function () { self.build(); requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); try { var u = new URL(location.href); if (c.key) u.searchParams.set('d', c.key); else u.searchParams.delete('d'); history.replaceState(null, '', u.toString()); } catch (e) {} }); }.bind(this)
+          click: () => this.setState({ jcat: c.key == null ? '_all' : c.key, limit: 12, shown: null }, () => this.build())
         }, chip(filter === c.key))),
       tierBoxes: (() => {
         const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
@@ -1560,7 +1574,7 @@ class Component extends DCLogic {
       notSmall: !this.state.small,
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
-      setFilterSelect: e => { const v = e.target.value; var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: v === 'all' ? null : v, limit: 12, shown: null }, function () { self.build(); restore(); }); },
+      setFilterSelect: e => { const v = e.target.value; this.setState({ jcat: v === 'all' ? '_all' : v, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); }); },
       sortValue: sort,
       sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
@@ -1590,7 +1604,7 @@ class Component extends DCLogic {
         ageColor: j.postedDays <= 3 ? accent : j.postedDays <= 10 ? '#c3ccd2' : '#6f7a82',
         dot: 'hsl(' + (HUES[j.category] != null ? HUES[j.category] : 210) + ',72%,60%)',
         open: () => this.setState({ job: j, descOpen: false }),
-        openCompany: e => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ company: j.company, limit: 12 }); },
+        openCompany: e => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ company: j.company, limit: 12, shown: null }, () => this.jobsTop()); },
         aria: j.title + ' at ' + j.company + ', posted ' + j.postedDays + ' days ago. Opens the details.'
       })),
       hasMore: all.length > shown.length,
@@ -2012,8 +2026,8 @@ class Component extends DCLogic {
           click: () => this.setState({ job: x, descOpen: false }, () => { var d = document.querySelector('[role="dialog"][aria-label="Job details"]'); if (d) d.scrollTop = 0; })
         }));
       })(),
-      filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => this.build()),
-      companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12 }), () => { this.build(); this.glideTo(this.sectionTop('All jobs')); }),
+      filterFromJob: () => this.setState(s => ({ jcat: s.job ? s.job.category : '_all', job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
+      companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       copyLink: () => {
         const j = this.state.job;
         if (!j) return;
@@ -2090,7 +2104,7 @@ class Component extends DCLogic {
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {
-        const shown = this.state.small ? ((filter || this.mobileCat()) === c.key) : !(filter && filter !== c.key);
+        const shown = this.state.small ? ((this.state.mcat || filter || this.mobileCat()) === c.key) : !(filter && filter !== c.key);
         const off = !shown;
         return {
           label: c.label,
@@ -2099,7 +2113,7 @@ class Component extends DCLogic {
           active: shown,
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
-            ? this.setState({ filter: this.state.filter === c.key ? null : c.key, mcat: null, limit: 12, shown: null }, () => this.build())
+            ? this.setState(s => ({ mcat: s.mcat === c.key ? null : c.key }), () => this.build())
             : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
@@ -2197,7 +2211,7 @@ class Component extends DCLogic {
         ink: filter === c.key ? '#ffffff' : '#c3ccd2',
         bg: filter === c.key ? 'rgba(255,255,255,.09)' : 'transparent',
         aria: c.key ? 'Filter to ' + c.label + ', ' + c.open + ' open roles' : 'Show every discipline',
-        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, limit: 12, catMenu: false, shown: null }, function () { self.build(); restore(); }); }
+        click: () => { var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: c.key, jcat: null, mcat: null, limit: 12, catMenu: false, shown: null }, function () { self.build(); restore(); }); }
       })),
       cats: cats.map((c, i) => ({
         label: c.label,
@@ -2269,6 +2283,10 @@ class Component extends DCLogic {
     })(t0);
   }
   window.__jrTop = function () { glide(0); };
+  // The app's own glideTo is the design's leisurely one. The three routes that
+  // put the reader at the top of All jobs borrow this instead, so landing there
+  // feels like the rest of the page.
+  window.__jrGlide = function (y) { glide(y); };
 
   function sectionTop(label) {
     var sec = null;
@@ -2398,6 +2416,12 @@ class Component extends DCLogic {
     return sec ? (sec.querySelector('h2') || sec.querySelector('h1') || sec) : null;
   }
   function holdJobsHeading() {
+    // Three routes deliberately move the reader to the top of the list — its
+    // discipline dropdown, "All X roles" and "All company roles". jobsTop
+    // stamps this before any of the corrections below run, because the hold is
+    // registered in the capture phase and would otherwise drag them back.
+    var stamp = window.__jrJobsTop || 0;
+    if (stamp && ((window.performance && performance.now ? performance.now() : Date.now()) - stamp) < 1500) return;
     var h = jobsHeading();
     if (!h) return;
     var before = h.getBoundingClientRect().top;
@@ -2492,6 +2516,10 @@ class Component extends DCLogic {
            });
       if (!stillEmpty) tile.removeAttribute('data-emptytile');
     });
+    // Hiding one changes how many are on screen, and the row is laid out by
+    // that count. Re-tag in the same pass or the column it vacated stays
+    // reserved and shows as a grey block.
+    tagTiles();
   }
   hideEmptyTiles();
   setInterval(hideEmptyTiles, 900);
@@ -2541,21 +2569,36 @@ class Component extends DCLogic {
   // Tile grids are laid out by the design for a wide screen and collapse to one
   // column on a phone, which turns three readings into three screens. Tag them
   // by how many tiles they hold so the stylesheet can lay them out properly.
+  //
+  // The count is of tiles actually on screen, not of children. A row draws its
+  // own hairlines as a light background showing through a 1px gap, so a column
+  // the stylesheet reserves for a tile that is hidden is not a space: it is a
+  // grey block sitting beside the readings. Median days to fill is hidden until
+  // roles start closing, which left exactly that block next to Open roles and
+  // New this week.
   function tagTiles() {
     var scope = document.querySelectorAll('section[data-screen-label] *, [role="dialog"] *');
     scope.forEach(function (e) {
-      if (e.hasAttribute('data-tiles')) return;
-      if (getComputedStyle(e).display !== 'grid') return;
-      var n = e.children.length;
-      var sec = e.closest('section[data-screen-label]');
-      var lbl = sec ? sec.getAttribute('data-screen-label') : '';
-      // The pie row in IC vs managers is a grid as well, and forcing three
-      // equal columns on it squashed the chart.
-      if (lbl === 'IC vs managers' || lbl === 'Field') return;
-      // A row of dropdowns is a grid of three as well, and three equal columns
-      // on a phone left each one too narrow to read its own selection.
-      if (e.querySelector('select, input, textarea')) return;
-      if (n === 3 || n === 5) e.setAttribute('data-tiles', String(n));
+      if (!e.hasAttribute('data-tilerow')) {
+        if (e.hasAttribute('data-tiles')) return;
+        if (getComputedStyle(e).display !== 'grid') return;
+        var n = e.children.length;
+        var sec = e.closest('section[data-screen-label]');
+        var lbl = sec ? sec.getAttribute('data-screen-label') : '';
+        // The pie row in IC vs managers is a grid as well, and forcing three
+        // equal columns on it squashed the chart.
+        if (lbl === 'IC vs managers' || lbl === 'Field') return;
+        // A row of dropdowns is a grid of three as well, and three equal columns
+        // on a phone left each one too narrow to read its own selection.
+        if (e.querySelector('select, input, textarea')) return;
+        if (n !== 3 && n !== 5) return;
+        e.setAttribute('data-tilerow', '');
+      }
+      var vis = 0;
+      [].forEach.call(e.children, function (c) {
+        if (getComputedStyle(c).display !== 'none') vis++;
+      });
+      if (e.getAttribute('data-tiles') !== String(vis)) e.setAttribute('data-tiles', String(vis));
     });
   }
   tagTiles();
@@ -2593,6 +2636,22 @@ class Component extends DCLogic {
     }
   }).observe(document.body, { childList: true, subtree: true });
   setInterval(function () { tagTiles(); tagTicker(); }, 1200);
+
+  // The company view is not a dialog — it opens inline inside All jobs — so the
+  // observer above never fired for it and its five tiles were laid out by that
+  // 1200ms poll. Measured: the readings are correct at 34ms and the row is
+  // still two columns wide at 1000ms, which is why "Hiring most for" appears to
+  // arrive a second late. It was never late; the row was.
+  //
+  // Widening the observer is what locked the renderer last time, because
+  // rescanning the document on every mutation runs getComputedStyle over
+  // thousands of elements on each frame of the bubble physics. A click is the
+  // only thing that opens the view and clicks are rare, so hang it off that.
+  document.addEventListener('click', function () {
+    requestAnimationFrame(function () { tagTiles(); hideEmptyTiles(); });
+    setTimeout(function () { tagTiles(); hideEmptyTiles(); }, 140);
+    setTimeout(function () { tagTiles(); hideEmptyTiles(); }, 420);
+  }, true);
 
   // The level filter shipped as six checkboxes stacked down the page, above the
   // discipline dropdown rather than beside it. It is now a select sitting next
@@ -3155,6 +3214,12 @@ class Component extends DCLogic {
     + '  section[data-screen-label="All jobs"] select{font-size:11px;padding:6px 11px}'
     // Three readings belong on one row, not stacked down three screens.
     + '  [data-tiles="3"]{grid-template-columns:repeat(3,1fr)!important}'
+    // The count is of tiles on screen, so a row whose third reading is not
+    // measurable yet asks for two columns and leaves no reserved column for
+    // the hairline background to show through.
+    + '  [data-tiles="1"]{grid-template-columns:1fr!important}'
+    + '  [data-tiles="2"]{grid-template-columns:repeat(2,1fr)!important}'
+    + '  [data-tiles="4"]{grid-template-columns:repeat(2,1fr)!important}'
     // Five tiles as three then two, with no hole in the second row: a six
     // column track lets the first three span two each and the last two span
     // three each.

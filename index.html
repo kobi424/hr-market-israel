@@ -259,7 +259,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
         <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: clamp(16px, 3vw, 44px);">
           <h1 style="margin: 0; font-size: clamp(76px, 19vw, 280px); line-height: .82; font-weight: 700; letter-spacing: -0.05em; display: flex; overflow: hidden; color: #f4f7f9;">
             <sc-for list="{{ letters }}" as="l" hint-placeholder-count="4">
-              <span style="display: inline-block; background: linear-gradient(100deg, #f4f7f9 20%, {{ accent }} 42%, #f4f7f9 64%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: riseIn 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ l.d }}s;">{{ l.ch }}</span>
+              <span style="display: inline-block; color: {{ accent }}; animation: riseIn 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ l.d }}s;">{{ l.ch }}</span>
             </sc-for>
           </h1>
           <div style="position: relative; display: flex; flex-direction: column; gap: 6px; padding-bottom: clamp(6px, 1.4vw, 22px); animation: fadeUp 1.4s cubic-bezier(.16,.84,.24,1) both; animation-delay: .5s;">
@@ -1322,7 +1322,7 @@ class Component extends DCLogic {
     if (!el) return;
     this._field = el;
     const w = el.clientWidth, h = el.clientHeight;
-    let scale = (this._isSmall ? 1.3 : 1) * (window.__bubbleZoom || 1);
+    let scale = (this._isSmall ? 1.3 : 1) * (window.__bubbleSize || 1);
     const list = this.jobs();
     if (this.state.cursor != null && this._liveScale) {
       scale = this._liveScale;
@@ -1635,7 +1635,7 @@ class Component extends DCLogic {
       const hue = HUES[j.category] != null ? HUES[j.category] : 210;
       const f = Math.max(0.12, 1 - Math.min(30, j.postedDays) / 30);
       const dim = filter && j.category !== filter;
-      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.3 : 1) * (window.__bubbleZoom || 1));
+      const size = Math.round(this.sizeFor(j.postedDays) * (this._isSmall ? 1.3 : 1) * (window.__bubbleSize || 1));
       const playing = this.state.cursor != null;
       const isNew = playing && j._new && !j.stock;
       const isToday = playing && j._today && !j.stock;
@@ -2382,39 +2382,77 @@ class Component extends DCLogic {
   // Zoom for the bubble field. The factor is read by both the renderer and the
   // physics, so the space reserved per bubble always matches the size it is
   // drawn at and zooming in can never make them overlap.
+  // Zoom magnifies the field, the way a map zooms: the whole picture gets
+  // closer, including the gaps. Scaling each bubble instead just made the
+  // circles fatter in the same space, which is not what looking closer means.
+  // The field element itself is transformed inside a clipping wrapper, so the
+  // section keeps its place on the page and the physics is left alone.
   window.__bubbleZoom = 1;
-  var ZMIN = 0.6, ZMAX = 2.4;
+  window.__bubbleSize = 1;
+  var ZMIN = 1, ZMAX = 3, SMIN = 0.6, SMAX = 1.8;
+
+  // Size is separate from zoom: zoom brings the picture closer, size changes
+  // how large each role is drawn within it. The patched resize handler
+  // re-renders as well as re-lays-out, which is what makes this take effect.
+  function applySize(next) {
+    var v = Math.max(SMIN, Math.min(SMAX, Math.round(next * 20) / 20));
+    if (v === window.__bubbleSize) return;
+    window.__bubbleSize = v;
+    dispatchEvent(new Event('resize'));
+  }
   function applyZoom(next) {
     var z = Math.max(ZMIN, Math.min(ZMAX, Math.round(next * 20) / 20));
-    if (z === window.__bubbleZoom) return;
     window.__bubbleZoom = z;
+    var field = document.querySelector('[data-field="1"]');
+    if (field) {
+      field.style.transformOrigin = 'center center';
+      field.style.transform = z === 1 ? '' : 'scale(' + z + ')';
+      field.style.willChange = z === 1 ? '' : 'transform';
+    }
     var out = document.querySelector('[data-zoomlevel]');
     if (out) out.textContent = Math.round(z * 100) + '%';
-    // The design rebuilds the field on resize, which is the cheapest way to ask
-    // it to lay out again without reaching into React's internals.
-    dispatchEvent(new Event('resize'));
   }
 
   function mountZoom() {
     var field = document.querySelector('[data-field="1"]');
-    if (!field || document.querySelector('[data-zoomui]')) return;
-    if (getComputedStyle(field).position === 'static') field.style.position = 'relative';
+    if (!field) return;
+    // A wrapper around the field, not inside it: React owns the field's
+    // children and would discard anything added there, but it never touches
+    // the field's parent. The wrapper clips the magnified field to its
+    // original box so the rest of the page does not move.
+    if (!field.parentElement || !field.parentElement.hasAttribute('data-fieldwrap')) {
+      var wrap = document.createElement('div');
+      wrap.setAttribute('data-fieldwrap', '');
+      field.parentNode.insertBefore(wrap, field);
+      wrap.appendChild(field);
+    }
+    if (document.querySelector('[data-zoomui]')) return;
     var box = document.createElement('div');
     box.setAttribute('data-zoomui', '');
     box.innerHTML =
       '<button type="button" data-zoom="out" aria-label="Zoom out of the field">&minus;</button>'
       + '<span data-zoomlevel>100%</span>'
       + '<button type="button" data-zoom="in" aria-label="Zoom into the field">+</button>'
-      + '<button type="button" data-zoom="reset" aria-label="Reset the zoom">Reset</button>';
+      + '<button type="button" data-zoom="reset" aria-label="Reset the view">Reset</button>'
+      + '<span data-zoomsep></span>'
+      + '<button type="button" data-size="down" aria-label="Draw the roles smaller">&#9679;</button>'
+      + '<button type="button" data-size="up" aria-label="Draw the roles larger">&#11044;</button>';
     box.addEventListener('click', function (e) {
+      var sz = e.target.closest('[data-size]');
+      if (sz) {
+        e.preventDefault();
+        e.stopPropagation();
+        applySize(window.__bubbleSize * (sz.dataset.size === 'up' ? 1.12 : 1 / 1.12));
+        return;
+      }
       var b = e.target.closest('[data-zoom]');
       if (!b) return;
       e.preventDefault();
       e.stopPropagation();
-      if (b.dataset.zoom === 'reset') applyZoom(1);
+      if (b.dataset.zoom === 'reset') { applyZoom(1); applySize(1); }
       else applyZoom(window.__bubbleZoom * (b.dataset.zoom === 'in' ? 1.15 : 1 / 1.15));
     });
-    field.appendChild(box);
+    (field.parentElement || field).appendChild(box);
 
     // Wheel over the field zooms. At either limit the event is left alone, so
     // the page still scrolls past rather than trapping the reader in the field.
@@ -2453,13 +2491,17 @@ class Component extends DCLogic {
     + '[data-levelhead]:hover{border-color:rgba(255,255,255,.4);color:#fff}'
     + '[data-levelgroup][data-open="0"]{display:none}'
     // Zoom control: small, tucked into the bottom right of the field.
-    + '[data-zoomui]{position:absolute;left:12px;top:12px;z-index:8;display:flex;'
-    + 'align-items:center;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.14);'
+    + 'section[data-screen-label="Field"] [data-fieldwrap]{position:relative;overflow:hidden}'
+    + '[data-zoomui]{position:absolute;left:12px;top:12px;z-index:8;display:inline-flex;'
+    + 'align-items:center;justify-content:center;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.14);'
     + 'border-radius:999px;background:rgba(6,8,10,.72);backdrop-filter:blur(8px)}'
-    + '[data-zoomui] button{min-width:24px;height:24px;border:0;border-radius:999px;background:none;'
+    + '[data-zoomui] button{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border:0;border-radius:999px;background:none;'
     + 'color:#cbd4d9;font:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0}'
     + '[data-zoomui] button:hover{background:rgba(255,255,255,.1);color:#fff}'
     + '[data-zoom="reset"]{font-size:9px!important;letter-spacing:.1em;text-transform:uppercase;padding:0 8px}'
+    + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
+    + '[data-size]{font-size:9px!important;color:#8b959c!important}'
+    + '[data-size="up"]{font-size:12px!important}'
     + '[data-zoomlevel]{min-width:34px;text-align:center;font:600 10px ui-monospace,'
     + 'SFMono-Regular,Menlo,monospace;color:#8b959c;letter-spacing:.04em}'
 
@@ -2475,7 +2517,7 @@ class Component extends DCLogic {
     // problem.
     + 'div:has(> [data-jobchip]) > div:first-child{flex:1 1 0;min-width:0}'
     + '[data-jobchip]{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}'
-    + '[data-jobclose]{flex:none;order:5}'
+    + '[data-jobclose]{flex:none;order:5;display:inline-flex;align-items:center;justify-content:center;line-height:1;padding:0}'
     // The dialog scrolls down, never sideways.
     + '[role="dialog"][aria-label="Job details"]{overflow-x:hidden}'
     + '[role="dialog"][aria-label="Job details"] *{max-width:100%}'
@@ -2486,7 +2528,8 @@ class Component extends DCLogic {
     // Smaller action buttons in the list and card, so the role itself leads.
     + '  [role="dialog"][aria-label="Job details"] a,'
     + '  [role="dialog"][aria-label="Job details"] button{font-size:11px;padding:8px 13px}'
-    + '  [data-jobclose]{width:30px;height:30px;padding:0}'
+    + '  [role="dialog"][aria-label="Job details"] [data-jobclose]{width:30px;height:30px;padding:0;font-size:15px}'
+    + '  [data-zoomui]{left:8px;top:8px;transform:scale(.92);transform-origin:left top}'
     // The IC / managers readout measures inside the viewport at 375px here, but
     // it is a single nowrap row whose width follows the discipline name, so a
     // longer label or a wider font would push it past the edge. Make that

@@ -1759,7 +1759,7 @@ class Component extends DCLogic {
       label: p.label,
       weight: p.measurable ? ('\u00b1' + p.cap) : 'no data yet',
       val: Math.round(((p.delta + p.cap) / (2 * p.cap)) * 100),
-      contrib: p.measurable ? ((p.delta > 0 ? '+' : '') + p.delta) : '\u2014',
+      contrib: p.measurable ? (function (v) { return (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v); })(Math.round(p.delta * (50 / 6))) : '\u2014',
       how: (p.bands || []).map(function (b) { return b.range + '  \u2192  ' + b.points; }).join('\n') + (p.scaleNote ? '\n\n' + p.scaleNote : ''),
       color: p.delta > 0 ? up : p.delta < 0 ? down : '#c8d0d6',
       detail: p.detail,
@@ -1839,7 +1839,7 @@ class Component extends DCLogic {
           return (v > 0 ? '+ ' : v < 0 ? '\u2212 ' : '\u00b1 ') + Math.abs(v);
         });
         var conv = '50 (neutral)   ' + each.join('   ') + '   =   ' + (dv.score != null ? dv.score : '');
-        return pts + '\n' + conv;
+        return conv;
       })(),
       replaying: rp != null,
       replayLabel: rp == null ? 'Replay last week to now' : 'Replaying',
@@ -1847,7 +1847,7 @@ class Component extends DCLogic {
       replayNote: rp == null ? '' : 'Showing last week moving to this week',
       heroAdded: fcat ? new7 : L(t.addedPrevWeek, t.addedThisWeek),
       heroClosed: fcat ? '' : L(t.removedPrevWeek, t.removedThisWeek),
-      heroClosedText: fcat ? '' : '\u2212' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
+      heroClosedText: (fcat || t.removedThisWeek == null) ? '' : '\u2212' + L(t.removedPrevWeek, t.removedThisWeek) + ' closed this week',
       heroAddedLabel: fcat ? 'posted in the last 7 days' : 'added this week',
       heroClosedLabel: fcat ? '' : 'closed this week',
       heroOpen: fcat ? fcat.open : L(prevOpen, t.open),
@@ -2445,6 +2445,32 @@ class Component extends DCLogic {
     if (t && t.closest && t.closest('section[data-screen-label="All jobs"]')) holdJobsHeading();
   }, true);
 
+  // A tile that only says it has nothing to say is worse than no tile. Hide the
+  // ones waiting on data, and let them reappear on their own the moment the
+  // feed carries a real figure: this reads the rendered text, so nothing has to
+  // be remembered about which tiles are pending.
+  var EMPTY_TILE = /not measurable until roles close|no snapshot from last week yet|no prior (week|period)/i;
+  function hideEmptyTiles() {
+    document.querySelectorAll('section[data-screen-label] *').forEach(function (e) {
+      if (e.children.length || e.hasAttribute('data-emptychecked')) return;
+      var t = (e.textContent || '').trim();
+      if (!t || !EMPTY_TILE.test(t)) return;
+      // walk up to the tile, which is the block holding the label and the value
+      var tile = e;
+      for (var i = 0; i < 4 && tile.parentElement; i++) {
+        tile = tile.parentElement;
+        if (tile.children.length >= 2 && tile.children.length <= 4) break;
+      }
+      tile.setAttribute('data-emptytile', '');
+    });
+    // and drop the flag from any that have since filled in
+    document.querySelectorAll('[data-emptytile]').forEach(function (tile) {
+      if (!EMPTY_TILE.test(tile.textContent || '')) tile.removeAttribute('data-emptytile');
+    });
+  }
+  hideEmptyTiles();
+  setInterval(hideEmptyTiles, 900);
+
   // An i with nothing behind it is a button that does nothing when pressed, so
   // hide it until the feed carries the scale text for that row.
   function syncHowButtons() {
@@ -2972,6 +2998,7 @@ class Component extends DCLogic {
     + '[data-filterrow] select{min-height:44px!important}'
     + '}'
     // The per-row scale, behind a marker.
+    + '[data-emptytile]{display:none!important}'
     + '[data-howbtn]{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;'
     + 'margin-left:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.22);border-radius:999px;'
     + 'background:none;color:#8b959c;font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;'

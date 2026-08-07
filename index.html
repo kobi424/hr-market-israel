@@ -2510,9 +2510,25 @@ class Component extends DCLogic {
     e.stopPropagation();
     var row = b.closest('li') || b.parentElement;
     if (!row) return;
-    if (row.hasAttribute('data-howopen')) row.removeAttribute('data-howopen');
-    else row.setAttribute('data-howopen', '');
+    var open = row.hasAttribute('data-howopen');
+    // One at a time, and the popup needs a positioned ancestor to hang from.
+    document.querySelectorAll('[data-howopen]').forEach(function (r) { r.removeAttribute('data-howopen'); });
+    if (!open) {
+      var host = b.parentElement;
+      if (host) host.setAttribute('data-howwrap', '');
+      row.setAttribute('data-howopen', '');
+    }
   }, true);
+
+  // Click anywhere else, or press escape, and the popup closes.
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && (e.target.closest('[data-howbtn]') || e.target.closest('[data-how]'))) return;
+    document.querySelectorAll('[data-howopen]').forEach(function (r) { r.removeAttribute('data-howopen'); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('[data-howopen]').forEach(function (r) { r.removeAttribute('data-howopen'); });
+  });
 
   // Tile grids are laid out by the design for a wide screen and collapse to one
   // column on a phone, which turns three readings into three screens. Tag them
@@ -3029,9 +3045,17 @@ class Component extends DCLogic {
     + '[data-howbtn]:hover{border-color:rgba(255,255,255,.5);color:#eef2f4}'
     // The bands arrive as one line per range, so keep the breaks and lay them
     // out in a monospaced column: it reads as a table without needing one.
-    + '[data-how]{display:none;margin-top:8px;color:#8b959c;font-size:11.5px;line-height:1.75;'
-    + 'white-space:pre-line;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
-    + 'border-left:2px solid rgba(255,255,255,.12);padding-left:11px}'
+    // A popup rather than a third paragraph in the row: it opens over the panel,
+    // says its piece and closes, instead of pushing everything below it down.
+    + '[data-howwrap]{position:relative}'
+    + '[data-how]{display:none;position:absolute;z-index:30;top:calc(100% + 8px);left:0;'
+    + 'width:max-content;max-width:min(330px,78vw);white-space:pre-line;'
+    + 'background:#0d1115;border:1px solid rgba(255,255,255,.16);border-radius:10px;'
+    + 'padding:12px 14px;box-shadow:0 20px 44px rgba(0,0,0,.6);'
+    + 'color:#a8b2b9;font:500 11.5px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace}'
+    + '[data-how]:before{content:"";position:absolute;top:-5px;left:14px;width:8px;height:8px;'
+    + 'background:#0d1115;border-left:1px solid rgba(255,255,255,.16);'
+    + 'border-top:1px solid rgba(255,255,255,.16);transform:rotate(45deg)}'
     + '[data-howopen] [data-how]{display:block}'
     // The scale as a table: a range and what it is worth, no jargon.
     + '[data-bandtable]{width:100%;max-width:340px;border-collapse:collapse;margin:2px 0 4px}'

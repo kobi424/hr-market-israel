@@ -1230,7 +1230,7 @@ class Component extends DCLogic {
     const cap = this._isSmall ? 12 : (this.props.maxBubbles || 400);
     let pool = d.jobs;
     if (this._isSmall) {
-      const key = this.state.filter || this.mobileCat();
+      const key = this.state.mcat || this.state.filter || this.mobileCat();
       if (key) pool = pool.filter(j => j.category === key);
     }
     const cur = this.state.cursor;
@@ -2066,7 +2066,7 @@ class Component extends DCLogic {
           active: shown,
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
-            ? this.setState({ mcat: c.key }, () => this.build())
+            ? this.setState({ mcat: this.state.mcat === c.key ? null : c.key }, () => this.build())
             : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
         };
       }),
@@ -2521,10 +2521,33 @@ class Component extends DCLogic {
     + '[data-splitjobs="1"]{max-height:17em;overflow-y:auto}'
     // The playback is out until there is real closure data to replay.
     + '[data-hidden-control]{display:none!important}'
+
+    // ---- hero order ----
+    // The state word and the score sit in one flex-wrap row with
+    // align-items: flex-end, so which one leads depends on how wide the word
+    // is: BULL and NEUTRAL laid out differently. On a phone the order is fixed,
+    // word first and score under it, whatever the verdict says.
+    + '@media (max-width:620px){'
+    + '  [data-parallax="-0.12"] > div:first-child{flex-direction:column;align-items:flex-start!important;gap:14px}'
+    + '}'
+
+    // ---- tap targets ----
+    // The discipline chips measured 152x16. Both Apple and Google put the
+    // minimum at 44px. min-height only ever raises a short control, so the
+    // rows that are already tall enough are untouched.
+    + '@media (max-width:620px){'
+    + '  section[data-screen-label] li > button,'
+    + '  section[data-screen-label] li > a,'
+    + '  nav button{min-height:44px;display:inline-flex;align-items:center}'
+    + '  section[data-screen-label] label{min-height:44px;display:flex;align-items:center}'
+    + '  section[data-screen-label] input[type="checkbox"]{width:20px;height:20px}'
+    // The controls this script owns are deliberately compact and stay so.
+    + '  [data-zoomui] button,[data-jobclose]{min-height:0}'
+    + '}'
     // The discipline pill must not move the menu button when the name is long.
     + '[aria-label="Filter by discipline"]{max-width:min(46vw,240px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}'
     + '@media (max-width:620px){[aria-label="Filter by discipline"]{max-width:44vw;font-size:9px!important;letter-spacing:.08em!important}}'
-    + '@media (max-width:620px){section[data-screen-label="Verdict"] [data-heroblock]{display:flex;flex-direction:column;align-items:flex-start}}'
+    
     // Level filter collapsed behind a summary, like the discipline dropdown.
     + '[data-levelhead]{display:block;width:100%;text-align:left;background:none;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:7px 11px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c3ccd2;cursor:pointer;margin-bottom:6px}'
     + '[data-levelhead]:hover{border-color:rgba(255,255,255,.4);color:#fff}'

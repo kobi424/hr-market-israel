@@ -1494,7 +1494,7 @@ class Component extends DCLogic {
 
   listVals(d, cats, filter) {
     const dv = (d && filter && d.categoryVerdict && d.categoryVerdict[filter]) || (d && d['verdict']) || null;
-    const jc = this.state.jcat;
+    const jc = this.state.small ? this.state.jcat : null;
     filter = (jc == null) ? filter : (jc === '_all' ? null : jc);
     const SEN = ['all', 'junior', 'specialist', 'senior', 'manager', 'senior-manager', 'director'];
     const sen = this.state.sen, sort = this.state.sort, limit = this.state.limit;
@@ -1523,7 +1523,10 @@ class Component extends DCLogic {
       noResults: all.length === 0,
       setQuery: e => this.setState({ q: e.target.value, limit: 12 }),
       clearQuery: () => this.setState({ q: '', limit: 12 }),
-      resetFilters: () => this.setState({ q: '', jcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }, () => this.build()),
+      resetFilters: () => this.setState(s => (s.small
+        ? { q: '', jcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }
+        : { q: '', filter: null, jcat: null, mcat: null, sen: 'all', tier: null, company: null, limit: 12, shown: null }
+      ), () => this.build()),
       companyOn: !!company,
       companyName: company || '',
       clearCompany: () => this.setState({ company: null, limit: 12 }),
@@ -1549,7 +1552,7 @@ class Component extends DCLogic {
         .map(c => Object.assign({
           label: c.label, active: filter === c.key,
           aria: c.key ? 'Show only ' + c.key.replace(/-/g, ' ') + ' roles' : 'Show roles from every discipline',
-          click: () => this.setState({ jcat: c.key == null ? '_all' : c.key, limit: 12, shown: null }, () => this.build())
+          click: () => this.setState({ filter: c.key, jcat: null, mcat: null, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); })
         }, chip(filter === c.key))),
       tierBoxes: (() => {
         const pool = (d.jobs || []).filter(j => (!filter || j.category === filter));
@@ -2026,7 +2029,11 @@ class Component extends DCLogic {
           click: () => this.setState({ job: x, descOpen: false }, () => { var d = document.querySelector('[role="dialog"][aria-label="Job details"]'); if (d) d.scrollTop = 0; })
         }));
       })(),
-      filterFromJob: () => this.setState(s => ({ jcat: s.job ? s.job.category : '_all', job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
+      filterFromJob: () => this.setState(s => Object.assign(
+        { job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null },
+        s.small ? { jcat: s.job ? s.job.category : '_all' }
+                : { filter: s.job ? s.job.category : null, jcat: null, mcat: null }
+      ), () => { this.build(); this.jobsTop(); }),
       companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       copyLink: () => {
         const j = this.state.job;
@@ -2114,7 +2121,7 @@ class Component extends DCLogic {
           aria: this.state.small ? 'Show the ' + c.label + ' field' : (filter === c.key ? 'Clear the ' + c.label + ' filter' : 'Filter the field to ' + c.label),
           click: () => this.state.small
             ? this.setState(s => ({ mcat: s.mcat === c.key ? null : c.key }), () => this.build())
-            : this.setState({ filter: filter === c.key ? null : c.key, limit: 12 }, () => this.build())
+            : this.setState({ filter: filter === c.key ? null : c.key, jcat: null, mcat: null, limit: 12, shown: null }, () => this.build())
         };
       }),
       fieldNoteMobile: this.state.small ? 'One discipline at a time on a small screen. Tap a colour below to switch.' : '',
@@ -2647,10 +2654,14 @@ class Component extends DCLogic {
   // rescanning the document on every mutation runs getComputedStyle over
   // thousands of elements on each frame of the bubble physics. A click is the
   // only thing that opens the view and clicks are rare, so hang it off that.
+  // buildLevelSelect rides along for the same reason: a click is what re-renders
+  // the filter row, and waiting 900ms to re-hide the level group is what let it
+  // flash back on screen.
+  function settle() { tagTiles(); hideEmptyTiles(); buildLevelSelect(); }
   document.addEventListener('click', function () {
-    requestAnimationFrame(function () { tagTiles(); hideEmptyTiles(); });
-    setTimeout(function () { tagTiles(); hideEmptyTiles(); }, 140);
-    setTimeout(function () { tagTiles(); hideEmptyTiles(); }, 420);
+    requestAnimationFrame(settle);
+    setTimeout(settle, 140);
+    setTimeout(settle, 420);
   }, true);
 
   // The level filter shipped as six checkboxes stacked down the page, above the
@@ -3064,6 +3075,15 @@ class Component extends DCLogic {
     
     
     + '[data-levelrow]{display:none!important}'
+    // The six level checkboxes kept reappearing on a phone. They are marked
+    // data-levelrow by buildLevelSelect, but React replaces the fieldset on a
+    // re-render and the replacement arrives without the attribute, so they were
+    // on screen until the next 900ms pass — the same shape of bug as the nav
+    // menu. Hide the group in the stylesheet, where nothing can lose it: this
+    // is the only fieldset the design draws, it renders only on a phone, and
+    // the injected dropdown is what drives it. Hidden inputs still take a
+    // programmatic click, so the dropdown keeps working.
+    + 'section[data-screen-label="All jobs"] fieldset{display:none!important}'
     // The panel was 375px wide inside a 375px viewport with 12px insets, so
     // its right edge landed at 387. Let the insets decide the width.
     + '@media (max-width:620px){nav{width:auto!important;box-sizing:border-box}}'

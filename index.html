@@ -1221,7 +1221,7 @@ class Component extends DCLogic {
   jobs() {
     const d = this.state.data;
     if (!d || !Array.isArray(d.jobs)) return [];
-    const cap = this._isSmall ? 12 : (this.props.maxBubbles || 400);
+    const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
     if (this._isSmall) {
       const key = this.state.filter || this.state.mcat || this.mobileCat();
@@ -1333,7 +1333,7 @@ class Component extends DCLogic {
     this._anchors = {};
     keys.forEach((k, i) => {
       const a = (i / Math.max(1, keys.length)) * Math.PI * 2 - Math.PI / 2;
-      this._anchors[k] = this._isSmall ? { x: 0.5, y: 0.5 }
+      this._anchors[k] = this._isSmall ? { x: 0.5 + Math.cos(a) * 0.33, y: 0.5 + Math.sin(a) * 0.33 }
         : { x: 0.5 + Math.cos(a) * 0.42, y: 0.5 + Math.sin(a) * 0.36 };
     });
     this._parts = list.map((j, i) => {
@@ -1562,7 +1562,7 @@ class Component extends DCLogic {
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
       setFilterSelect: e => { const v = e.target.value; var self = this; var sc = self._scroller; var keep = sc ? sc.scrollTop : (window.scrollY || 0); var restore = function () { requestAnimationFrame(function () { if (sc) sc.scrollTop = keep; else window.scrollTo(0, keep); }); }; self.setState({ filter: v === 'all' ? null : v, limit: 12, shown: null }, function () { self.build(); restore(); }); },
       sortValue: sort,
-      sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }, { value: 'company', label: 'Company' }],
+      sortOptions: [{ value: 'newest', label: 'Newest' }, { value: 'seniority', label: 'Seniority' }],
       setSortSelect: e => this.setState({ sort: e.target.value }),
       senBoxes: SEN.filter(x => x !== 'all').map(x => ({
         label: x.replace(/-/g, ' '),
@@ -2433,39 +2433,56 @@ class Component extends DCLogic {
     setTimeout(fix, 140);
     setTimeout(fix, 300);
   }
-  document.addEventListener('click', function (e) {
-    var t = e.target;
+  // Every route that can change the filter, not just the ones inside All jobs:
+  // the header pill and its menu move the page the same way, and on a phone
+  // that is the one most used.
+  function maybeHold(t) {
     if (!t || !t.closest) return;
-    if (!t.closest('section[data-screen-label="All jobs"]')) return;
-    if (!t.closest('button')) return;
-    holdJobsHeading();
-  }, true);
-  document.addEventListener('change', function (e) {
-    var t = e.target;
-    if (t && t.closest && t.closest('section[data-screen-label="All jobs"]')) holdJobsHeading();
-  }, true);
+    if (t.closest('section[data-screen-label="All jobs"]')
+        || t.closest('nav') === null && (t.closest('button') || t.closest('select'))) {
+      holdJobsHeading();
+    }
+  }
+  document.addEventListener('click', function (e) { maybeHold(e.target); }, true);
+  document.addEventListener('change', function (e) { maybeHold(e.target); }, true);
+  // The list re-renders after the state settles, so correct once more when it
+  // has: a single frame is not always enough on a phone.
+  document.addEventListener('click', function () { setTimeout(holdJobsHeading, 60); }, true);
 
   // A tile that only says it has nothing to say is worse than no tile. Hide the
   // ones waiting on data, and let them reappear on their own the moment the
   // feed carries a real figure: this reads the rendered text, so nothing has to
   // be remembered about which tiles are pending.
   var EMPTY_TILE = /not measurable until roles close|no snapshot from last week yet|no prior (week|period)/i;
+  // A value of nothing counts as empty too: the median tile renders an em dash
+  // over "not measurable", and the dash alone is what a reader sees first.
+  var EMPTY_VALUE = /^[—–-]$/;
   function hideEmptyTiles() {
     document.querySelectorAll('section[data-screen-label] *').forEach(function (e) {
-      if (e.children.length || e.hasAttribute('data-emptychecked')) return;
+      if (e.children.length) return;
       var t = (e.textContent || '').trim();
-      if (!t || !EMPTY_TILE.test(t)) return;
+      if (!t) return;
+      var empty = EMPTY_TILE.test(t) || EMPTY_VALUE.test(t);
+      if (!empty) return;
       // walk up to the tile, which is the block holding the label and the value
       var tile = e;
       for (var i = 0; i < 4 && tile.parentElement; i++) {
         tile = tile.parentElement;
         if (tile.children.length >= 2 && tile.children.length <= 4) break;
       }
+      // Only inside a tile row, never a chart axis or a list.
+      if (tile.querySelector('svg, ul, table')) return;
       tile.setAttribute('data-emptytile', '');
     });
-    // and drop the flag from any that have since filled in
+    // and drop the flag from any that have since filled in, so a tile comes
+    // back on its own the day the feed carries a real figure for it
     document.querySelectorAll('[data-emptytile]').forEach(function (tile) {
-      if (!EMPTY_TILE.test(tile.textContent || '')) tile.removeAttribute('data-emptytile');
+      var txt = tile.textContent || '';
+      var stillEmpty = EMPTY_TILE.test(txt)
+        || [].slice.call(tile.querySelectorAll('*')).some(function (n) {
+             return !n.children.length && EMPTY_VALUE.test((n.textContent || '').trim());
+           });
+      if (!stillEmpty) tile.removeAttribute('data-emptytile');
     });
   }
   hideEmptyTiles();
@@ -2999,6 +3016,12 @@ class Component extends DCLogic {
     + '}'
     // The per-row scale, behind a marker.
     + '[data-emptytile]{display:none!important}'
+    // Safari zooms the page whenever a focused control is under 16px, and it
+    // does not zoom back out afterwards. Sixteen exactly, on every control a
+    // phone can focus, is the only thing that stops it.
+    + '@media (max-width:620px){input,select,textarea{font-size:16px!important}'
+    + 'section[data-screen-label="All jobs"] select{font-size:16px!important}'
+    + '[data-bubsearch] input{font-size:16px!important;width:132px}}'
     + '[data-howbtn]{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;'
     + 'margin-left:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.22);border-radius:999px;'
     + 'background:none;color:#8b959c;font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;'

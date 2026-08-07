@@ -2329,15 +2329,16 @@ class Component extends DCLogic {
       row.style.display = Object.prototype.hasOwnProperty.call(MENU, label) ? '' : 'none';
     });
   }
-  var navShown = false;
   function pruneMenu2() {
     var items = document.querySelectorAll('nav button');
     if (!items.length) return;
     pruneMenu();
-    if (!navShown) {
-      navShown = true;
-      document.querySelectorAll('nav').forEach(function (n) { n.style.visibility = 'visible'; });
-    }
+    // Revealing once was wrong: React swaps the whole nav element out during
+    // mount, and the replacement arrives hidden by the stylesheet rule with no
+    // inline style on it. Reveal on every pass instead, which is idempotent.
+    document.querySelectorAll('nav').forEach(function (n) {
+      if (n.style.visibility !== 'visible') n.style.visibility = 'visible';
+    });
   }
   pruneMenu2();
   // A 500ms timer meant every visitor saw all five entries appear and two of
@@ -2349,8 +2350,14 @@ class Component extends DCLogic {
     new MutationObserver(pruneMenu2).observe(nav, { childList: true, subtree: true });
     pruneMenu2();
   })();
-  // React can replace the nav element wholesale, which orphans the observer
-  // above, so a modest timer stays as the safety net.
+  // That observer dies with the element it watches, and the 400ms timer below
+  // was what actually pruned the menu: half a second in, which is both why the
+  // entries took a beat to appear and why the header pill visibly shifted as
+  // the row re-flowed. Run every frame while the page is settling instead.
+  (function earlyPrune() {
+    pruneMenu2();
+    if (performance.now() < 4000) requestAnimationFrame(earlyPrune);
+  })();
   setInterval(pruneMenu2, 400);
   // Reveal regardless after a moment, so a script error can never leave the
   // navigation permanently hidden.

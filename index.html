@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="888445de60fe">
-<script>window.__jrBuild="888445de60fe"</script>
+<meta name="build" content="a5b2fd623707">
+<script>window.__jrBuild="a5b2fd623707"</script>
 </head>
 <body>
 <x-dc>
@@ -779,7 +779,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1.2,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:400,&quot;min&quot;:6,&quot;max&quot;:600,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;data.json&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;hello@hrjobs.co.il&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;motionSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.55,&quot;min&quot;:0.2,&quot;max&quot;:2.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;maxBubbles&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:400,&quot;min&quot;:6,&quot;max&quot;:600,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
 const HUES = { 'total-rewards': 152, 'hrbp': 205, 'talent-acquisition': 268, 'hr-ops': 32, 'learning': 330, 'hris': 186, 'leadership': 8, 'payroll': 288, 'analytics': 100 };
 const SIZES = { junior: 34, specialist: 58, senior: 70, manager: 78, 'senior-manager': 98, director: 122 };
   const IC_LEVELS = { junior: 1, specialist: 1, senior: 1 };
@@ -1432,7 +1432,7 @@ class Component extends DCLogic {
   }
 
   tick(t) {
-    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 1.2);
+    const dt = Math.min(0.05, (t - (this._last || t)) / 1000) * (this.props.motionSpeed || 0.55);
     this._last = t;
     const el = this._field;
     if (el) {
@@ -2045,17 +2045,17 @@ class Component extends DCLogic {
       jobFacts: (() => {
         const j = this.state.job;
         if (!j) return [];
-        return [
+        const facts = [
           { label: 'Level', value: j.seniority.replace(/-/g, ' '), color: '#eef2f4' },
-          { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#8b969e' },
-        ].concat(j.repostedAt ? [{ label: 'Reposted', color: '#dcc07a',
-          value: (function (d, n) {
-            var days = Math.round((Date.now() - Date.parse(d)) / 86400000);
-            var when = days <= 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
-            return when + (n > 1 ? ' (' + n + ' times)' : '');
-          })(j.repostedAt, j.repostCount) }] : []).concat([
-          { label: 'Track', value: (IC_LEVELS[j.seniority]) ? 'Individual' : 'Management', color: (IC_LEVELS[j.seniority]) ? st.accent : '#7fb1ff' }
+          { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#8b969e' }
         ];
+        if (j.repostedAt) facts.push({ label: 'Reposted', color: '#dcc07a', value: (function (d, n) {
+          var days = Math.round((Date.now() - Date.parse(d)) / 86400000);
+          var when = days <= 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
+          return when + (n > 1 ? ' (' + n + ' times)' : '');
+        })(j.repostedAt, j.repostCount) });
+        facts.push({ label: 'Track', value: (IC_LEVELS[j.seniority]) ? 'Individual' : 'Management', color: (IC_LEVELS[j.seniority]) ? st.accent : '#7fb1ff' });
+        return facts;
       })(),
       similarJobs: (() => {
         const j = this.state.job;

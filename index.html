@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="cc84759726bd">
-<script>window.__jrBuild="cc84759726bd"</script>
+<meta name="build" content="888445de60fe">
+<script>window.__jrBuild="888445de60fe"</script>
 </head>
 <body>
 <x-dc>
@@ -365,6 +365,9 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <div style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; color: #f2f5f7;">{{ tipTitle }}</div>
             <div style="font-size: 12px; color: #a8b2b9;">{{ tipCompany }}</div>
             <div style="font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: {{ accent }}; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">{{ tipMeta }}</div>
+            <sc-if value="{{ tipRepost }}" hint-placeholder-val="{{ '' }}">
+              <div style="font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #dcc07a; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">{{ tipRepost }}</div>
+            </sc-if>
           </div>
         </sc-if>
       </div>
@@ -2044,7 +2047,13 @@ class Component extends DCLogic {
         if (!j) return [];
         return [
           { label: 'Level', value: j.seniority.replace(/-/g, ' '), color: '#eef2f4' },
-          { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? st.accent : j.postedDays <= 10 ? '#c3ccd2' : '#8b969e' },
+          { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#8b969e' },
+        ].concat(j.repostedAt ? [{ label: 'Reposted', color: '#dcc07a',
+          value: (function (d, n) {
+            var days = Math.round((Date.now() - Date.parse(d)) / 86400000);
+            var when = days <= 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
+            return when + (n > 1 ? ' (' + n + ' times)' : '');
+          })(j.repostedAt, j.repostCount) }] : []).concat([
           { label: 'Track', value: (IC_LEVELS[j.seniority]) ? 'Individual' : 'Management', color: (IC_LEVELS[j.seniority]) ? st.accent : '#7fb1ff' }
         ];
       })(),
@@ -2180,6 +2189,13 @@ class Component extends DCLogic {
       })(),
       tip: !!hov, tipTitle: hov ? hov.title : '', tipCompany: hov ? hov.company : '',
       tipMeta: hov ? hov.sen.replace('-', ' ') + ' · posted ' + hov.days + (hov.days === 1 ? ' day' : ' days') + ' ago' : '',
+      tipRepost: (function (h) {
+        if (!h || !h.repostedAt) return '';
+        var days = Math.round((Date.now() - Date.parse(h.repostedAt)) / 86400000);
+        var when = days <= 0 ? 'today' : days === 1 ? 'yesterday'
+          : new Date(h.repostedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        return 'reposted ' + when + (h.repostCount > 1 ? ' \u00b7 ' + h.repostCount + ' times' : '');
+      })(hov),
       stats, series,
       hasFlow: flowRows.length > 1,
       addedNow: addedNow, removedNow: removedNow,

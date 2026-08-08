@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="a5b2fd623707">
-<script>window.__jrBuild="a5b2fd623707"</script>
+<meta name="build" content="f43fc061a49c">
+<script>window.__jrBuild="f43fc061a49c"</script>
 </head>
 <body>
 <x-dc>
@@ -1747,7 +1747,8 @@ class Component extends DCLogic {
         arrow: newD > 0 ? '▲' : newD < 0 ? '▼' : '■', color: newD > 0 ? up : newD < 0 ? down : flat,
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
       { label: 'Median days to fill', value: String(t.medianDaysToFill != null ? LE(t.medianDaysToFillPrev, t.medianDaysToFill) : '—'),
-        arrow: fillD < 0 ? '▼' : fillD > 0 ? '▲' : '■', color: fillD < 0 ? up : fillD > 0 ? down : flat,
+        arrow: t.medianDaysToFillPrev == null ? '\u25a0' : (fillD < 0 ? '\u25bc' : fillD > 0 ? '\u25b2' : '\u25a0'),
+        color: t.medianDaysToFillPrev == null ? flat : (fillD < 0 ? up : fillD > 0 ? down : flat),
         delta: t.medianDaysToFill == null ? 'not measurable until roles close' : ((t.medianDaysToFillPrev == null || isNaN(fillD)) ? '' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before') },
     ];
     if (!fcat && t.addedThisWeek != null && t.removedThisWeek != null) {

@@ -193,7 +193,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
         <div data-badge="1" style="display: flex; align-items: baseline; justify-content: {{ badgeJustify }}; gap: 10px; order: {{ badgeOrder }}; width: {{ badgeW }}; opacity: 0; transform: translate3d(0,-14px,0); transition: opacity .45s ease, transform .45s ease;">
           <span style="font-size: {{ badgeSize }}; font-weight: 700; letter-spacing: .04em;">{{ word }}</span>
           <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: {{ badgeSize }}; color: {{ accent }};">{{ score }}</span>
-          <span style="font-size: {{ badgeMeta }}; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82;">{{ heroOpen }} open · {{ scopeLabel }}</span>
+          
         </div>
         <div style="position: relative; flex: {{ pillFlex }}; display: flex; justify-content: {{ pillJustify }}; margin-left: {{ pillML }};">
           <button type="button" onClick="{{ toggleCatMenu }}" aria-haspopup="true" aria-expanded="{{ catMenuOpen }}" aria-label="Filter by discipline" style="display: flex; align-items: center; gap: 10px; background: none; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #cbd4d9; cursor: pointer; transition: border-color .25s ease;" style-hover="border-color: rgba(255,255,255,.5); color: #ffffff;">
@@ -246,7 +246,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 
       <header data-hero-top="1" style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.09); padding-bottom: 14px; margin-top: clamp(112px, 15vh, 150px);">
         <div style="font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: #cdd5da;">HR Market Israel</div>
-        <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">updated {{ agoLabel }}{{ confidenceNote }}</div>
+        <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">updated {{ agoLabel }}</div>
       </header>
 
       <div data-parallax="-0.12" style="position: relative; z-index: 1; display: flex; flex-direction: column; gap: clamp(20px, 3vw, 34px); padding: clamp(28px, 6vh, 72px) 0; will-change: transform;">
@@ -2121,13 +2121,6 @@ class Component extends DCLogic {
       why: (dv && dv.why) || [],
       whyChips: ((dv && dv.why) || []).map((text, i) => ({ text: text, d: (0.9 + i * 0.14).toFixed(2) })),
       agoLabel: (function (g) { var hrs = (Date.now() - Date.parse(g)) / 3600000; if (!isFinite(hrs)) return 'at an unknown time'; if (hrs > 168) return 'over a week ago · this feed has stopped updating'; if (hrs > 36) return 'over ' + Math.floor(hrs / 24) + ' days ago · update overdue'; return this.ago(g); }).call(this, d.generated),
-      confidenceNote: (function (v) {
-        if (!v) return '';
-        var w = v.weeksOfData || 0;
-        if (!w) return '';
-        var word = v.confidence === 'good' ? '' : (v.confidence === 'building' ? ' \u00b7 building' : ' \u00b7 early reading');
-        return word ? (word + ', ' + w + (w === 1 ? ' week' : ' weeks') + ' of history') : '';
-      })((this.state.filter && d.categoryVerdict && d.categoryVerdict[this.state.filter]) || d['verdict']),
       openLabel: t.open,
       fieldNote: 'Every role currently listed, drifting. Size and brightness follow how recently it was posted, so the newest roles are the largest and most vivid; colour is discipline. Hover or tab through for the title; click to open the listing.',
       legend: cats.map(c => {
@@ -3198,7 +3191,13 @@ class Component extends DCLogic {
     + '[data-zoomui] button,[data-bubsearch] input,[data-bubclear]{height:26px;box-sizing:border-box}'
     + '[data-bubsearch] input{width:132px;min-width:0;background:none;border:0;outline:none;color:#eef2f4;'
     + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:0 0 0 8px}'
-    + '[data-bubsearch] input::placeholder{color:#6f7a82;letter-spacing:.08em;text-transform:uppercase}'
+    // Same face as RESET beside it: Helvetica Neue 9px/400 at .1em, uppercase.
+    // Only the placeholder, because the input itself has to stay at 16px or
+    // focusing it zooms the whole page on iOS — that fix is older than this one
+    // and the visible text here is the placeholder anyway.
+    + '[data-bubsearch] input::placeholder{color:#6f7a82;'
+    + 'font:400 9px "Helvetica Neue",Helvetica,ui-sans-serif,system-ui,sans-serif;'
+    + 'letter-spacing:.1em;text-transform:uppercase}'
     + '[data-bubsearch] input::-webkit-search-cancel-button{display:none}'
     + '[data-bubcount]{font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#3ddc9b;padding:0 2px}'
     + '[data-bubclear]{display:none;align-items:center;justify-content:center;width:22px;height:22px;border:0;'
@@ -3216,8 +3215,7 @@ class Component extends DCLogic {
     // The zoom pill starts at 8 and is 143 wide at .92, so it ends near 151.
     + '@media (max-width:620px){[data-bubsearch]{left:158px;top:8px;align-items:center;'
     + 'transform:scale(.92);transform-origin:left top;padding:3px}'
-    + '[data-bubsearch] input{width:118px;padding:0 0 0 8px;letter-spacing:.02em}'
-    + '[data-bubsearch] input::placeholder{letter-spacing:.04em}}'
+    + '[data-bubsearch] input{width:118px;padding:0 0 0 8px;letter-spacing:.02em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'
     + '[data-size="up"]{font-size:12px!important}'

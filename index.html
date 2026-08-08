@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="b39d54749a19">
-<script>window.__jrBuild="b39d54749a19"</script>
+<meta name="build" content="65fa5de3493d">
+<script>window.__jrBuild="65fa5de3493d"</script>
 </head>
 <body>
 <x-dc>
@@ -390,9 +390,13 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.03em;">Added and removed <span style="font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82; margin-left: 10px;">{{ scopeNote }}</span></h2>
             <div style="display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
               <span style="color: #6f7a82; letter-spacing: .14em; text-transform: uppercase;">{{ flowWeekLabel }}</span>
-              <span style="color: {{ accent }};">+{{ flowAdded }} added</span>
-              <sc-if value="{{ hasRemovals }}" hint-placeholder-val="{{ false }}">
+              <sc-if value="{{ showAdded }}" hint-placeholder-val="{{ false }}">
+                <span style="color: #3ddc9b;">+{{ flowAdded }} added</span>
+              </sc-if>
+              <sc-if value="{{ showRemoved }}" hint-placeholder-val="{{ false }}">
                 <span style="color: #ff6257;">−{{ flowRemoved }} removed</span>
+              </sc-if>
+              <sc-if value="{{ showNet }}" hint-placeholder-val="{{ false }}">
                 <span style="color: #99a4ab;">net {{ flowNet }}</span>
               </sc-if>
             </div>
@@ -1622,7 +1626,7 @@ class Component extends DCLogic {
         title: j.title, company: j.company, url: j.url,
         sen: j.seniority.replace(/-/g, ' '),
         age: j.postedDays + 'd',
-        ageColor: j.postedDays <= 3 ? accent : j.postedDays <= 10 ? '#c3ccd2' : '#6f7a82',
+        ageColor: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#6f7a82',
         dot: 'hsl(' + (function (x, f) { var k = (f && inCat(x, f)) ? f : x.category; return HUES[k] != null ? HUES[k] : 210; })(j, filter) + ',72%,60%)',
         open: () => this.setState({ job: j, descOpen: false }),
         openCompany: e => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ company: j.company, limit: 12, shown: null }, () => this.jobsTop()); },
@@ -2164,7 +2168,7 @@ class Component extends DCLogic {
         const src = scoped.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, 16).map(j => ({
           company: j.company, title: j.title, age: j.postedDays + 'd', url: j.url,
           aria: j.title + ' at ' + j.company + ', posted ' + j.postedDays + ' days ago. Opens the listing in a new tab.',
-          ageColor: j.postedDays <= 3 ? st.accent : '#7d878e',
+          ageColor: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#7d878e',
           dot: 'hsl(' + (HUES[j.category] != null ? HUES[j.category] : 210) + ',72%,60%)'
         }));
         return src.concat(src);
@@ -2196,6 +2200,9 @@ class Component extends DCLogic {
       flowAdded: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.added : addedNow; })(),
       flowRemoved: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.removed : removedNow; })(),
       hasRemovals: removedNow != null && removedNow > 0,
+      showAdded: (function (s) { var r = s != null ? flowRows[s] : null; var v = r ? r.added : addedNow; return v != null && v > 0; })(this.state.flowHover),
+      showRemoved: (function (s) { var r = s != null ? flowRows[s] : null; var v = r ? r.removed : removedNow; return v != null && v > 0; })(this.state.flowHover),
+      showNet: (function (s) { var r = s != null ? flowRows[s] : null; var a = r ? r.added : addedNow; var b = r ? r.removed : removedNow; return a > 0 && b > 0; })(this.state.flowHover),
       flowNet: (() => {
         const i = this.state.flowHover;
         const r = i != null ? flowRows[i] : null;

@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="86571beb1cb0">
-<script>window.__jrBuild="86571beb1cb0"</script>
+<meta name="build" content="b39d54749a19">
+<script>window.__jrBuild="b39d54749a19"</script>
 </head>
 <body>
 <x-dc>
@@ -1249,14 +1249,12 @@ class Component extends DCLogic {
     if (!d || !Array.isArray(d.jobs)) return [];
     const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
-    pool = pool.reduce(function (acc, j) {
-      var ks = (j.categories && j.categories.length > 1) ? j.categories : null;
-      if (!ks) { acc.push(j); return acc; }
-      ks.forEach(function (k) {
-        acc.push(Object.assign({}, j, { id: j.id + '#' + k, category: k }));
-      });
-      return acc;
-    }, []);
+    const scopeKey = this.state.filter || (this._isSmall ? this.mobileCat() : null);
+    if (this._isSmall && scopeKey) pool = pool.filter(j => inCat(j, scopeKey));
+    if (scopeKey) pool = pool.map(function (j) {
+      return (j.category === scopeKey || !inCat(j, scopeKey))
+        ? j : Object.assign({}, j, { category: scopeKey });
+    });
     if (this._isSmall) {
       const key = this.state.filter || this.mobileCat();
       if (key) pool = pool.filter(j => j.category === key);

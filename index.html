@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="72e069db4a9e">
-<script>window.__jrBuild="72e069db4a9e"</script>
+<meta name="build" content="273ce42fd8ba">
+<script>window.__jrBuild="273ce42fd8ba"</script>
 </head>
 <body>
 <x-dc>
@@ -1764,7 +1764,7 @@ class Component extends DCLogic {
     series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
     const hi = this.state.chartHover;
     const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
-    const keysOf = [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
+    const keysOf = [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
 
     const flowRows = h.filter(r => r.added != null || r.removed != null);
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));

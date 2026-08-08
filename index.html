@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="776a2052a71a">
-<script>window.__jrBuild="776a2052a71a"</script>
+<meta name="build" content="72e069db4a9e">
+<script>window.__jrBuild="72e069db4a9e"</script>
 </head>
 <body>
 <x-dc>
@@ -1871,12 +1871,14 @@ class Component extends DCLogic {
         var c = dv.composite;
         var pts = bits.join('   ') + '   =   ' + (c > 0 ? '+' : '') + c + ' points';
         var each = (dv.parts || []).map(function (p) {
-          if (!p.measurable) return '\u00b1 0';
-          var v = Math.round(p.delta);
-          return (v > 0 ? '+ ' : v < 0 ? '\u2212 ' : '\u00b1 ') + Math.abs(v);
+          var v = p.measurable ? Math.round(p.delta) : 0;
+          return (v < 0 ? '\u2212 ' : '+ ') + Math.abs(v);
         });
-        var conv = '50 (neutral)   ' + each.join('   ') + '   =   ' + (dv.score != null ? dv.score : '');
-        return conv;
+        var w = dv.volumeWeight;
+        var body = (w != null && w < 1)
+          ? '( ' + each.join('   ') + ' )   \u00d7 ' + w
+          : each.join('   ');
+        return '50 (neutral)   ' + body + '   =   ' + (dv.score != null ? dv.score : '');
       })(),
       replaying: rp != null,
       replayLabel: rp == null ? 'Replay last week to now' : 'Replaying',

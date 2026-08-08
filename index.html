@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="8f6a8f69ebad">
-<script>window.__jrBuild="8f6a8f69ebad"</script>
+<meta name="build" content="86571beb1cb0">
+<script>window.__jrBuild="86571beb1cb0"</script>
 </head>
 <body>
 <x-dc>
@@ -434,8 +434,8 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           <sc-if value="{{ chartOn }}" hint-placeholder-val="{{ false }}">
             <div aria-hidden="true" style="position: absolute; left: clamp(12px, 1.6vw, 22px); right: clamp(12px, 1.6vw, 22px); top: clamp(16px, 2vw, 28px); bottom: clamp(16px, 2vw, 28px); pointer-events: none;">
               <div style="position: absolute; left: {{ chartPct }}; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.28);"></div>
-              <div style="position: absolute; left: {{ chartPct }}; top: 6px; transform: {{ chartSide }}; min-width: 176px; background: rgba(10,13,16,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;">
-                <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #8b959c;">week of {{ chartWeek }}</div>
+              <div data-charttip style="position: absolute; left: {{ chartPct }}; top: 6px; transform: {{ chartSide }}; min-width: 176px; background: rgba(10,13,16,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;">
+                <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #8b959c;">{{ chartWeek }}</div>
                 <sc-for list="{{ chartReads }}" as="cr" hint-placeholder-count="3">
                   <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px;">
                     <span style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #b3bcc2;">
@@ -1625,7 +1625,7 @@ class Component extends DCLogic {
         sen: j.seniority.replace(/-/g, ' '),
         age: j.postedDays + 'd',
         ageColor: j.postedDays <= 3 ? accent : j.postedDays <= 10 ? '#c3ccd2' : '#6f7a82',
-        dot: 'hsl(' + (HUES[j.category] != null ? HUES[j.category] : 210) + ',72%,60%)',
+        dot: 'hsl(' + (function (x, f) { var k = (f && inCat(x, f)) ? f : x.category; return HUES[k] != null ? HUES[k] : 210; })(j, filter) + ',72%,60%)',
         open: () => this.setState({ job: j, descOpen: false }),
         openCompany: e => { if (e) { e.preventDefault(); e.stopPropagation(); } this.setState({ company: j.company, limit: 12, shown: null }, () => this.jobsTop()); },
         aria: j.title + ' at ' + j.company + ', posted ' + j.postedDays + ' days ago. Opens the details.'
@@ -1981,7 +1981,7 @@ class Component extends DCLogic {
         var ks = (j.categories && j.categories.length) ? j.categories : [j.category];
         return ks.map(function (k) { return (cats.find(c => c.key === k) || {}).label || k; }).join(' · ');
       })(this.state.job),
-      jobDot: this.state.job ? 'hsl(' + (HUES[this.state.job.category] != null ? HUES[this.state.job.category] : 210) + ',72%,60%)' : 'transparent',
+      jobDot: this.state.job ? 'hsl(' + (function (x, f) { var k = (f && inCat(x, f)) ? f : x.category; return HUES[k] != null ? HUES[k] : 210; })(this.state.job, this.state.filter) + ',72%,60%)' : 'transparent',
       jobParas: (() => {
         const j = this.state.job;
         if (!j) return [];
@@ -2197,14 +2197,23 @@ class Component extends DCLogic {
       })(),
       flowAdded: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.added : addedNow; })(),
       flowRemoved: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.removed : removedNow; })(),
-      hasRemovals: removedNow != null,
+      hasRemovals: removedNow != null && removedNow > 0,
       flowNet: (() => {
         const i = this.state.flowHover;
         const r = i != null ? flowRows[i] : null;
         const v = r ? r.added - r.removed : netNow;
         return v == null ? '—' : (v > 0 ? '+' + v : String(v));
       })(),
-      flowSummary: flowRows.length ? (removedNow == null ? ('This week ' + addedNow + ' roles were added. Closures are not counted yet: this feed treats a role as gone once it has been absent for five days, so the first ones become measurable about a fortnight after collection started. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + '.') : ('This week ' + addedNow + ' roles were added and ' + removedNow + ' closed or expired, a net change of ' + (netNow > 0 ? 'plus ' : '') + Math.abs(netNow) + ' roles. Across the last ' + flowRows.length + ' weeks additions ranged from ' + Math.min(...flowRows.map(r => r.added)) + ' to ' + Math.max(...flowRows.map(r => r.added)) + ' and removals from ' + Math.min(...flowRows.map(r => r.removed)) + ' to ' + Math.max(...flowRows.map(r => r.removed)) + '.')) : '',
+      flowSummary: (function () {
+        if (!flowRows.length) return '';
+        var role = function (n) { return n + (Math.abs(n) === 1 ? ' role' : ' roles'); };
+        var was = function (n) { return Math.abs(n) === 1 ? ' was ' : ' were '; };
+        var head = 'This week ' + role(addedNow) + was(addedNow) + 'added';
+        if (removedNow == null) return head + '. Closures are not counted yet.';
+        if (!removedNow) return head + ' and none closed.';
+        return head + ' and ' + role(removedNow) + ' closed or expired, a net change of '
+          + (netNow > 0 ? 'plus ' : netNow < 0 ? 'minus ' : '') + role(Math.abs(netNow)) + '.';
+      })(),
       chartHot: n > 1,
       chartMove: e => {
         const box = e.currentTarget.getBoundingClientRect();
@@ -2222,7 +2231,7 @@ class Component extends DCLogic {
         const pt = s.points.split(' ')[hoverIdx].split(',');
         return { cx: pt[0], cy: pt[1], color: s.color };
       }) : [],
-      chartReads: hoverIdx != null ? keysOf.map(([k, label, color]) => ({
+      chartReads: hoverIdx != null ? keysOf.filter(([k]) => hasData(k)).map(([k, label, color]) => ({
         label: label, color: color,
         value: h[hoverIdx][k] != null ? String(h[hoverIdx][k]) : '—'
       })) : [],
@@ -3269,6 +3278,12 @@ class Component extends DCLogic {
     + '  [role="dialog"][aria-label="Job details"] button{font-size:11px;padding:8px 13px}'
     + '  [role="dialog"][aria-label="Job details"] [data-jobclose]{width:30px;height:30px;padding:0;font-size:15px}'
     + '  [data-zoomui]{left:8px;top:8px;transform:scale(.92);transform-origin:left top}'
+    // The chart's hover card is 176px wide inside a plot about 330px across on
+    // a phone, so there is no threshold that keeps it on screen: pushed right it
+    // runs past the right edge, flipped left it runs past the left. Pin it
+    // across the plot instead, where it cannot overflow either way.
+    + '  [data-charttip]{left:0!important;right:0!important;transform:none!important;'
+    + 'min-width:0!important;width:auto!important}'
     // The IC / managers readout measures inside the viewport at 375px here, but
     // it is a single nowrap row whose width follows the discipline name, so a
     // longer label or a wider font would push it past the edge. Make that

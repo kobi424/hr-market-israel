@@ -1247,9 +1247,17 @@ class Component extends DCLogic {
     if (!d || !Array.isArray(d.jobs)) return [];
     const cap = this.props.maxBubbles || 400;
     let pool = d.jobs;
+    pool = pool.reduce(function (acc, j) {
+      var ks = (j.categories && j.categories.length > 1) ? j.categories : null;
+      if (!ks) { acc.push(j); return acc; }
+      ks.forEach(function (k) {
+        acc.push(Object.assign({}, j, { id: j.id + '#' + k, category: k }));
+      });
+      return acc;
+    }, []);
     if (this._isSmall) {
       const key = this.state.filter || this.mobileCat();
-      if (key) pool = pool.filter(j => inCat(j, key));
+      if (key) pool = pool.filter(j => j.category === key);
     }
     const cur = this.state.cursor;
     if (cur == null) return pool.slice().sort((a, b) => a.postedDays - b.postedDays).slice(0, cap);
@@ -1956,7 +1964,11 @@ class Component extends DCLogic {
       jobTitle: this.state.job ? this.state.job.title : '',
       jobCompany: this.state.job ? this.state.job.company : '',
       jobUrl: this.state.job ? this.state.job.url : '#',
-      jobCat: this.state.job ? ((cats.find(c => c.key === this.state.job.category) || {}).label || this.state.job.category) : '',
+      jobCat: (function (j, f) {
+        if (!j) return '';
+        var k = (f && (j.category === f || (j.categories && j.categories.indexOf(f) > -1))) ? f : j.category;
+        return (cats.find(c => c.key === k) || {}).label || k;
+      })(this.state.job, this.state.filter),
       jobCats: (function (j) {
         if (!j) return '';
         var ks = (j.categories && j.categories.length) ? j.categories : [j.category];
@@ -2046,7 +2058,10 @@ class Component extends DCLogic {
           click: () => this.setState({ job: x, descOpen: false }, () => { var d = document.querySelector('[role="dialog"][aria-label="Job details"]'); if (d) d.scrollTop = 0; })
         }));
       })(),
-      filterFromJob: () => this.setState(s => ({ filter: s.job ? s.job.category : null, job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
+      filterFromJob: () => this.setState(s => ({ filter: (function (j, f) {
+          if (!j) return null;
+          return (f && (j.category === f || (j.categories && j.categories.indexOf(f) > -1))) ? f : j.category;
+        })(s.job, s.filter), job: null, company: null, q: '', sen: 'all', tier: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       companyFromJob: () => this.setState(s => ({ company: s.job ? s.job.company : null, job: null, limit: 12, shown: null }), () => { this.build(); this.jobsTop(); }),
       copyLink: () => {
         const j = this.state.job;

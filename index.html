@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="a0545473b473">
-<script>window.__jrBuild="a0545473b473"</script>
+<meta name="build" content="cc84759726bd">
+<script>window.__jrBuild="cc84759726bd"</script>
 </head>
 <body>
 <x-dc>
@@ -1369,7 +1369,7 @@ class Component extends DCLogic {
     this._anchors = {};
     keys.forEach((k, i) => {
       const a = (i / Math.max(1, keys.length)) * Math.PI * 2 - Math.PI / 2;
-      this._anchors[k] = this._isSmall ? { x: 0.5 + Math.cos(a) * 0.33, y: 0.5 + Math.sin(a) * 0.33 }
+      this._anchors[k] = this._isSmall ? { x: 0.5, y: 0.5 }
         : { x: 0.5 + Math.cos(a) * 0.42, y: 0.5 + Math.sin(a) * 0.36 };
     });
     this._parts = list.map((j, i) => {
@@ -2539,9 +2539,14 @@ class Component extends DCLogic {
   // feed carries a real figure: this reads the rendered text, so nothing has to
   // be remembered about which tiles are pending.
   var EMPTY_TILE = /not measurable until roles close|no snapshot from last week yet|no prior (week|period)/i;
-  // A value of nothing counts as empty too: the median tile renders an em dash
-  // over "not measurable", and the dash alone is what a reader sees first.
-  var EMPTY_VALUE = /^[—–-]$/;
+  // A bare em dash used to count as empty too. That was wrong once the rows
+  // started saying so in words: the design paints an em dash as its placeholder
+  // before the feed arrives, so every tile was hidden on first paint and only
+  // came back on the next pass — which is why Median days to fill appeared a
+  // beat after the tiles beside it. A tile with no figure now says "not
+  // measurable until roles close" and is caught by the line above; a tile
+  // showing a dash is simply still loading and is left alone.
+  var EMPTY_VALUE = /^$/;
   function hideEmptyTiles() {
     document.querySelectorAll('section[data-screen-label] *').forEach(function (e) {
       if (e.children.length) return;

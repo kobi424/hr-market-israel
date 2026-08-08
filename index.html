@@ -1756,8 +1756,8 @@ class Component extends DCLogic {
       return { label, color, points: pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
         lastX: pts.length ? pts[pts.length - 1][0].toFixed(1) : 0, lastY: pts.length ? pts[pts.length - 1][1].toFixed(1) : 0 };
     };
-    const hasData = k => h.some(r => r[k] != null);
-    const series = n ? [['open', 'Openings', st.accent], ['new', 'New per week', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']]
+    const hasData = k => h.filter(r => r[k] != null).length >= Math.max(3, Math.ceil(h.length * 0.6));
+    const series = n ? [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']]
       .filter(([k]) => hasData(k)).map(([k, label, color]) => mk(k, label, color)) : [];
     series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
     const hi = this.state.chartHover;
@@ -2219,10 +2219,10 @@ class Component extends DCLogic {
         label: label, color: color,
         value: h[hoverIdx][k] != null ? String(h[hoverIdx][k]) : '—'
       })) : [],
-      lastReads: n ? keysOf.filter(([k]) => h.some(r => r[k] != null)).map(([k, label, color]) => ({ label: label, color: color, value: last[k] == null ? '\u2014' : String(last[k]) })) : [],
+      lastReads: n ? keysOf.filter(([k]) => hasData(k)).map(([k, label, color]) => ({ label: label, color: color, value: last[k] == null ? '\u2014' : String(last[k]) })) : [],
       gridLines: [0, 1, 2, 3].map(i => ({ y: (pad + i * ((H - pad * 2) / 3)).toFixed(1) })),
       firstWeek: fmtWeek(first.week), lastWeek: fmtWeek(last.week),
-      chartSummary: n ? ('Weeks are grouped by the date LinkedIn published each role, counting the ' + t.open + ' roles open today. Collection began recently, so a role posted months ago and since taken down was never recorded: earlier weeks show only what is still live. Read the rise as the age profile of what is open now rather than as market growth. ' + t.newThisWeek + ' roles were posted this week against ' + t.newPrevWeek + ' last week.') : '',
+      chartSummary: n ? ('A day at a time, by the date LinkedIn published each role. Openings is a running total of the ' + t.open + ' open today, so it counts only what is still live. ' + t.newThisWeek + ' posted this week against ' + t.newPrevWeek + ' last week.') : '',
       filterLabel: filter ? 'Clear filter' : 'All disciplines',
       badgeOrder: this.state.small ? 3 : 0,
       badgeW: this.state.small ? '100%' : 'auto',

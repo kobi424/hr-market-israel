@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="339b2718dac5">
-<script>window.__jrBuild="339b2718dac5"</script>
+<meta name="build" content="a0545473b473">
+<script>window.__jrBuild="a0545473b473"</script>
 </head>
 <body>
 <x-dc>
@@ -386,7 +386,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 
       <sc-if value="{{ hasFlow }}" hint-placeholder-val="{{ false }}">
         <div style="display: flex; flex-direction: column; gap: 20px;">
-          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 28px;">
+          <div data-flowhead style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 28px;">
             <h2 style="margin: 0; font-size: clamp(20px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.03em;">Added and removed <span style="font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6f7a82; margin-left: 10px;">{{ scopeNote }}</span></h2>
             <div style="display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
               <span style="color: #6f7a82; letter-spacing: .14em; text-transform: uppercase;">{{ flowWeekLabel }}</span>
@@ -1728,9 +1728,7 @@ class Component extends DCLogic {
         delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' last week') : (fcat.newCount + ' posted, no prior week to compare') },
       { label: 'Median days to fill', value: String(fcat.medianDaysToFill != null ? fcat.medianDaysToFill : '\u2014'),
         arrow: '\u25a0', color: flat,
-        delta: fcat.medianDaysToFill == null
-          ? 'not measurable until roles close'
-          : ('from ' + fcat.closedCount + (fcat.closedCount === 1 ? ' closure' : ' closures')) },
+        delta: fcat.medianDaysToFill == null ? 'not measurable until roles close' : '' },
       { label: 'Net change', value: (fcat.removedCount == null ? '\u2014' : ((fcat.newCount - fcat.removedCount) > 0 ? '+' : '') + (fcat.newCount - fcat.removedCount)),
         arrow: fcat.removedCount == null ? '\u25a0' : ((fcat.newCount - fcat.removedCount) > 0 ? '\u25b2' : (fcat.newCount - fcat.removedCount) < 0 ? '\u25bc' : '\u25a0'),
         color: fcat.removedCount == null ? flat : ((fcat.newCount - fcat.removedCount) > 0 ? up : (fcat.newCount - fcat.removedCount) < 0 ? down : flat),
@@ -1747,7 +1745,7 @@ class Component extends DCLogic {
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
       { label: 'Median days to fill', value: String(t.medianDaysToFill != null ? LE(t.medianDaysToFillPrev, t.medianDaysToFill) : '—'),
         arrow: fillD < 0 ? '▼' : fillD > 0 ? '▲' : '■', color: fillD < 0 ? up : fillD > 0 ? down : flat,
-        delta: (t.medianDaysToFill == null || t.medianDaysToFillPrev == null || isNaN(fillD)) ? 'not measurable until roles close' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before' },
+        delta: t.medianDaysToFill == null ? 'not measurable until roles close' : ((t.medianDaysToFillPrev == null || isNaN(fillD)) ? '' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before') },
     ];
     if (!fcat && t.addedThisWeek != null && t.removedThisWeek != null) {
       const net = t.addedThisWeek - t.removedThisWeek;
@@ -3308,6 +3306,9 @@ class Component extends DCLogic {
     // across the plot instead, where it cannot overflow either way.
     + '  [data-charttip]{left:0!important;right:0!important;transform:none!important;'
     + 'min-width:0!important;width:auto!important}'
+    // The figures sit under the heading on a phone whatever their length, so
+    // hovering a bar changes the numbers and not where to look for them.
+    + '  [data-flowhead]{flex-direction:column!important;align-items:flex-start!important;gap:8px!important}'
     // The IC / managers readout measures inside the viewport at 375px here, but
     // it is a single nowrap row whose width follows the discipline name, so a
     // longer label or a wider font would push it past the edge. Make that

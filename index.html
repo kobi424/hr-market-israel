@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="273ce42fd8ba">
-<script>window.__jrBuild="273ce42fd8ba"</script>
+<meta name="build" content="8f6a8f69ebad">
+<script>window.__jrBuild="8f6a8f69ebad"</script>
 </head>
 <body>
 <x-dc>
@@ -1768,8 +1768,11 @@ class Component extends DCLogic {
 
     const flowRows = h.filter(r => r.added != null || r.removed != null);
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
-    const addedNow = t.addedThisWeek != null ? t.addedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].added : null);
-    const removedNow = t.removedThisWeek != null ? t.removedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].removed : null);
+    const scopeRow = filter ? (cats.find(c => c.key === filter) || null) : null;
+    const addedNow = scopeRow ? scopeRow.newCount
+      : (t.addedThisWeek != null ? t.addedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].added : null));
+    const removedNow = scopeRow ? (scopeRow.removedCount != null ? scopeRow.removedCount : null)
+      : (t.removedThisWeek != null ? t.removedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].removed : null));
     const netNow = addedNow != null && removedNow != null ? addedNow - removedNow : null;
     const first = h[0] || {}, last = h[n - 1] || {};
     const fmtWeek = w => w ? new Date(w).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
@@ -2190,7 +2193,7 @@ class Component extends DCLogic {
       flowWeekLabel: (() => {
         const i = this.state.flowHover;
         const r = i != null ? flowRows[i] : flowRows[flowRows.length - 1];
-        return r ? 'week of ' + fmtWeek(r.week) : '';
+        return r ? fmtWeek(r.week) : '';
       })(),
       flowAdded: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.added : addedNow; })(),
       flowRemoved: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.removed : removedNow; })(),

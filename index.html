@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="e7a2b509252d">
-<script>window.__jrBuild="e7a2b509252d"</script>
+<meta name="build" content="9116153b457f">
+<script>window.__jrBuild="9116153b457f"</script>
 </head>
 <body>
 <x-dc>
@@ -798,7 +798,7 @@ const SIZES = { junior: 34, specialist: 58, senior: 70, manager: 78, 'senior-man
 const STATES = {
   bull: { word: 'BULL', accent: '#3ddc9b', a: 'rgba(45,190,130,.34)', b: 'rgba(90,210,160,.18)', c: 'rgba(20,120,95,.3)' },
   bear: { word: 'BEAR', accent: '#ff6257', a: 'rgba(190,55,50,.32)', b: 'rgba(220,95,110,.17)', c: 'rgba(120,30,55,.3)' },
-  neutral: { word: 'NEUTRAL', accent: '#ffffff', a: 'rgba(150,140,110,.26)', b: 'rgba(110,120,130,.16)', c: 'rgba(70,75,85,.3)' }
+  neutral: { word: 'NEUTRAL', accent: '#dcc07a', a: 'rgba(150,140,110,.26)', b: 'rgba(110,120,130,.16)', c: 'rgba(70,75,85,.3)' }
 };
 
 class Component extends DCLogic {
@@ -2972,19 +2972,62 @@ class Component extends DCLogic {
   // jump. A brief fade over the field turns it into a transition. The scope
   // label is what marks the change, since the bubbles themselves are replaced.
   var scopeLast = null;
-  function fadeFieldOnScopeChange() {
-    var wrap = document.querySelector('[data-fieldwrap]');
+  // Changing discipline replaces every circle in one frame, which reads as the
+  // field teleporting. Dim it, let the swap happen behind that, bring it back.
+  //
+  // This used to run off a 200ms poll, so the fade began after the new field had
+  // already been drawn — the jump happened in full view and then something faded
+  // in on top of it. It is driven from the click now, and the scope is read from
+  // the URL, which the app keeps current and which works the same on a phone as
+  // on a desktop; the poll stays only as a backstop for routes not clicked.
+  function fieldWrap() { return document.querySelector('[data-fieldwrap]'); }
+  function softenField() {
+    var wrap = fieldWrap();
     if (!wrap) return;
-    var pill = document.querySelector('[aria-label="Filter by discipline"]');
-    var scope = pill ? (pill.textContent || '').trim() : '';
+    wrap.style.transition = 'opacity .16s ease';
+    wrap.style.opacity = '0.12';
+    setTimeout(function () {
+      var w = fieldWrap();
+      if (!w) return;
+      w.style.transition = 'opacity .32s ease';
+      w.style.opacity = '1';
+    }, 190);
+  }
+  function currentScope() {
+    try {
+      var q = new URLSearchParams(location.search);
+      return q.get('cat') || q.get('d') || '';
+    } catch (e) { return ''; }
+  }
+  function fadeFieldOnScopeChange() {
+    var scope = currentScope();
     if (scopeLast === null) { scopeLast = scope; return; }
     if (scope === scopeLast) return;
     scopeLast = scope;
-    wrap.style.animation = 'none';
-    void wrap.offsetWidth;
-    wrap.style.animation = 'fadeUp .45s cubic-bezier(.16,.84,.24,1) both';
+    softenField();
   }
   setInterval(fadeFieldOnScopeChange, 200);
+  // Anything that can change the discipline dims the field straight away, and
+  // the poll above notices the scope has moved and leaves it alone.
+  // Matched on the control's own aria-label, in the capture phase, so the field
+  // is already dimming before React swaps the circles. Waiting for the URL to
+  // change was always too late: the app rewrites it after the re-render, by
+  // which point the jump has been on screen for a frame.
+  var SCOPE_BTN = /filter the field|show the .+ field|show only .+ roles|show roles from every discipline/i;
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('button');
+    if (!b) return;
+    if (!SCOPE_BTN.test(b.getAttribute('aria-label') || '')) return;
+    softenField();
+    setTimeout(function () { scopeLast = currentScope(); }, 60);
+  }, true);
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.tagName === 'SELECT') {
+      var scope = currentScope();
+      scopeLast = scope;
+      softenField();
+    }
+  }, true);
 
 
 

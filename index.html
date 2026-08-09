@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="9116153b457f">
-<script>window.__jrBuild="9116153b457f"</script>
+<meta name="build" content="2ee9119c933b">
+<script>window.__jrBuild="2ee9119c933b"</script>
 </head>
 <body>
 <x-dc>
@@ -1910,7 +1910,7 @@ class Component extends DCLogic {
       freshNote: jobs.filter(j => j.postedDays <= 3).length + ' posted in the last three days',
       splitCount: allJobs.length + ' tracked roles · ' + scopeLabel,
       scopeLabel: scopeLabel,
-      noteColour: filter ? ('hsl(' + (HUES[filter] != null ? HUES[filter] : 210) + ',72%,64%)') : '#cdd5da',
+      noteColour: filter ? ('hsl(' + (HUES[filter] != null ? HUES[filter] : 210) + ',72%,64%)') : (STATES[(d.verdict && d.verdict.state) || 'neutral'] || STATES.neutral).accent,
       playIcon: this.state.playing ? '❚❚' : '▶',
       playLabel: this.state.playing ? 'Pause' : (this.state.cursor != null ? 'Resume' : 'Play 30 days'),
       playAria: this.state.playing ? 'Pause the 30 day playback' : 'Play the last 30 days of postings and closures',

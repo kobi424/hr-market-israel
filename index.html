@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="e80ab7f8f03e">
-<script>window.__jrBuild="e80ab7f8f03e"</script>
+<meta name="build" content="ff3279582b54">
+<script>window.__jrBuild="ff3279582b54"</script>
 </head>
 <body>
 <x-dc>
@@ -1714,9 +1714,16 @@ class Component extends DCLogic {
       var src = filter ? ((d.measuredCategoryHistory || {})[filter] || []) : (d.measuredHistory || []);
       if (!src.length) return base;
       var real = {};
-      src.forEach(function (x) { real[x.week] = x.open; });
+      src.forEach(function (x) { real[x.week] = x; });
       return base.map(function (row) {
-        return real[row.week] == null ? row : Object.assign({}, row, { open: real[row.week] });
+        var m = real[row.week];
+        if (!m) return row;
+        // open, added and removed all measured the same way, so the bars
+        // account for the line: yesterday plus in minus out is today.
+        return Object.assign({}, row, { open: m.open,
+          added: m.added == null ? row.added : m.added,
+          new: m.added == null ? row.new : m.added,
+          removed: m.removed == null ? row.removed : m.removed });
       });
     })();
     const perCatHistory = !!(filter && d.categoryHistory && d.categoryHistory[filter]);

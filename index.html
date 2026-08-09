@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="ff3279582b54">
-<script>window.__jrBuild="ff3279582b54"</script>
+<meta name="build" content="cea0c42e17e5">
+<script>window.__jrBuild="cea0c42e17e5"</script>
 </head>
 <body>
 <x-dc>
@@ -3004,14 +3004,22 @@ class Component extends DCLogic {
   function softenField() {
     var wrap = fieldWrap();
     if (!wrap) return;
-    wrap.style.transition = 'opacity .16s ease';
-    wrap.style.opacity = '0.12';
+    // Dimming to almost nothing on a near-black page is a blackout, not a
+    // transition: the field went out and came back and the eye read a flash.
+    // Hold most of the brightness, pull it back a fraction of a per cent, and
+    // let it come in slower than it went out — the swap happens under cover
+    // without the screen ever going dark.
+    wrap.style.transition = 'opacity .13s ease-out, transform .13s ease-out';
+    wrap.style.transformOrigin = '50% 50%';
+    wrap.style.opacity = '0.45';
+    wrap.style.transform = 'scale(.988)';
     setTimeout(function () {
       var w = fieldWrap();
       if (!w) return;
-      w.style.transition = 'opacity .32s ease';
+      w.style.transition = 'opacity .42s cubic-bezier(.16,.84,.24,1), transform .42s cubic-bezier(.16,.84,.24,1)';
       w.style.opacity = '1';
-    }, 190);
+      w.style.transform = 'none';
+    }, 165);
   }
   function currentScope() {
     try {

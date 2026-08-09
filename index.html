@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="5f1887706017">
-<script>window.__jrBuild="5f1887706017"</script>
+<meta name="build" content="b5ab85e7fc17">
+<script>window.__jrBuild="b5ab85e7fc17"</script>
 </head>
 <body>
 <x-dc>
@@ -1705,7 +1705,20 @@ class Component extends DCLogic {
     });
 
     const t = d.totals || {};
-    const h = ((filter && d.categoryHistory && d.categoryHistory[filter]) || d.history || []);
+    const h = (function () {
+      // The openings line is rebuilt from the publish dates of roles that are
+      // open now, so a role that closed leaves no trace and the line can only
+      // rise. Where a real count was taken that day, use it: the market fell
+      // from 197 to 188 over three days and the reconstruction showed a climb.
+      var base = (filter && d.categoryHistory && d.categoryHistory[filter]) || d.history || [];
+      var src = filter ? ((d.measuredCategoryHistory || {})[filter] || []) : (d.measuredHistory || []);
+      if (!src.length) return base;
+      var real = {};
+      src.forEach(function (x) { real[x.week] = x.open; });
+      return base.map(function (row) {
+        return real[row.week] == null ? row : Object.assign({}, row, { open: real[row.week] });
+      });
+    })();
     const perCatHistory = !!(filter && d.categoryHistory && d.categoryHistory[filter]);
     const prevOpen = h.length > 1 ? h[h.length - 2].open : null;
     const senior = jobs.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;

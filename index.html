@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="2ee9119c933b">
-<script>window.__jrBuild="2ee9119c933b"</script>
+<meta name="build" content="5f1887706017">
+<script>window.__jrBuild="5f1887706017"</script>
 </head>
 <body>
 <x-dc>
@@ -247,7 +247,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
       </div>
 
       <header data-hero-top="1" style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.09); padding-bottom: 14px; margin-top: clamp(112px, 15vh, 150px);">
-        <div style="font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #ffffff;">Find the current HR jobs and the market</div>
+        <div style="font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #ffffff;">Find the current HR jobs, and when to move</div>
         <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #6f7a82; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">updated {{ agoLabel }}</div>
       </header>
 
@@ -299,7 +299,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
       <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 16px 32px; padding: 0 clamp(20px, 5vw, 80px) clamp(18px, 2.4vw, 28px);">
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <h2 id="field-title" style="margin: 0; font-size: clamp(24px, 3.2vw, 40px); font-weight: 600; letter-spacing: -0.03em;">The field</h2>
-          <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: {{ accent }};">{{ scopeLabel }}</div>
+          <div style="font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #ffffff;">{{ scopeLabel }}</div>
           <div style="font-size: 13px; color: {{ noteColour }}; line-height: 1.5; max-width: 30em;">{{ fieldNote }}</div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
@@ -1910,7 +1910,7 @@ class Component extends DCLogic {
       freshNote: jobs.filter(j => j.postedDays <= 3).length + ' posted in the last three days',
       splitCount: allJobs.length + ' tracked roles · ' + scopeLabel,
       scopeLabel: scopeLabel,
-      noteColour: filter ? ('hsl(' + (HUES[filter] != null ? HUES[filter] : 210) + ',72%,64%)') : (STATES[(d.verdict && d.verdict.state) || 'neutral'] || STATES.neutral).accent,
+      noteColour: filter ? ('hsl(' + (HUES[filter] != null ? HUES[filter] : 210) + ',72%,64%)') : '#ffffff',
       playIcon: this.state.playing ? '❚❚' : '▶',
       playLabel: this.state.playing ? 'Pause' : (this.state.cursor != null ? 'Resume' : 'Play 30 days'),
       playAria: this.state.playing ? 'Pause the 30 day playback' : 'Play the last 30 days of postings and closures',

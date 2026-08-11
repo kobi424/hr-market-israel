@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="f85c32d0b291">
-<script>window.__jrBuild="f85c32d0b291"</script>
+<meta name="build" content="d6b18269c507">
+<script>window.__jrBuild="d6b18269c507"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -667,6 +667,15 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
                 </sc-for>
               </select>
             </label>
+            <label style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Posted</span>
+              <select value="{{ ageValue }}" onChange="{{ setAgeSelect }}" aria-label="Show only roles published within" style="background: #0a0d10; border: 1px solid rgba(255,255,255,.16); color: #eef2f4; font: inherit; font-size: 13px; padding: 10px 11px; border-radius: 8px;">
+                <option value="all">Any time</option>
+                <option value="1">Last 24 hours</option>
+                <option value="7">Last week</option>
+                <option value="30">Last month</option>
+              </select>
+            </label>
           </div>
           <fieldset style="border: 1px solid rgba(255,255,255,.12); border-radius: 8px; margin: 0; padding: 12px 13px; display: flex; flex-direction: column; gap: 10px;">
             <legend style="padding: 0 6px; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Level</legend>
@@ -692,6 +701,13 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             <sc-for list="{{ senChips }}" as="s" hint-placeholder-count="6">
               <li>
                 <button type="button" onClick="{{ s.click }}" aria-pressed="{{ s.active }}" aria-label="{{ s.aria }}" style="background: none; border: 1px solid {{ s.border }}; color: {{ s.ink }}; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.42);">{{ s.label }}</button>
+              </li>
+            </sc-for>
+          </ul>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px;" aria-label="Show only roles published within">
+            <sc-for list="{{ ageChips }}" as="g" hint-placeholder-count="4">
+              <li>
+                <button type="button" onClick="{{ g.click }}" aria-pressed="{{ g.active }}" aria-label="{{ g.aria }}" style="background: none; border: 1px solid {{ g.border }}; color: {{ g.ink }}; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.42);">{{ g.label }}</button>
               </li>
             </sc-for>
           </ul>
@@ -815,7 +831,7 @@ const STATES = {
 };
 
 class Component extends DCLogic {
-  state = { data: null, failed: false, filter: (function () { try { var q = new URLSearchParams(location.search); var d = q.get('d') || q.get('cat'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, tier: null, descOpen: false, cName: '', cMail: '', cMsg: '', cNote: '' };
+  state = { data: null, failed: false, filter: (function () { try { var q = new URLSearchParams(location.search); var d = q.get('d') || q.get('cat'); return d ? String(d).toLowerCase().replace(/[^a-z-]/g, '') : null; } catch (e) { return null; } })(), hover: null, small: false, sen: 'all', sort: 'newest', limit: 12, q: '', job: null, tier: null, age: null, descOpen: false, cName: '', cMail: '', cMsg: '', cNote: '' };
 
   readUrl() {
     const p = new URLSearchParams(window.location.search);
@@ -1548,6 +1564,7 @@ class Component extends DCLogic {
     const all = (d.jobs || []).filter(j => inCat(j, filter) && (sen === 'all' || j.seniority === sen)
       && (!tier || TIER[tier].indexOf(j.seniority) >= 0)
       && (!company || j.company === company)
+      && (!this.state.age || j.postedDays <= this.state.age)
       && (!q || j.title.toLowerCase().indexOf(q) >= 0 || j.company.toLowerCase().indexOf(q) >= 0));
     const rank = { junior: 0, specialist: 1, senior: 2, manager: 3, 'senior-manager': 4, director: 5 };
     all.sort((a, b) => sort === 'newest' ? a.postedDays - b.postedDays
@@ -1631,6 +1648,13 @@ class Component extends DCLogic {
         aria: sen === x ? 'Stop filtering to ' + x.replace(/-/g, ' ') + ' roles' : 'Show only ' + x.replace(/-/g, ' ') + ' roles',
         click: () => this.setState(st2 => ({ sen: st2.sen === x ? 'all' : x, tier: null, limit: 12 }))
       })),
+      ageChips: [[null, 'Any time'], [1, '24h'], [7, 'Week'], [30, 'Month']].map(([k, l]) => Object.assign({
+        label: l, active: this.state.age === k,
+        aria: k == null ? 'Show roles from any time' : 'Show only roles published in the last ' + (k === 1 ? 'day' : k + ' days'),
+        click: () => this.setState({ age: k, limit: 12 })
+      }, chip(this.state.age === k))),
+      ageValue: this.state.age == null ? 'all' : String(this.state.age),
+      setAgeSelect: e => { const v = e.target.value; this.setState({ age: v === 'all' ? null : +v, limit: 12 }); },
       senChips: SEN.map(s => Object.assign({
         label: s === 'all' ? 'Any level' : s.replace(/-/g, ' '), active: sen === s,
         aria: s === 'all' ? 'Show every seniority level' : 'Show only ' + s.replace(/-/g, ' ') + ' roles',
@@ -3466,7 +3490,8 @@ class Component extends DCLogic {
     + '@media (max-width:620px){'
     + '[data-filterrow]{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;align-items:end}'
     + '[data-filterrow] > *{min-width:0;width:auto!important;padding:0!important}'
-    + '[data-filterrow] > *:nth-child(3){grid-column:1 / -1!important}'
+    // Four cells now that Posted joined: a clean two-by-two, no full-width row.
+    + '[data-filterrow] > *:nth-child(3){grid-column:auto!important}'
     + '[data-filtercell] > span:first-child,[data-filtercell] > div:first-child{display:none}'
     // The 44px touch floor belongs on the control, not on the label around it:
     // on the label it left the dropdown floating 9px above its neighbour.

@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="2e91b769e361">
-<script>window.__jrBuild="2e91b769e361"</script>
+<meta name="build" content="abeac5af40be">
+<script>window.__jrBuild="abeac5af40be"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -738,6 +738,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             </sc-for>
           </ul>
           <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <button type="button" onClick="{{ toggleClosed }}" aria-pressed="{{ closedOn }}" aria-label="{{ closedAria }}" style="background: {{ closedBg }}; border: 1px solid {{ closedBorder }}; border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: {{ closedInk }}; cursor: pointer; margin-right: 6px;" style-hover="border-color: rgba(255,255,255,.45);">Closed</button>
             <button type="button" onClick="{{ resetJobs }}" aria-label="Clear every filter in All jobs" style="background: none; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: {{ resetInk }}; cursor: pointer; margin-right: 6px;" style-hover="border-color: rgba(255,255,255,.45); color: #ffffff;">Reset</button>
             <span style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6f7a82;">Sort</span>
             <sc-for list="{{ sorts }}" as="s" hint-placeholder-count="3">
@@ -1588,7 +1589,28 @@ class Component extends DCLogic {
     const q = (this.state.q || '').trim().toLowerCase();
     const TIER = { junior: ['junior', 'specialist', 'senior'], senior: ['senior-manager', 'director'] };
     const tier = this.state.tier, company = this.state.company;
-    const all = (d.jobs || []).filter(j => inCat(j, filter) && (sen === 'all' || j.seniority === sen)
+        const showClosed = !!this.state.closed;
+    const DAY = 86400000;
+    const daysSince = s => {
+      if (!s) return 0;
+      const p = String(s).slice(0, 10).split('-');
+      const then = new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+      return Math.max(0, Math.round((Date.now() - then) / DAY));
+    };
+    const jobPool = showClosed
+      ? (d.closedJobs || []).map(c => ({
+          id: c.id, title: c.title, company: c.company, category: c.category,
+          categories: c.categories || [c.category], seniority: c.seniority,
+          url: c.url, posted: c.listedFrom, firstSeen: c.firstSeen || c.listedFrom,
+          readdedAt: c.readdedAt || null, removedReason: c.removedReason,
+          removedAt: c.removedAt, daysListed: c.daysListed,
+          postedDays: daysSince(c.removedAt),
+          description: null, applicants: null, applicantsNote: null,
+          employmentType: null, industry: null, companyUrl: null,
+          repostedAt: null, repostCount: 0,
+        }))
+      : (d.jobs || []);
+    const all = jobPool.filter(j => inCat(j, filter) && (sen === 'all' || j.seniority === sen)
       && (!tier || TIER[tier].indexOf(j.seniority) >= 0)
       && (!company || j.company === company)
       && (!this.state.age || j.postedDays <= this.state.age)
@@ -1607,7 +1629,7 @@ class Component extends DCLogic {
     return {
       listCount: all.length + (all.length === 1 ? ' role' : ' roles') + (filter ? ' in ' + (catLabel[filter] || filter) : '') + (q ? ' matching “' + this.state.q.trim() + '”' : ''),
       listCountNum: String(all.length),
-      listCountHead: (all.length === 1 ? ' role' : ' roles') + (filter ? ' in ' : ''),
+      listCountHead: (showClosed ? ' closed' : '') + (all.length === 1 ? ' role' : ' roles') + (filter ? ' in ' : ''),
       listCountScope: filter ? (catLabel[filter] || filter) : '',
       listCountInk: filter ? accent : '#6f7a82',
       listCountTail: q ? ' matching “' + this.state.q.trim() + '”' : '',
@@ -1670,9 +1692,15 @@ class Component extends DCLogic {
       filterValue: filter || 'all',
       catOptions: [{ value: 'all', label: 'All disciplines' }].concat(cats.map(c => ({ value: c.key, label: c.label + ' (' + c.open + ')' }))),
       setFilterSelect: e => { const v = e.target.value; this.setState({ filter: v === 'all' ? null : v, limit: 12, shown: null }, () => { this.build(); this.jobsTop(); }); },
-      resetInk: (filter || sen !== 'all' || tier || company || q || this.state.age || sort !== 'newest') ? '#eef2f4' : '#6f7a82',
+      closedOn: !!this.state.closed,
+      closedAria: this.state.closed ? 'Show roles that are open' : 'Show roles that have closed',
+      closedBg: this.state.closed ? 'rgba(255,98,87,.14)' : 'none',
+      closedBorder: this.state.closed ? 'rgba(255,98,87,.5)' : 'rgba(255,255,255,.16)',
+      closedInk: this.state.closed ? '#ff8a82' : '#6f7a82',
+      toggleClosed: () => this.setState(s2 => ({ closed: !s2.closed, limit: 12, shown: null, job: null, company: null }), () => this.build()),
+      resetInk: (filter || sen !== 'all' || tier || company || q || this.state.age || this.state.closed || sort !== 'newest') ? '#eef2f4' : '#6f7a82',
       resetJobs: () => this.setState({
-        filter: null, sen: 'all', tier: null, company: null, job: null,
+        filter: null, sen: 'all', tier: null, company: null, job: null, closed: false,
         q: '', age: null, sort: 'newest', limit: 12, shown: null,
       }, () => this.build()),
       sortValue: sort,

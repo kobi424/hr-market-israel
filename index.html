@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="abeac5af40be">
-<script>window.__jrBuild="abeac5af40be"</script>
+<meta name="build" content="c58e28f67f5c">
+<script>window.__jrBuild="c58e28f67f5c"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -422,9 +422,6 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Added</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #3ddc9b;">+{{ flowTipAdded }}</span></div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Closed or expired</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #ff6257;">&#8722;{{ flowTipRemoved }}</span></div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Net</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e8ecef;">{{ flowTipNet }}</span></div>
-    <sc-if value="{{ flowTipDtfOn }}" hint-placeholder-val="{{ false }}">
-      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Median days listed</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e6b45c;">{{ flowTipDtf }}</span></div>
-    </sc-if>
     <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
       <div data-tiplist style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px; max-height: 55px; overflow-y: auto; overscroll-behavior: contain;">
         <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
@@ -1924,6 +1921,16 @@ class Component extends DCLogic {
     const flowRows = h.some(r => r.added != null || r.removed != null) ? h.slice() : [];
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
     const flowHoverFx = this.state.flowHover;
+    const flowAddPool = (d.jobs || []).concat((d.closedJobs || []).map(c => ({
+      id: c.id, title: c.title, company: c.company, category: c.category,
+      categories: c.categories || [c.category], seniority: c.seniority,
+      url: c.url, posted: c.listedFrom, firstSeen: c.firstSeen || c.listedFrom,
+      readdedAt: c.readdedAt || null, removedReason: c.removedReason,
+      removedAt: c.removedAt, daysListed: c.daysListed, postedDays: c.daysListed,
+      description: null, applicants: null, applicantsNote: null,
+      employmentType: null, industry: null, companyUrl: null,
+      repostedAt: null, repostCount: 0,
+    })));
 
     const scopeRow = filter ? (cats.find(c => c.key === filter) || null) : null;
     const addedNow = scopeRow ? scopeRow.newCount
@@ -2493,7 +2500,7 @@ class Component extends DCLogic {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
         if (!r) return [];
         const day = String(r.week).slice(0, 10);
-        return (d.jobs || []).filter(j => (!filter || j.category === filter)
+        return flowAddPool.filter(j => (!filter || j.category === filter)
             && (String(j.firstSeen || '').slice(0, 10) === day
                 || (j.readdedAt && String(j.readdedAt).slice(0, 10) === day
                     && String(j.firstSeen || '').slice(0, 10) !== day)))
@@ -2522,7 +2529,7 @@ class Component extends DCLogic {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
         if (!r) return false;
         const day = String(r.week).slice(0, 10);
-        return (d.jobs || []).some(j => (!filter || j.category === filter)
+        return flowAddPool.some(j => (!filter || j.category === filter)
             && (String(j.firstSeen || '').slice(0, 10) === day
                 || (j.readdedAt && String(j.readdedAt).slice(0, 10) === day
                     && String(j.firstSeen || '').slice(0, 10) !== day)));
@@ -3051,13 +3058,17 @@ class Component extends DCLogic {
     }
     var days = document.querySelectorAll('[data-wkstart]').length;
     if (!days) return;
-    // Fourteen days on screen; the rest is the same day width again.
-    var pct = Math.max(100, Math.round((days / 14) * 100)) + '%';
+    // An exact width in pixels, not a percentage. A percentage is of the pane,
+    // and the rounding left slack past the last bar — you could scroll right
+    // into empty space. Fourteen days fill the pane, so a day is a fourteenth
+    // of it, and the row is exactly as wide as the days it holds.
+    var perDay = pane.clientWidth / 14;
+    var wide = Math.round(perDay * days);
     pane.setAttribute('data-flowscroll', '');
     [barRow, dateRow].forEach(function (el) {
       if (!el) return;
       el.setAttribute('data-flowwide', '');
-      el.style.setProperty('--flow-w', pct);
+      el.style.setProperty('--flow-w', wide + 'px');
     });
     // Open at the newest end, which is the end the reader came for.
     if (!pane.hasAttribute('data-flowend') && pane.scrollWidth > pane.clientWidth) {

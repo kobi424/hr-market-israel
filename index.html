@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="932acf8b0fcc">
-<script>window.__jrBuild="932acf8b0fcc"</script>
+<meta name="build" content="1d3fc3ba61ee">
+<script>window.__jrBuild="1d3fc3ba61ee"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -128,6 +128,9 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               </sc-if>
               <sc-if value="{{ noCompanyUrl }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size: 15px; color: #b3bcc2;">{{ jobCompany }}</div>
+              </sc-if>
+              <sc-if value="{{ jobIsClosed }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 11.5px; color: #f0a09a;">{{ jobClosedNote }}</div>
               </sc-if>
               <sc-if value="{{ hasOriginalPosted }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size: 11.5px; color: #8b959c;">Reposted &#8212; originally published {{ jobOriginalPosted }}</div>
@@ -425,14 +428,14 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
     <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
       <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
         <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
-          <button type="button" onClick="{{ fa.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></button>
+          <button type="button" onClick="{{ fa.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">+ {{ fa.t }}</button>
         </sc-for>
       </div>
     </sc-if>
     <sc-if value="{{ flowTipHasRems }}" hint-placeholder-val="{{ false }}">
       <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
         <sc-for list="{{ flowTipRems }}" as="fr" hint-placeholder-count="3">
-          <a href="{{ fr.u }}" target="_blank" rel="noopener noreferrer" style="font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;" style-hover="text-decoration: underline;">&#8722; {{ fr.t }} &#183; <span style="color: #7d878e;">{{ fr.c }}</span> <span style="color: #e6b45c;">{{ fr.days }}</span></a>
+          <button type="button" onClick="{{ fr.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">&#8722; {{ fr.t }}</button>
         </sc-for>
       </div>
     </sc-if>
@@ -440,7 +443,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
 </sc-if>
 <div role="img" aria-label="{{ flowSummary }}" style="display: flex; align-items: stretch; gap: clamp(4px, 1vw, 12px); height: clamp(150px, 24vh, 230px);">
               <sc-for list="{{ flow }}" as="f" hint-placeholder-count="11">
-                <div tabindex="0" role="button" aria-label="{{ f.aria }}" onMouseEnter="{{ f.enter }}" onMouseLeave="{{ f.leave }}" onFocus="{{ f.enter }}" onBlur="{{ f.leave }}" style="flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; cursor: default; background-color: {{ f.bg }}; background-image: {{ f.wk }}; background-repeat: no-repeat; background-size: 1px 100%; background-position: left top; transition: background-color .25s ease; outline-offset: 2px;">
+                <div tabindex="0" role="button" aria-label="{{ f.aria }}" onMouseEnter="{{ f.enter }}" onMouseLeave="{{ f.leave }}" onFocus="{{ f.enter }}" onBlur="{{ f.leave }}" style="flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; cursor: default; background-color: {{ f.bg }}; transition: background-color .25s ease; outline-offset: 2px;" data-wkstart="{{ f.wk }}">
                   <div style="flex: 1; display: flex; align-items: flex-end;">
                     <span style="display: block; width: 100%; height: {{ f.addH }}%; background: {{ accent }}; opacity: {{ f.op }}; transform-origin: bottom; animation: growY 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ f.d }}s;"></span>
                   </div>
@@ -885,7 +888,7 @@ class Component extends DCLogic {
 
   fallbackDesc(j, cats) {
     const c = (cats.find(x => x.key === j.category) || {});
-    const sen = j.seniority.replace(/-/g, ' ');
+    const sen = String(j.seniority || '').replace(/-/g, ' ');
     return 'The feed carries the listing itself rather than its text, so there is no description to show here.\n\nWhat is known: ' + (/^[aeiou]/i.test(sen) ? 'an ' : 'a ') + sen + ' level ' + (c.label || j.category) + ' role at ' + j.company + ', first seen ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago, one of ' + (c.open != null ? c.open : '—') + ' open in this discipline.\n\nOpen the listing for the full posting.';
   }
 
@@ -1691,7 +1694,7 @@ class Component extends DCLogic {
       list: shown.map((j, i) => ({
         d: ((i % 12) * 0.045).toFixed(3),
         title: j.title, company: j.company, url: j.url,
-        sen: j.seniority.replace(/-/g, ' '),
+        sen: String(j.seniority || '').replace(/-/g, ' '),
         age: j.postedDays + 'd',
         ageColor: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#6f7a82',
         dot: 'hsl(' + (function (x, f) { var k = (f && inCat(x, f)) ? f : x.category; return HUES[k] != null ? HUES[k] : 210; })(j, filter) + ',72%,60%)',
@@ -1772,7 +1775,7 @@ class Component extends DCLogic {
           : dim ? 'none' : '0 0 ' + Math.round(14 + 44 * f) + 'px hsla(' + hue + ',85%,60%,' + (0.06 + 0.26 * f) + ')',
         op: isGone ? 0.7 : dim ? 0.34 : 1,
         aria: j.stock ? 'A role already open at this date'
-          : j.title + ' at ' + j.company + ', ' + j.seniority.replace('-', ' ') + ' level, posted ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago. Opens the details.',
+          : j.title + ' at ' + j.company + ', ' + String(j.seniority || '').replace('-', ' ') + ' level, posted ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago. Opens the details.',
         click: e => { if (e && e.preventDefault) e.preventDefault(); if (!j.stock) this.setState({ job: j, hover: null, descOpen: false }); },
         enter: () => j.stock ? null : this.setState({ hover: { id: j.id, title: j.title, company: j.company, days: j.postedDays, sen: j.seniority } }, () => {
           (this._parts || []).forEach(p => { p.hov = p.id === j.id; });
@@ -2143,6 +2146,15 @@ class Component extends DCLogic {
       descToggle: this.state.descOpen ? 'Show less' : 'Show all',
       descAria: this.state.descOpen ? 'Collapse the description' : 'Show the full description',
       toggleDesc: () => this.setState(s => ({ descOpen: !s.descOpen })),
+      jobIsClosed: !!(this.state.job && this.state.job.removedAt),
+      jobClosedNote: (() => {
+        const j = this.state.job;
+        if (!j || !j.removedAt) return '';
+        const p = String(j.removedAt).slice(0, 10).split('-');
+        const when = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const dl = j.daysListed;
+        return 'Closed ' + when + (dl == null ? '' : ' \u00b7 listed ' + dl + (dl === 1 ? ' day' : ' days'));
+      })(),
       hasOriginalPosted: !!(this.state.job && this.state.job.originalPosted),
       jobOriginalPosted: (() => {
         const j = this.state.job;
@@ -2171,14 +2183,14 @@ class Component extends DCLogic {
         if (!j) return '';
         if (j.description) return j.description;
         const c = (cats.find(x => x.key === j.category) || {});
-        const sen = j.seniority.replace(/-/g, ' ');
+        const sen = String(j.seniority || '').replace(/-/g, ' ');
         return 'The feed carries the listing itself rather than its text, so there is no description to show here. What is known: ' + (/^[aeiou]/i.test(sen) ? 'an ' : 'a ') + sen + ' level ' + (c.label || j.category) + ' role at ' + j.company + ', first seen ' + j.postedDays + (j.postedDays === 1 ? ' day' : ' days') + ' ago, one of ' + (c.open != null ? c.open : '—') + ' open in this discipline. Open the listing for the full posting.';
       })(),
       jobFacts: (() => {
         const j = this.state.job;
         if (!j) return [];
         const facts = [
-          { label: 'Level', value: j.seniority.replace(/-/g, ' '), color: '#eef2f4' },
+          { label: 'Level', value: String(j.seniority || '').replace(/-/g, ' '), color: '#eef2f4' },
           { label: 'Posted', value: j.postedDays + (j.postedDays === 1 ? ' day ago' : ' days ago'), color: j.postedDays <= 3 ? '#3ddc9b' : j.postedDays <= 14 ? '#dcc07a' : '#8b969e' }
         ];
         if (j.repostedAt) facts.push({ label: 'Reposted', color: '#dcc07a', value: (function (d, n) {
@@ -2340,9 +2352,7 @@ class Component extends DCLogic {
           op: hovered ? 1 : (i === flowRows.length - 1 ? 0.92 : 0.42),
           bg: hovered ? 'rgba(255,255,255,.06)' : 'transparent',
           d: (0.05 + i * 0.05).toFixed(2),
-          wk: (i > 0 && flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week))
-            ? 'linear-gradient(to bottom, rgba(255,255,255,.22) 0 44%, rgba(255,255,255,0) 44% 56%, rgba(255,255,255,.22) 56% 100%)'
-            : 'none',
+          wk: (i > 0 && flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week)) ? '1' : '',
           wklabel: (i === 0 || (flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week)))
             ? fmtWeek(r.week) : '',
           aria: fmtWeek(r.week) + ': ' + (r.added == null ? 'nothing recorded' : r.added + ' added, ' + r.removed + ' removed, net ' + (r.added - r.removed)),
@@ -2422,9 +2432,16 @@ class Component extends DCLogic {
         const day = String(r.week).slice(0, 10);
         return (d.closedJobs || []).filter(c => (!filter || c.category === filter)
             && String(c.removedAt || '').slice(0, 10) === day)
-          .slice(0, 3).map(c => ({ t: c.title, c: c.company,
-            u: 'https://www.linkedin.com/jobs/view/' + c.id,
-            days: c.daysListed == null ? '' : 'listed ' + c.daysListed + (c.daysListed === 1 ? ' day' : ' days') }));
+          .slice(0, 3).map(c => ({ t: c.title,
+            open: () => this.setState({ descOpen: false, flowHover: null, job: {
+              id: c.id, title: c.title, company: c.company, category: c.category,
+              categories: c.categories || [c.category], seniority: c.seniority,
+              url: c.url, posted: c.listedFrom, firstSeen: c.listedFrom,
+              postedDays: c.daysListed, removedAt: c.removedAt, daysListed: c.daysListed,
+              description: null, applicants: null, applicantsNote: null,
+              employmentType: null, industry: null, companyUrl: null,
+              repostedAt: null, repostCount: 0 } })
+          }));
       })(),
       flowTipHasAdds: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
@@ -2880,6 +2897,47 @@ class Component extends DCLogic {
     }
     open.click();
   }, true);
+
+  // The week dividers in Added and removed, drawn as an overlay rather than on
+  // the bars themselves. Each bar's own left edge is inside the bar, which put
+  // the line half a gap to the right of the break in the zero rule; measuring
+  // where the gap actually is puts it in the middle of that break. Plain and
+  // solid, floor to ceiling, and behind the bars so it never cuts one in half.
+  function drawWeekLines() {
+    var bars = document.querySelectorAll('[data-wkstart]');
+    if (!bars.length) return;
+    var box = bars[0].parentElement && bars[0].parentElement.parentElement;
+    if (!box) return;
+    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+    var layer = box.querySelector('[data-wklines]');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.setAttribute('data-wklines', '');
+      layer.setAttribute('aria-hidden', 'true');
+      box.insertBefore(layer, box.firstChild);
+    }
+    var br = box.getBoundingClientRect();
+    var wanted = [];
+    [].slice.call(bars).forEach(function (b, i) {
+      if (b.getAttribute('data-wkstart') !== '1') return;
+      var prev = b.previousElementSibling;
+      if (!prev) return;
+      var r = b.getBoundingClientRect(), p = prev.getBoundingClientRect();
+      // The middle of the gap between the two bars, which is where the zero
+      // rule breaks.
+      wanted.push(((p.right + r.left) / 2 - br.left).toFixed(1));
+    });
+    var have = layer.getAttribute('data-at') || '';
+    var key = wanted.join(',');
+    if (have === key) return;
+    layer.setAttribute('data-at', key);
+    layer.innerHTML = wanted.map(function (x) {
+      return '<i style="position:absolute;left:' + x + 'px;top:0;bottom:0;width:1px;'
+        + 'background:rgba(255,255,255,.18)"></i>';
+    }).join('');
+  }
+  setInterval(drawWeekLines, 600);
+  window.addEventListener('resize', drawWeekLines);
 
   // A tile with nothing in it at all is the same noise as one that says so.
     // Only inside a row of tiles, so an empty layout box is never touched.
@@ -3715,6 +3773,9 @@ class Component extends DCLogic {
     + '[data-bubsearch] input::-webkit-search-cancel-button{display:none}'
     + '[data-bubcount]{font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#3ddc9b;padding:0 2px}'
     + '[data-bubsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 2px;flex:none}'
+    // Behind the bars, inside the bars' own box, ignoring the pointer.
+    + '[data-wklines]{position:absolute;inset:0;pointer-events:none;z-index:0}'
+    + '[data-wklines] i{display:block}'
     // The publish window, in the pill's own face. Appearance none, or the OS
     // paints it as a grey form control in the middle of a glass pill.
     + '[data-bubage]{appearance:none;-webkit-appearance:none;background:none;border:0;outline:none;'

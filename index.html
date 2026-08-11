@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="8fbcd92b0bcc">
-<script>window.__jrBuild="8fbcd92b0bcc"</script>
+<meta name="build" content="c163b78427f4">
+<script>window.__jrBuild="c163b78427f4"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -4071,6 +4071,11 @@ class Component extends DCLogic {
     + '  [data-flowscroll]::-webkit-scrollbar{height:4px}'
     + '  [data-flowscroll]::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:2px}'
     + '  [data-flowwide]{width:var(--flow-w,100%)}'
+    // The bars grow in from scaleY(0) with a delay per bar, and on a phone
+    // they were staying at zero — an empty chart with a scrollbar under it.
+    // The height is real data; an entry animation that can strand it is not
+    // worth the risk, so on a phone the bars are simply drawn.
+    + '  [data-wkstart] span{animation:none!important;transform:none!important}'
     + '}'
     // The publish window, in the pill's own face. Appearance none, or the OS
     // paints it as a grey form control in the middle of a glass pill.

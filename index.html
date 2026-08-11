@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="ee9cf56da1fc">
-<script>window.__jrBuild="ee9cf56da1fc"</script>
+<meta name="build" content="6c7336f9ea68">
+<script>window.__jrBuild="6c7336f9ea68"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -1610,7 +1610,7 @@ class Component extends DCLogic {
           readdedAt: c.readdedAt || null, removedReason: c.removedReason,
           removedAt: c.removedAt, daysListed: c.daysListed,
           postedDays: daysSince(c.removedAt),
-          description: null, applicants: null, applicantsNote: null,
+          description: c.description || null, applicants: null, applicantsNote: null,
           employmentType: null, industry: null, companyUrl: null,
           repostedAt: null, repostCount: 0,
         }))
@@ -1702,7 +1702,7 @@ class Component extends DCLogic {
       closedBg: this.state.closed ? 'rgba(255,98,87,.14)' : 'none',
       closedBorder: this.state.closed ? 'rgba(255,98,87,.5)' : 'rgba(255,255,255,.16)',
       closedInk: this.state.closed ? '#ff8a82' : '#6f7a82',
-      toggleClosed: () => this.setState(s2 => ({ closed: !s2.closed, limit: 12, shown: null, job: null, company: null }), () => this.build()),
+      toggleClosed: () => this.setState(s2 => ({ closed: !s2.closed, limit: 12, shown: null, job: null }), () => this.build()),
       resetInk: (filter || sen !== 'all' || tier || company || q || this.state.age || this.state.closed || sort !== 'newest') ? '#eef2f4' : '#6f7a82',
       resetJobs: () => this.setState({
         filter: null, sen: 'all', tier: null, company: null, job: null, closed: false,
@@ -1947,7 +1947,7 @@ class Component extends DCLogic {
       url: c.url, posted: c.listedFrom, firstSeen: c.firstSeen || c.listedFrom,
       readdedAt: c.readdedAt || null, removedReason: c.removedReason,
       removedAt: c.removedAt, daysListed: c.daysListed, postedDays: c.daysListed,
-      description: null, applicants: null, applicantsNote: null,
+      description: c.description || null, applicants: null, applicantsNote: null,
       employmentType: null, industry: null, companyUrl: null,
       repostedAt: null, repostCount: 0,
     })));
@@ -2254,7 +2254,7 @@ class Component extends DCLogic {
           url: c.url, posted: c.listedFrom, firstSeen: c.firstSeen || c.listedFrom,
           readdedAt: c.readdedAt || null, removedReason: c.removedReason,
           postedDays: c.daysListed, removedAt: c.removedAt, daysListed: c.daysListed,
-          description: null, applicants: null, applicantsNote: null,
+          description: c.description || null, applicants: null, applicantsNote: null,
           employmentType: null, industry: null, companyUrl: null,
           repostedAt: null, repostCount: 0 } });
       },
@@ -2550,7 +2550,7 @@ class Component extends DCLogic {
               url: c.url, posted: c.listedFrom, firstSeen: c.firstSeen || c.listedFrom,
               readdedAt: c.readdedAt || null, removedReason: c.removedReason,
               postedDays: c.daysListed, removedAt: c.removedAt, daysListed: c.daysListed,
-              description: null, applicants: null, applicantsNote: null,
+              description: c.description || null, applicants: null, applicantsNote: null,
               employmentType: null, industry: null, companyUrl: null,
               repostedAt: null, repostCount: 0 } })
           }));

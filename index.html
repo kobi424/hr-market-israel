@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="332b94f06c8e">
-<script>window.__jrBuild="332b94f06c8e"</script>
+<meta name="build" content="ee9cf56da1fc">
+<script>window.__jrBuild="ee9cf56da1fc"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -1919,7 +1919,7 @@ class Component extends DCLogic {
 
     const W = 1000, H = 330, pad = 22;
     const n = h.length;
-    const xAt = i => n < 2 ? W / 2 : ((i + 0.5) / n) * W;
+    const xAt = i => n < 2 ? W / 2 : (i / (n - 1)) * W;
     const mk = (key, label, color) => {
       const vals = h.map(r => r[key]);
       const lo = Math.min(...vals), hi = Math.max(...vals), span = (hi - lo) || 1;
@@ -1928,12 +1928,12 @@ class Component extends DCLogic {
         lastX: pts.length ? pts[pts.length - 1][0].toFixed(1) : 0, lastY: pts.length ? pts[pts.length - 1][1].toFixed(1) : 0 };
     };
     const hasData = k => h.filter(r => r[k] != null).length >= Math.max(3, Math.ceil(h.length * 0.6));
-    const series = n ? [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']]
+    const series = n ? [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff']]
       .filter(([k]) => hasData(k)).map(([k, label, color]) => mk(k, label, color)) : [];
     series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
     const hi = this.state.chartHover;
     const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
-    const keysOf = [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
+    const keysOf = [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff']];
 
     const flowFrom = (d.measuredFrom || '').slice(0, 10);
     const flowRows = h.some(r => r.added != null || r.removed != null)
@@ -2967,9 +2967,18 @@ class Component extends DCLogic {
   function markJobList() {
     var sec = jobsSection();
     if (!sec) return;
+    // The roles list, not the longest list. "Longest" picked up the discipline
+    // chips, so the skeleton swept over the filters instead of the rows. A job
+    // row is the only one holding a button that opens a listing, which is what
+    // the aria-label on it says.
     var best = null;
     sec.querySelectorAll('ul,ol').forEach(function (l) {
       if (l.closest('[data-filterrow]')) return;
+      var rows = [].slice.call(l.children).filter(function (li) {
+        var b = li.querySelector('button[aria-label]');
+        return b && /open the listing|,s|·/i.test(b.getAttribute('aria-label') || '');
+      });
+      if (rows.length < 2) return;
       if (!best || l.children.length > best.children.length) best = l;
     });
     if (best && best.children.length > 2 && !best.hasAttribute('data-joblist')) {

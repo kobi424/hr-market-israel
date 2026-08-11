@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="fb2620ef5097">
-<script>window.__jrBuild="fb2620ef5097"</script>
+<meta name="build" content="184b0de4cd86">
+<script>window.__jrBuild="184b0de4cd86"</script>
 </head>
 <body>
 <x-dc>
@@ -422,7 +422,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               <span>{{ firstWeek }}</span><span>{{ lastWeek }}</span>
             </div>
           </div>
-          <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #808b93; max-width: 46em;">{{ flowSummary }}</p>
+          
         </div>
       </sc-if>
 
@@ -1740,40 +1740,40 @@ class Component extends DCLogic {
     const LE = (a, b) => (rpEarly == null || a == null) ? b : Math.round(a + (b - a) * rpEarly);
     const scopedSenior = scoped.filter(j => j.seniority === 'director' || j.seniority === 'senior-manager').length;
     const stats = fcat ? [
-      { label: 'Open roles', value: String(fcat.open),
+      { label: 'Current open roles', value: String(fcat.open),
         arrow: fcat.openDelta == null ? '\u25a0' : (fcat.openDelta > 0 ? '\u25b2' : fcat.openDelta < 0 ? '\u25bc' : '\u25a0'),
         color: fcat.openDelta == null ? flat : (fcat.openDelta > 0 ? up : fcat.openDelta < 0 ? down : flat),
         delta: fcat.openDelta == null
-          ? 'no snapshot from last week yet'
+          ? 'last week was not recorded, not zero'
           : (Math.abs(fcat.openDelta) + '% vs ' + fcat.openPrev + ' last week') },
       { label: 'New this week', value: String(fcat.newCount != null ? fcat.newCount : new7),
         arrow: fcat.delta > 0 ? '\u25b2' : fcat.delta < 0 ? '\u25bc' : '\u25a0', color: fcat.delta > 0 ? up : fcat.delta < 0 ? down : flat,
         delta: fcat.newPrev ? (Math.abs(fcat.delta) + '% vs ' + fcat.newPrev + ' last week') : (fcat.newCount + ' posted, no prior week to compare') },
-      { label: 'Median days to fill', value: String(fcat.medianDaysToFill != null ? fcat.medianDaysToFill : '\u2014'),
+      { label: 'Median days to fill, all closures', value: String(fcat.medianDaysToFill != null ? fcat.medianDaysToFill : '\u2014'),
         arrow: '\u25a0', color: flat,
         delta: fcat.medianDaysToFill == null ? 'not measurable until roles close' : '' },
-      { label: 'Net change', value: (fcat.removedCount == null ? '\u2014' : ((fcat.newCount - fcat.removedCount) > 0 ? '+' : '') + (fcat.newCount - fcat.removedCount)),
+      { label: 'Net change this week', value: (fcat.removedCount == null ? '\u2014' : ((fcat.newCount - fcat.removedCount) > 0 ? '+' : '') + (fcat.newCount - fcat.removedCount)),
         arrow: fcat.removedCount == null ? '\u25a0' : ((fcat.newCount - fcat.removedCount) > 0 ? '\u25b2' : (fcat.newCount - fcat.removedCount) < 0 ? '\u25bc' : '\u25a0'),
         color: fcat.removedCount == null ? flat : ((fcat.newCount - fcat.removedCount) > 0 ? up : (fcat.newCount - fcat.removedCount) < 0 ? down : flat),
         delta: fcat.removedCount == null ? 'closures not counted yet' : (fcat.newCount + ' added, ' + fcat.removedCount + ' removed') }
     ] : [
-      { label: 'Open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '\u2014'),
+      { label: 'Current open roles', value: String(t.open != null ? LE(prevOpen, t.open) : '\u2014'),
         arrow: (function (o, p) { if (p == null || !p) return '\u25a0'; return o > p ? '\u25b2' : o < p ? '\u25bc' : '\u25a0'; })(t.open, t.openPrevWeek),
         color: (function (o, p) { if (p == null || !p) return flat; return o > p ? up : o < p ? down : flat; })(t.open, t.openPrevWeek),
         delta: (t.openPrevWeek == null || !t.openPrevWeek)
-          ? 'no snapshot from last week yet'
+          ? 'last week was not recorded, not zero'
           : (Math.abs(Math.round((t.open - t.openPrevWeek) / t.openPrevWeek * 100)) + '% vs ' + t.openPrevWeek + ' last week') },
       { label: 'New this week', value: String(t.newThisWeek != null ? LE(t.newPrevWeek, t.newThisWeek) : '—'),
         arrow: newD > 0 ? '▲' : newD < 0 ? '▼' : '■', color: newD > 0 ? up : newD < 0 ? down : flat,
         delta: newD == null ? 'no prior week' : Math.abs(newD) + '% vs ' + t.newPrevWeek + ' last week' },
-      { label: 'Median days to fill', value: String(t.medianDaysToFill != null ? LE(t.medianDaysToFillPrev, t.medianDaysToFill) : '—'),
+      { label: 'Median days to fill, all closures', value: String(t.medianDaysToFill != null ? LE(t.medianDaysToFillPrev, t.medianDaysToFill) : '—'),
         arrow: t.medianDaysToFillPrev == null ? '\u25a0' : (fillD < 0 ? '\u25bc' : fillD > 0 ? '\u25b2' : '\u25a0'),
         color: t.medianDaysToFillPrev == null ? flat : (fillD < 0 ? up : fillD > 0 ? down : flat),
         delta: t.medianDaysToFill == null ? 'not measurable until roles close' : ((t.medianDaysToFillPrev == null || isNaN(fillD)) ? '' : Math.abs(fillD) + ' days ' + (fillD < 0 ? 'faster' : 'slower') + ' than before') },
     ];
     if (!fcat && t.addedThisWeek != null && t.removedThisWeek != null) {
       const net = t.addedThisWeek - t.removedThisWeek;
-      stats.push({ label: 'Net change', value: (net > 0 ? '+' : '') + net,
+      stats.push({ label: 'Net change this week', value: (net > 0 ? '+' : '') + net,
         arrow: net > 0 ? '▲' : net < 0 ? '▼' : '■', color: net > 0 ? up : net < 0 ? down : flat,
         delta: t.addedThisWeek + ' added, ' + t.removedThisWeek + ' removed' });
     }
@@ -1928,7 +1928,7 @@ class Component extends DCLogic {
       pulseDur: (7 - freshShare * 4).toFixed(1) + 's',
       pulseOpacity: (0.1 + freshShare * 0.45).toFixed(2),
       freshNote: jobs.filter(j => j.postedDays <= 3).length + ' posted in the last three days',
-      splitCount: allJobs.length + ' tracked roles · ' + scopeLabel,
+      splitCount: '',
       scopeLabel: scopeLabel,
       noteColour: filter ? ('hsl(' + (HUES[filter] != null ? HUES[filter] : 210) + ',72%,64%)') : (STATES[(d.verdict && d.verdict.state) || 'neutral'] || STATES.neutral).accent,
       playIcon: this.state.playing ? '❚❚' : '▶',
@@ -2603,7 +2603,7 @@ class Component extends DCLogic {
   // ones waiting on data, and let them reappear on their own the moment the
   // feed carries a real figure: this reads the rendered text, so nothing has to
   // be remembered about which tiles are pending.
-  var EMPTY_TILE = /not measurable until roles close|no snapshot from last week yet|no prior (week|period)/i;
+  var EMPTY_TILE = /not measurable until roles close|last week was not recorded|no prior (week|period)/i;
   // A bare em dash used to count as empty too. That was wrong once the rows
   // started saying so in words: the design paints an em dash as its placeholder
   // before the feed arrives, so every tile was hidden on first paint and only

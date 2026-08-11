@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="cd098d3c5a35">
-<script>window.__jrBuild="cd098d3c5a35"</script>
+<meta name="build" content="9aa16565d9a5">
+<script>window.__jrBuild="9aa16565d9a5"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -166,7 +166,10 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
             </sc-if>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center;">
-            <a href="{{ jobUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Open the full listing in a new tab" style="border: 1px solid {{ accent }}; color: {{ accent }}; border-radius: 999px; padding: 11px 22px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="background: rgba(255,255,255,.06); color: #ffffff;">Open the listing</a>
+            <sc-if value="{{ hasApplyUrl }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ jobApplyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Apply on the employer's own site, opens in a new tab" style="background: {{ accent }}; border: 1px solid {{ accent }}; color: #06080a; font-weight: 700; border-radius: 999px; padding: 11px 22px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="opacity: .88;">Apply on company site &#8599;</a>
+            </sc-if>
+            <a href="{{ jobUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Open the listing on LinkedIn in a new tab" style="border: 1px solid {{ accent }}; color: {{ accent }}; border-radius: 999px; padding: 11px 22px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="background: rgba(255,255,255,.06); color: #ffffff;">{{ linkedinLabel }}</a>
             <sc-if value="{{ hasCompanyUrl }}" hint-placeholder-val="{{ false }}">
               <a href="{{ jobCompanyUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Visit the {{ jobCompany }} site in a new tab" style="border: 1px solid rgba(255,255,255,.18); color: #cbd4d9; border-radius: 999px; padding: 11px 20px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;" style-hover="border-color: rgba(255,255,255,.45); color: #ffffff;">Company site ↗</a>
             </sc-if>
@@ -2248,6 +2251,14 @@ class Component extends DCLogic {
           employmentType: null, industry: null, companyUrl: null,
           repostedAt: null, repostCount: 0 } });
       },
+      hasApplyUrl: !!(this.state.job && this.state.job.applyUrl),
+      jobApplyUrl: this.state.job ? (this.state.job.applyUrl || '#') : '#',
+      linkedinLabel: (() => {
+        const j = this.state.job;
+        if (!j) return 'Open on LinkedIn';
+        if (j.applyUrl) return 'Open on LinkedIn';
+        return j.applyKind === 'linkedin' ? 'Apply on LinkedIn' : 'Open on LinkedIn';
+      })(),
       hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
       noCompanyUrl: !(this.state.job && this.state.job.companyUrl),
       jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
@@ -4105,6 +4116,13 @@ class Component extends DCLogic {
     + '  [data-flowscroll]::-webkit-scrollbar{height:4px}'
     + '  [data-flowscroll]::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:2px}'
     + '  [data-flowwide]{width:var(--flow-w,100%)}'
+    // The widened row is only allowed to be wide INSIDE its own scroller. Its
+    // ancestors have to hold the viewport's width, or the page itself grows
+    // and the whole site can be dragged sideways — the strip of black down the
+    // right of every screen.
+    + '  [data-flowscroll]{max-width:100%}'
+    + '  html,body{overflow-x:hidden;max-width:100%}'
+    + '  section[data-screen-label]{max-width:100%;overflow-x:clip}'
     // The bars grow in from scaleY(0) with a delay per bar, and on a phone
     // they were staying at zero — an empty chart with a scrollbar under it.
     // The height is real data; an entry animation that can strand it is not

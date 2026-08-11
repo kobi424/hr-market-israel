@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="c8a77bdb09e5">
-<script>window.__jrBuild="c8a77bdb09e5"</script>
+<meta name="build" content="af02ee4c6a46">
+<script>window.__jrBuild="af02ee4c6a46"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -1607,7 +1607,7 @@ class Component extends DCLogic {
       listCount: all.length + (all.length === 1 ? ' role' : ' roles') + (filter ? ' in ' + (catLabel[filter] || filter) : '') + (q ? ' matching “' + this.state.q.trim() + '”' : ''),
       listCountHead: all.length + (all.length === 1 ? ' role' : ' roles') + (filter ? ' in ' : ''),
       listCountScope: filter ? (catLabel[filter] || filter) : '',
-      listCountInk: filter ? st.accent : '#6f7a82',
+      listCountInk: filter ? accent : '#6f7a82',
       listCountTail: q ? ' matching “' + this.state.q.trim() + '”' : '',
       query: this.state.q, hasQuery: !!q, queryEcho: q ? '“' + this.state.q.trim() + '”' : 'that',
       noResults: all.length === 0,

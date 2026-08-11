@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="a2e43e3122ec">
-<script>window.__jrBuild="a2e43e3122ec"</script>
+<meta name="build" content="82f2f5db8069">
+<script>window.__jrBuild="82f2f5db8069"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -3058,17 +3058,38 @@ class Component extends DCLogic {
     // Hold most of the brightness, pull it back a fraction of a per cent, and
     // let it come in slower than it went out — the swap happens under cover
     // without the screen ever going dark.
-    wrap.style.transition = 'opacity .22s ease-out, transform .22s ease-out';
+    //
+    // Opacity alone was not enough. Every circle is in a new place after the
+    // swap, and at 55% brightness you can still see them all teleport. A short
+    // blur is what actually hides that: out of focus, a circle moving is just
+    // a smudge changing shape. It clears as the field comes back.
+    //
+    // The height is pinned across the swap as well. A discipline with fewer
+    // roles is a shorter field, so the panel used to close up under the fade
+    // and drag everything below it up the page — the part of the jump that had
+    // nothing to do with the circles.
+    var h = wrap.getBoundingClientRect().height;
+    if (h > 40) wrap.style.minHeight = h + 'px';
+    wrap.style.transition = 'opacity .28s ease-out, transform .28s ease-out, filter .28s ease-out';
     wrap.style.transformOrigin = '50% 50%';
     wrap.style.opacity = '0.55';
     wrap.style.transform = 'scale(.992)';
+    wrap.style.filter = 'blur(7px)';
     setTimeout(function () {
       var w = fieldWrap();
       if (!w) return;
-      w.style.transition = 'opacity .72s cubic-bezier(.16,.84,.24,1), transform .72s cubic-bezier(.16,.84,.24,1)';
+      var ease = 'cubic-bezier(.16,.84,.24,1)';
+      w.style.transition = 'opacity .85s ' + ease + ', transform .85s ' + ease + ', filter .6s ' + ease;
       w.style.opacity = '1';
       w.style.transform = 'none';
-    }, 260);
+      w.style.filter = 'none';
+      // Let it size itself again once it has settled, or the field keeps the
+      // taller discipline's height for good.
+      setTimeout(function () {
+        var w2 = fieldWrap();
+        if (w2) w2.style.minHeight = '';
+      }, 900);
+    }, 300);
   }
   function currentScope() {
     try {

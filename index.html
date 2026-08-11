@@ -27,10 +27,12 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="184b0de4cd86">
-<script>window.__jrBuild="184b0de4cd86"</script>
+<style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
+<meta name="build" content="a2e43e3122ec">
+<script>window.__jrBuild="a2e43e3122ec"</script>
 </head>
 <body>
+<div id="boot" role="status" aria-label="Loading"><i></i></div>
 <x-dc>
 <helmet>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -407,7 +409,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           <div style="border: 1px solid rgba(255,255,255,.09); padding: clamp(16px, 2vw, 26px) clamp(12px, 1.6vw, 20px);">
             <div role="img" aria-label="{{ flowSummary }}" style="display: flex; align-items: stretch; gap: clamp(4px, 1vw, 12px); height: clamp(150px, 24vh, 230px);">
               <sc-for list="{{ flow }}" as="f" hint-placeholder-count="11">
-                <div tabindex="0" role="button" aria-label="{{ f.aria }}" onMouseEnter="{{ f.enter }}" onMouseLeave="{{ f.leave }}" onFocus="{{ f.enter }}" onBlur="{{ f.leave }}" style="flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; cursor: default; background: {{ f.bg }}; transition: background .25s ease; outline-offset: 2px;">
+                <div tabindex="0" role="button" aria-label="{{ f.aria }}" onMouseEnter="{{ f.enter }}" onMouseLeave="{{ f.leave }}" onFocus="{{ f.enter }}" onBlur="{{ f.leave }}" style="flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; cursor: default; background: {{ f.bg }}; transition: background .25s ease; outline-offset: 2px; box-shadow: {{ f.wk }};">
                   <div style="flex: 1; display: flex; align-items: flex-end;">
                     <span style="display: block; width: 100%; height: {{ f.addH }}%; background: {{ accent }}; opacity: {{ f.op }}; transform-origin: bottom; animation: growY 1.1s cubic-bezier(.16,.84,.24,1) both; animation-delay: {{ f.d }}s;"></span>
                   </div>
@@ -941,6 +943,11 @@ class Component extends DCLogic {
   }
 
   jobsTop() {
+    // On a phone the discipline dropdown is already at the top of the list,
+    // so gliding there moves the page for no reason — which is the jump.
+    // Standing down here lets the heading hold in the injected script keep
+    // the view exactly where the reader left it.
+    if (window.matchMedia && window.matchMedia('(max-width: 720px)').matches) return;
     window.__jrJobsTop = (window.performance && performance.now) ? performance.now() : Date.now();
     var self = this;
     var go = function () {
@@ -1807,6 +1814,20 @@ class Component extends DCLogic {
     const netNow = addedNow != null && removedNow != null ? addedNow - removedNow : null;
     const first = h[0] || {}, last = h[n - 1] || {};
     const fmtWeek = w => w ? new Date(w).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+    const weekStart = w => {
+      const p = String(w || '').slice(0, 10).split('-');
+      if (p.length < 3) return '';
+      const d = new Date(+p[0], +p[1] - 1, +p[2]);
+      d.setDate(d.getDate() - d.getDay());
+      return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    };
+    const weekTotal = row => {
+      if (!row) return null;
+      const ws = weekStart(row.week);
+      return flowRows.filter(r => weekStart(r.week) === ws).reduce(
+        (a, r) => ({ added: a.added + (r.added || 0), removed: a.removed + (r.removed || 0) }),
+        { added: 0, removed: 0 });
+    };
 
     const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
     const prior = h.slice(-5, -1);
@@ -2230,18 +2251,31 @@ class Component extends DCLogic {
           op: hovered ? 1 : (i === flowRows.length - 1 ? 0.92 : 0.42),
           bg: hovered ? 'rgba(255,255,255,.06)' : 'transparent',
           d: (0.05 + i * 0.05).toFixed(2),
-          aria: 'Week of ' + fmtWeek(r.week) + ': ' + r.added + ' added, ' + r.removed + ' removed, net ' + (r.added - r.removed),
+          wk: (i > 0 && flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week))
+            ? 'inset 1px 0 0 rgba(255,255,255,.22)' : 'none',
+          aria: fmtWeek(r.week) + ': ' + r.added + ' added, ' + r.removed + ' removed, net ' + (r.added - r.removed),
           enter: () => this.setState({ flowHover: i }),
           leave: () => this.setState({ flowHover: null })
         };
       }),
       flowWeekLabel: (() => {
         const i = this.state.flowHover;
-        const r = i != null ? flowRows[i] : flowRows[flowRows.length - 1];
-        return r ? fmtWeek(r.week) : '';
+        if (i != null && flowRows[i]) return fmtWeek(flowRows[i].week);
+        const r = flowRows[flowRows.length - 1];
+        return r ? 'week of ' + fmtWeek(weekStart(r.week)) : '';
       })(),
-      flowAdded: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.added : addedNow; })(),
-      flowRemoved: (() => { const i = this.state.flowHover; const r = i != null ? flowRows[i] : null; return r ? r.removed : removedNow; })(),
+      flowAdded: (() => {
+        const i = this.state.flowHover;
+        if (i != null && flowRows[i]) return flowRows[i].added;
+        const w = weekTotal(flowRows[flowRows.length - 1]);
+        return w ? w.added : addedNow;
+      })(),
+      flowRemoved: (() => {
+        const i = this.state.flowHover;
+        if (i != null && flowRows[i]) return flowRows[i].removed;
+        const w = weekTotal(flowRows[flowRows.length - 1]);
+        return w ? w.removed : removedNow;
+      })(),
       hasRemovals: removedNow != null && removedNow > 0,
       showAdded: (function (s) { var r = s != null ? flowRows[s] : null; var v = r ? r.added : addedNow; return v != null && v > 0; })(this.state.flowHover),
       showRemoved: (function (s) { var r = s != null ? flowRows[s] : null; var v = r ? r.removed : removedNow; return v != null && v > 0; })(this.state.flowHover),
@@ -2249,7 +2283,8 @@ class Component extends DCLogic {
       flowNet: (() => {
         const i = this.state.flowHover;
         const r = i != null ? flowRows[i] : null;
-        const v = r ? r.added - r.removed : netNow;
+        const w = r ? null : weekTotal(flowRows[flowRows.length - 1]);
+        const v = r ? r.added - r.removed : (w ? w.added - w.removed : netNow);
         return v == null ? '—' : (v > 0 ? '+' + v : String(v));
       })(),
       flowSummary: (function () {
@@ -2332,7 +2367,6 @@ class Component extends DCLogic {
 }
 
 </script>
-<style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style><div id="boot" role="status" aria-label="Loading"><i></i></div>
 
     <a href="./" data-brand aria-label="HRjobs.co.il, reload the site"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
@@ -2390,21 +2424,36 @@ class Component extends DCLogic {
       else sc.style.scrollBehavior = prevBehavior;
     })(t0);
   }
-  // Drop the loading state as soon as the hero has a word in it, and give up
-  // waiting after six seconds either way: a spinner that never leaves is worse
-  // than no spinner.
+  // Wait for the page to be worth looking at, not merely mounted. The hero
+  // paints its frame before data.json lands, so "the hero has a word in it"
+  // let go while the numbers were still missing — cover gone, page still
+  // blank. The count of tracked roles only reads as a number once the feed has
+  // arrived and rendered, so that is the signal.
+  //
+  // Held for at least 450ms so a warm cache does not flash it, and dropped
+  // after six seconds no matter what: a spinner that never leaves is worse
+  // than no spinner. Polled rather than driven by animation frames, which a
+  // background tab stops delivering.
   (function bootWatch() {
     var boot = document.getElementById('boot');
     if (!boot) return;
+    var t0 = Date.now();
     var done = function () { if (!boot.hasAttribute('hidden')) boot.setAttribute('hidden', ''); };
-    var tick = function () {
+    // Two signals, either will do. The count is the honest one, but it is a
+    // phrase from the design's own copy, and a reworded page should not strand
+    // the cover for the full six seconds — so a hero heading with words in it
+    // releases it too. In practice they land in the same frame.
+    var ready = function () {
+      if (/[0-9]s*open roles tracked/i.test(document.body.textContent || '')) return true;
       var h1 = document.querySelector('section[data-screen-label="Verdict"] h1');
-      if (h1 && (h1.textContent || '').trim()) return done();
-      if (performance.now() < 6000) return requestAnimationFrame(tick);
-      done();
+      return !!h1 && !!(h1.textContent || '').trim();
+    };
+    var tick = function () {
+      var age = Date.now() - t0;
+      if (age >= 6000 || (ready() && age >= 450)) return done();
+      setTimeout(tick, 60);
     };
     tick();
-    setTimeout(done, 6000);
   })();
 
   window.__jrTop = function () { glide(0); };
@@ -3334,6 +3383,11 @@ class Component extends DCLogic {
     // on the label it left the dropdown floating 9px above its neighbour.
     + '[data-filterrow] label{min-height:0!important;align-items:stretch!important}'
     + '[data-filterrow] select{min-height:44px!important}'
+    // Every card and tile in All jobs replays its entry animation whenever the
+    // filter changes. On a wide screen that reads as the list refreshing; on a
+    // phone, where the dropdown sits directly above the cards, it reads as the
+    // page jumping under your thumb. The hero keeps its own animation.
+    + 'section[data-screen-label="All jobs"] *{animation:none!important}'
     + '}'
     // The per-row scale, behind a marker.
     + '[data-emptytile]{display:none!important}'

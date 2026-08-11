@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="1d3fc3ba61ee">
-<script>window.__jrBuild="1d3fc3ba61ee"</script>
+<meta name="build" content="b03ad862999b">
+<script>window.__jrBuild="b03ad862999b"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -136,7 +136,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
                 <div style="font-size: 11.5px; color: #8b959c;">Reposted &#8212; originally published {{ jobOriginalPosted }}</div>
               </sc-if>
               <sc-if value="{{ hasAltUrl }}" hint-placeholder-val="{{ false }}">
-                <a href="{{ jobAltUrl }}" target="_blank" rel="noopener noreferrer" style="font-size: 11.5px; color: #8b959c; align-self: flex-start; border-bottom: 1px solid rgba(255,255,255,.18);" style-hover="color: #eef2f4;">Also listed separately &#8599;</a>
+                <a href="{{ jobAltUrl }}" target="_blank" rel="noopener noreferrer" style="font-size: 11.5px; color: #eef2f4; align-self: flex-start; border-bottom: 1px solid rgba(255,255,255,.28);" style-hover="border-color: #ffffff;">{{ jobAltLabel }} &#8599;</a>
               </sc-if>
             </div>
             <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
@@ -426,14 +426,14 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
       <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Median days listed</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e6b45c;">{{ flowTipDtf }}</span></div>
     </sc-if>
     <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
-      <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
+      <div data-tiplist style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px; max-height: 62px; overflow-y: auto;">
         <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
           <button type="button" onClick="{{ fa.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">+ {{ fa.t }}</button>
         </sc-for>
       </div>
     </sc-if>
     <sc-if value="{{ flowTipHasRems }}" hint-placeholder-val="{{ false }}">
-      <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
+      <div data-tiplist style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px; max-height: 62px; overflow-y: auto;">
         <sc-for list="{{ flowTipRems }}" as="fr" hint-placeholder-count="3">
           <button type="button" onClick="{{ fr.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">&#8722; {{ fr.t }}</button>
         </sc-for>
@@ -1884,6 +1884,7 @@ class Component extends DCLogic {
     const flowRows = h.some(r => r.added != null || r.removed != null) ? h.slice() : [];
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
     const flowHoverFx = this.state.flowHover;
+
     const scopeRow = filter ? (cats.find(c => c.key === filter) || null) : null;
     const addedNow = scopeRow ? scopeRow.newCount
       : (t.addedThisWeek != null ? t.addedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].added : null));
@@ -2164,6 +2165,14 @@ class Component extends DCLogic {
       })(),
       hasAltUrl: !!(this.state.job && this.state.job.altUrl),
       jobAltUrl: this.state.job ? (this.state.job.altUrl || '#') : '#',
+      jobAltLabel: (() => {
+        const j = this.state.job;
+        if (!j || !j.altUrl) return '';
+        if (!j.altFrom) return 'Also listed earlier';
+        const p = String(j.altFrom).slice(0, 10).split('-');
+        const when = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        return 'Also listed since ' + when;
+      })(),
       hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
       noCompanyUrl: !(this.state.job && this.state.job.companyUrl),
       jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
@@ -2356,8 +2365,16 @@ class Component extends DCLogic {
           wklabel: (i === 0 || (flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week)))
             ? fmtWeek(r.week) : '',
           aria: fmtWeek(r.week) + ': ' + (r.added == null ? 'nothing recorded' : r.added + ' added, ' + r.removed + ' removed, net ' + (r.added - r.removed)),
-          enter: () => { if (this._ftT) clearTimeout(this._ftT); this.setState({ flowHover: i }); },
-          leave: () => { if (this._ftT) clearTimeout(this._ftT); this._ftT = setTimeout(() => this.setState({ flowHover: null }), 320); }
+          enter: () => {
+            if (this._ftT) clearTimeout(this._ftT);
+            if (this._ftOpen) clearTimeout(this._ftOpen);
+            this._ftOpen = setTimeout(() => this.setState({ flowHover: i }), 800);
+          },
+          leave: () => {
+            if (this._ftOpen) clearTimeout(this._ftOpen);
+            if (this._ftT) clearTimeout(this._ftT);
+            this._ftT = setTimeout(() => this.setState({ flowHover: null }), 320);
+          }
         };
       }),
       flowWeekLabel: (() => {
@@ -2422,8 +2439,9 @@ class Component extends DCLogic {
         const day = String(r.week).slice(0, 10);
         return (d.jobs || []).filter(j => (!filter || j.category === filter)
             && (String(j.firstSeen || '').slice(0, 10) === day
-                || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)))
-          .slice(0, 3).map(j => ({ t: j.title, c: j.company,
+                || (j.readdedAt && String(j.readdedAt).slice(0, 10) === day
+                    && String(j.firstSeen || '').slice(0, 10) !== day)))
+          .map(j => ({ t: j.title, c: j.company,
             open: () => this.setState({ job: j, descOpen: false, flowHover: null }) }));
       })(),
       flowTipRems: (() => {
@@ -2432,7 +2450,7 @@ class Component extends DCLogic {
         const day = String(r.week).slice(0, 10);
         return (d.closedJobs || []).filter(c => (!filter || c.category === filter)
             && String(c.removedAt || '').slice(0, 10) === day)
-          .slice(0, 3).map(c => ({ t: c.title,
+          .map(c => ({ t: c.title,
             open: () => this.setState({ descOpen: false, flowHover: null, job: {
               id: c.id, title: c.title, company: c.company, category: c.category,
               categories: c.categories || [c.category], seniority: c.seniority,
@@ -2449,7 +2467,8 @@ class Component extends DCLogic {
         const day = String(r.week).slice(0, 10);
         return (d.jobs || []).some(j => (!filter || j.category === filter)
             && (String(j.firstSeen || '').slice(0, 10) === day
-                || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)));
+                || (j.readdedAt && String(j.readdedAt).slice(0, 10) === day
+                    && String(j.firstSeen || '').slice(0, 10) !== day)));
       })(),
       flowTipHasRems: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
@@ -2903,6 +2922,48 @@ class Component extends DCLogic {
   // the line half a gap to the right of the break in the zero rule; measuring
   // where the gap actually is puts it in the middle of that break. Plain and
   // solid, floor to ceiling, and behind the bars so it never cuts one in half.
+  // A fortnight fits a phone; the rest is a sideways scroll. The bar row and
+  // the date row are widened together to the same measurement, so a date stays
+  // under its own divider, and the pane starts at the newest end.
+  function sizeFlowForPhone() {
+    var first = document.querySelector('[data-wkstart]');
+    var barRow = first && first.parentElement;
+    if (!barRow) return;
+    // Both rows live inside the bordered box, so scrolling the box moves the
+    // bars and their dates as one thing. Nothing to keep in step by hand.
+    var pane = barRow.parentElement;
+    var dateRow = barRow.nextElementSibling;
+    if (!pane) return;
+    var small = window.matchMedia && window.matchMedia('(max-width: 620px)').matches;
+    if (!small) {
+      pane.removeAttribute('data-flowscroll');
+      [barRow, dateRow].forEach(function (el) {
+        if (!el) return;
+        el.removeAttribute('data-flowwide');
+        el.style.removeProperty('--flow-w');
+      });
+      pane.removeAttribute('data-flowend');
+      return;
+    }
+    var days = document.querySelectorAll('[data-wkstart]').length;
+    if (!days) return;
+    // Fourteen days on screen; the rest is the same day width again.
+    var pct = Math.max(100, Math.round((days / 14) * 100)) + '%';
+    pane.setAttribute('data-flowscroll', '');
+    [barRow, dateRow].forEach(function (el) {
+      if (!el) return;
+      el.setAttribute('data-flowwide', '');
+      el.style.setProperty('--flow-w', pct);
+    });
+    // Open at the newest end, which is the end the reader came for.
+    if (!pane.hasAttribute('data-flowend') && pane.scrollWidth > pane.clientWidth) {
+      pane.setAttribute('data-flowend', '');
+      pane.scrollLeft = pane.scrollWidth;
+    }
+  }
+  setInterval(sizeFlowForPhone, 700);
+  window.addEventListener('resize', sizeFlowForPhone);
+
   function drawWeekLines() {
     var bars = document.querySelectorAll('[data-wkstart]');
     if (!bars.length) return;
@@ -3776,6 +3837,26 @@ class Component extends DCLogic {
     // Behind the bars, inside the bars' own box, ignoring the pointer.
     + '[data-wklines]{position:absolute;inset:0;pointer-events:none;z-index:0}'
     + '[data-wklines] i{display:block}'
+    // Three rows then a scroller, so a day with sixteen additions lists all
+    // sixteen without the popup growing taller than the chart it sits on.
+    + '[data-tiplist]{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent;overscroll-behavior:contain}'
+    + '[data-tiplist]::-webkit-scrollbar{width:5px}'
+    + '[data-tiplist]::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:3px}'
+    + '[data-tiplist]::-webkit-scrollbar-track{background:transparent}'
+    // On a phone, twenty-eight days across 340px is a bar four pixels wide
+    // that cannot be tapped and a week label that cannot be read. Show a
+    // fortnight at a time and let the reader scroll back through the rest,
+    // newest end first — which is the end they came for. The width is set on
+    // the bar row and the label row alike so a date stays under its own
+    // divider, and the divider overlay is measured from the bars so it
+    // follows on its own.
+    + '@media (max-width:620px){'
+    + '  [data-flowscroll]{overflow-x:auto;overscroll-behavior-x:contain;'
+    + '    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}'
+    + '  [data-flowscroll]::-webkit-scrollbar{height:4px}'
+    + '  [data-flowscroll]::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:2px}'
+    + '  [data-flowwide]{width:var(--flow-w,100%)}'
+    + '}'
     // The publish window, in the pill's own face. Appearance none, or the OS
     // paints it as a grey form control in the middle of a glass pill.
     + '[data-bubage]{appearance:none;-webkit-appearance:none;background:none;border:0;outline:none;'

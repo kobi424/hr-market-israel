@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="131b12e00abd">
-<script>window.__jrBuild="131b12e00abd"</script>
+<meta name="build" content="932acf8b0fcc">
+<script>window.__jrBuild="932acf8b0fcc"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -425,7 +425,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
     <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
       <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
         <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
-          <a href="{{ fa.u }}" target="_blank" rel="noopener noreferrer" style="font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;" style-hover="text-decoration: underline;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></a>
+          <button type="button" onClick="{{ fa.open }}" style="width: 100%; background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" style-hover="text-decoration: underline;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></button>
         </sc-for>
       </div>
     </sc-if>
@@ -2414,7 +2414,7 @@ class Component extends DCLogic {
             && (String(j.firstSeen || '').slice(0, 10) === day
                 || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)))
           .slice(0, 3).map(j => ({ t: j.title, c: j.company,
-            u: j.url || ('https://www.linkedin.com/jobs/view/' + j.id) }));
+            open: () => this.setState({ job: j, descOpen: false, flowHover: null }) }));
       })(),
       flowTipRems: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
@@ -2865,7 +2865,19 @@ class Component extends DCLogic {
     if (!open) return;
     if (t.closest('[aria-expanded="true"]')) return;      // the button itself
     var panel = open.parentElement;
-    if (panel && panel.contains(t)) return;               // a choice inside it
+    if (panel && panel.contains(t)) {
+      // A choice inside the menu. Picking one is the end of the interaction,
+      // so the menu should shut behind it — on a phone it was covering the
+      // page the choice had just changed. Closed on the next frame, after the
+      // app has taken the click.
+      if (t.closest('a, button, [role="option"], [role="menuitem"]')) {
+        setTimeout(function () {
+          var still = document.querySelector('[aria-expanded="true"]');
+          if (still) still.click();
+        }, 0);
+      }
+      return;
+    }
     open.click();
   }, true);
 
@@ -3628,7 +3640,12 @@ class Component extends DCLogic {
     // phone can focus, is the only thing that stops it.
     + '@media (max-width:620px){input,select,textarea{font-size:16px!important}'
     + 'section[data-screen-label="All jobs"] select{font-size:16px!important}'
-    + '[data-bubsearch] input{font-size:16px!important;width:132px}}'
+    + '[data-bubsearch] input{font-size:16px!important;width:132px}'
+    // The 16px floor above exists to stop iOS zooming a focused field. The
+    // publish window is a select of four fixed choices — iOS opens a picker
+    // rather than a keyboard, so nothing zooms — and at 16px it towered over
+    // RESET beside it. Same face as RESET, which is what it sits next to.
+    + '[data-bubage]{font-size:9px!important}}'
     + '[data-howbtn]{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;'
     + 'margin-left:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.22);border-radius:999px;'
     + 'background:none;color:#8b959c;font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;'

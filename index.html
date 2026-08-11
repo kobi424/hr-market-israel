@@ -27,8 +27,8 @@
 gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
-<meta name="build" content="cea0c42e17e5">
-<script>window.__jrBuild="cea0c42e17e5"</script>
+<meta name="build" content="fb2620ef5097">
+<script>window.__jrBuild="fb2620ef5097"</script>
 </head>
 <body>
 <x-dc>
@@ -2332,7 +2332,7 @@ class Component extends DCLogic {
 }
 
 </script>
-<div id="boot" role="status" aria-label="Loading"><i></i></div>
+<style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style><div id="boot" role="status" aria-label="Loading"><i></i></div>
 
     <a href="./" data-brand aria-label="HRjobs.co.il, reload the site"
        style="position: fixed; top: 18px; left: 22px; z-index: 60; text-decoration: none;
@@ -3009,17 +3009,17 @@ class Component extends DCLogic {
     // Hold most of the brightness, pull it back a fraction of a per cent, and
     // let it come in slower than it went out — the swap happens under cover
     // without the screen ever going dark.
-    wrap.style.transition = 'opacity .13s ease-out, transform .13s ease-out';
+    wrap.style.transition = 'opacity .22s ease-out, transform .22s ease-out';
     wrap.style.transformOrigin = '50% 50%';
-    wrap.style.opacity = '0.45';
-    wrap.style.transform = 'scale(.988)';
+    wrap.style.opacity = '0.55';
+    wrap.style.transform = 'scale(.992)';
     setTimeout(function () {
       var w = fieldWrap();
       if (!w) return;
-      w.style.transition = 'opacity .42s cubic-bezier(.16,.84,.24,1), transform .42s cubic-bezier(.16,.84,.24,1)';
+      w.style.transition = 'opacity .72s cubic-bezier(.16,.84,.24,1), transform .72s cubic-bezier(.16,.84,.24,1)';
       w.style.opacity = '1';
       w.style.transform = 'none';
-    }, 165);
+    }, 260);
   }
   function currentScope() {
     try {

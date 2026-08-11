@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="c163b78427f4">
-<script>window.__jrBuild="c163b78427f4"</script>
+<meta name="build" content="cd098d3c5a35">
+<script>window.__jrBuild="cd098d3c5a35"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -699,6 +699,8 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
                 <option value="30">Last month</option>
               </select>
             </label>
+            <button type="button" onClick="{{ toggleClosed }}" aria-pressed="{{ closedOn }}" aria-label="{{ closedAria }}" style="grid-column: 1; min-height: 44px; background: {{ closedBg }}; border: 1px solid {{ closedBorder }}; border-radius: 999px; font: inherit; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: {{ closedInk }}; cursor: pointer;">Closed</button>
+            <button type="button" onClick="{{ resetJobs }}" aria-label="Clear every filter in All jobs" style="grid-column: 2; min-height: 44px; background: none; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; font: inherit; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: {{ resetInk }}; cursor: pointer;">Reset</button>
           </div>
           <fieldset style="border: 1px solid rgba(255,255,255,.12); border-radius: 8px; margin: 0; padding: 12px 13px; display: flex; flex-direction: column; gap: 10px;">
             <legend style="padding: 0 6px; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: #78838b;">Level</legend>
@@ -1923,7 +1925,10 @@ class Component extends DCLogic {
     const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
     const keysOf = [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
 
-    const flowRows = h.some(r => r.added != null || r.removed != null) ? h.slice() : [];
+    const flowFrom = (d.measuredFrom || '').slice(0, 10);
+    const flowRows = h.some(r => r.added != null || r.removed != null)
+      ? h.filter(r => !flowFrom || String(r.week).slice(0, 10) >= flowFrom)
+      : [];
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
     const flowHoverFx = this.state.flowHover;
     const flowAddPool = (d.jobs || []).concat((d.closedJobs || []).map(c => ({
@@ -2910,6 +2915,35 @@ class Component extends DCLogic {
     });
     return sec;
   }
+  // Tapping a control focuses it, and the browser scrolls a freshly focused
+  // element into view. On a phone that is the screen jumping up and settling
+  // back: the discipline dropdown does it, and so does every bar in Added and
+  // removed, which is why the popup appears mid-lurch. Put the scroll back
+  // where it was, on the same frame, before anything is painted.
+  (function keepPlaceOnFocus() {
+    var lock = false;
+    document.addEventListener('focusin', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (!t.closest('[data-wkstart]') && !t.closest('[data-filterrow]')
+          && !t.closest('[data-tiplist]')) return;
+      if (lock) return;
+      lock = true;
+      var sc = scroller();
+      var y = topOf(sc);
+      var put = function () {
+        if (topOf(sc) !== y) {
+          if (sc === document.scrollingElement || sc === document.documentElement) window.scrollTo(0, y);
+          else sc.scrollTop = y;
+        }
+      };
+      put();
+      requestAnimationFrame(function () { put(); lock = false; });
+      setTimeout(put, 60);
+    }, true);
+  })();
+
+
   // The skeleton needs to know which list holds the roles. It is the longest
   // list in the section, which is the roles rather than the filter chips.
   function markJobList() {
@@ -4076,6 +4110,11 @@ class Component extends DCLogic {
     // The height is real data; an entry animation that can strand it is not
     // worth the risk, so on a phone the bars are simply drawn.
     + '  [data-wkstart] span{animation:none!important;transform:none!important}'
+    // The verdict word and score ride in the header beside the discipline pill
+    // and the menu button, which on a narrow phone leaves the pill no room.
+    // The same verdict is the first thing in the hero directly below, so the
+    // header does not need to carry it too.
+    + '  header [data-badge]{display:none!important}'
     + '}'
     // The publish window, in the pill's own face. Appearance none, or the OS
     // paints it as a grey form control in the middle of a glass pill.

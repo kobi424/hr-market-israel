@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="d6b18269c507">
-<script>window.__jrBuild="d6b18269c507"</script>
+<meta name="build" content="b562aad46dc2">
+<script>window.__jrBuild="b562aad46dc2"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -416,6 +416,20 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
     <sc-if value="{{ flowTipDtfOn }}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Median days listed</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e6b45c;">{{ flowTipDtf }}</span></div>
     </sc-if>
+    <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
+        <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
+          <div style="font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ flowTipHasRems }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
+        <sc-for list="{{ flowTipRems }}" as="fr" hint-placeholder-count="3">
+          <div style="font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">&#8722; {{ fr.t }} &#183; <span style="color: #7d878e;">{{ fr.c }}</span> <span style="color: #e6b45c;">{{ fr.days }}</span></div>
+        </sc-for>
+      </div>
+    </sc-if>
   </div>
 </sc-if>
 <div role="img" aria-label="{{ flowSummary }}" style="display: flex; align-items: stretch; gap: clamp(4px, 1vw, 12px); height: clamp(150px, 24vh, 230px);">
@@ -493,7 +507,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           </div>
         </div>
         <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 26px;">
-          <span style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6f7a82;">Latest week</span>
+          <span style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6f7a82;">{{ lastWeek }}</span>
           <sc-for list="{{ lastReads }}" as="lr" hint-placeholder-count="3">
             <span style="display: flex; align-items: baseline; gap: 9px; font-size: 12px; color: #99a4ab;">
               <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ lr.color }}; align-self: center; flex: none;"></span>{{ lr.label }}
@@ -1853,26 +1867,12 @@ class Component extends DCLogic {
       .filter(([k]) => hasData(k)).map(([k, label, color]) => mk(k, label, color)) : [];
     series.forEach((s, i) => { s.d = (0.15 + i * 0.35).toFixed(2); });
     const hi = this.state.chartHover;
-    const hoverIdx = (() => {
-      if (hi != null && hi >= 0 && hi < n) return hi;
-      const fi = this.state.flowHover;
-      if (fi == null) return null;
-      const fr = h.filter(r => r.added != null || r.removed != null)[fi];
-      const k = fr ? h.findIndex(r => r.week === fr.week) : -1;
-      return k >= 0 ? k : null;
-    })();
+    const hoverIdx = hi != null && hi >= 0 && hi < n ? hi : null;
     const keysOf = [['open', 'Openings', st.accent], ['new', 'New per day', '#7fb1ff'], ['daysToFill', 'Days to fill', '#e6b45c']];
 
     const flowRows = h.filter(r => r.added != null || r.removed != null);
     const flowMax = Math.max(1, ...flowRows.map(r => Math.max(r.added || 0, r.removed || 0)));
-    const flowHoverFx = (() => {
-      const fi = this.state.flowHover;
-      if (fi != null) return fi;
-      const ci = this.state.chartHover;
-      if (ci == null || !h[ci]) return null;
-      const k = flowRows.findIndex(r => r.week === h[ci].week);
-      return k >= 0 ? k : null;
-    })();
+    const flowHoverFx = this.state.flowHover;
     const scopeRow = filter ? (cats.find(c => c.key === filter) || null) : null;
     const addedNow = scopeRow ? scopeRow.newCount
       : (t.addedThisWeek != null ? t.addedThisWeek : (flowRows.length ? flowRows[flowRows.length - 1].added : null));
@@ -2376,8 +2376,41 @@ class Component extends DCLogic {
       flowTipDtf: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
         if (!r || r.daysToFill == null) return '';
-        const d = Math.round(r.daysToFill);
-        return d + (d === 1 ? ' day' : ' days');
+        const dd = Math.round(r.daysToFill);
+        return dd + (dd === 1 ? ' day' : ' days');
+      })(),
+      flowTipAdds: (() => {
+        const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
+        if (!r) return [];
+        const day = String(r.week).slice(0, 10);
+        return (d.jobs || []).filter(j => (!filter || j.category === filter)
+            && (String(j.firstSeen || '').slice(0, 10) === day
+                || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)))
+          .slice(0, 3).map(j => ({ t: j.title, c: j.company }));
+      })(),
+      flowTipRems: (() => {
+        const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
+        if (!r) return [];
+        const day = String(r.week).slice(0, 10);
+        return (d.closedJobs || []).filter(c => (!filter || c.category === filter)
+            && String(c.removedAt || '').slice(0, 10) === day)
+          .slice(0, 3).map(c => ({ t: c.title, c: c.company,
+            days: c.daysListed == null ? '' : 'listed ' + c.daysListed + (c.daysListed === 1 ? ' day' : ' days') }));
+      })(),
+      flowTipHasAdds: (() => {
+        const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
+        if (!r) return false;
+        const day = String(r.week).slice(0, 10);
+        return (d.jobs || []).some(j => (!filter || j.category === filter)
+            && (String(j.firstSeen || '').slice(0, 10) === day
+                || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)));
+      })(),
+      flowTipHasRems: (() => {
+        const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
+        if (!r) return false;
+        const day = String(r.week).slice(0, 10);
+        return (d.closedJobs || []).some(c => (!filter || c.category === filter)
+            && String(c.removedAt || '').slice(0, 10) === day);
       })(),
       flowSummary: (function () {
         if (!flowRows.length) return '';
@@ -3570,7 +3603,9 @@ class Component extends DCLogic {
     // of line box where the zoom buttons are a flat 26 and the left padding was
     // 11 against 3. Both boxes now take the same 3px and both contents the same
     // 26px, so the pills match without either being measured against the other.
-    + '[data-bubsearch]{position:absolute;left:180px;top:12px;z-index:8;display:inline-flex;align-items:center;'
+    // On the right edge, opposite the zoom pill: the two controls stopped
+    // crowding one corner and the field's top reads left tools, right search.
+    + '[data-bubsearch]{position:absolute;right:12px;top:12px;z-index:8;display:inline-flex;align-items:center;'
     + 'gap:4px;padding:3px;border:1px solid rgba(255,255,255,.14);border-radius:999px;'
     + 'background:rgba(6,8,10,.72);backdrop-filter:blur(8px);box-sizing:border-box}'
     + '[data-zoomui] button,[data-bubsearch] input,[data-bubclear]{height:26px;box-sizing:border-box}'
@@ -3601,8 +3636,8 @@ class Component extends DCLogic {
     // "COMPANY / ROLE" sat smaller and 4px lower than "− 100% + RESET" — not
     // padding, not font size. Same scale, same origin, same top.
     // The zoom pill starts at 8 and is 143 wide at .92, so it ends near 151.
-    + '@media (max-width:620px){[data-bubsearch]{left:158px;top:8px;align-items:center;'
-    + 'transform:scale(.92);transform-origin:left top;padding:3px}'
+    + '@media (max-width:620px){[data-bubsearch]{left:auto;right:8px;top:8px;align-items:center;'
+    + 'transform:scale(.92);transform-origin:right top;padding:3px}'
     + '[data-bubsearch] input{width:118px;padding:0 0 0 8px;letter-spacing:.02em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'

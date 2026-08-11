@@ -28,8 +28,8 @@ gtag('js', new Date());
 gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
 </script>
 <style>#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#06080a;transition:opacity .4s ease}#boot[hidden]{opacity:0;pointer-events:none;display:flex}#boot i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid rgba(255,255,255,.14);border-top-color:#3ddc9b;animation:bootspin .8s linear infinite}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
-<meta name="build" content="b562aad46dc2">
-<script>window.__jrBuild="b562aad46dc2"</script>
+<meta name="build" content="57681f292d0a">
+<script>window.__jrBuild="57681f292d0a"</script>
 </head>
 <body>
 <div id="boot" role="status" aria-label="Loading"><i></i></div>
@@ -108,7 +108,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               </li>
             </sc-for>
           </ul>
-          <div style="padding-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: #cbd4d9; letter-spacing: .02em;">{{ scoreSum }}</div>
+          <div style="padding-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: #cbd4d9; letter-spacing: .02em;">{{ scoreSum }}<span data-howwrap style="position: relative; display: inline-block;"><button type="button" data-howbtn aria-label="Why the sum is multiplied">i</button><span data-how>The multiplier appears when a discipline has fewer than 10 open roles. The three metrics are multiplied by open ÷ 10 before they move the score, so a couple of postings cannot swing a whole verdict. At 10 or more roles the weight is 1 and no multiplier is shown.</span></span></div>
         </div>
       </div>
     </sc-if>
@@ -128,6 +128,12 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
               </sc-if>
               <sc-if value="{{ noCompanyUrl }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size: 15px; color: #b3bcc2;">{{ jobCompany }}</div>
+              </sc-if>
+              <sc-if value="{{ hasOriginalPosted }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 11.5px; color: #8b959c;">Reposted &#8212; originally published {{ jobOriginalPosted }}</div>
+              </sc-if>
+              <sc-if value="{{ hasAltUrl }}" hint-placeholder-val="{{ false }}">
+                <a href="{{ jobAltUrl }}" target="_blank" rel="noopener noreferrer" style="font-size: 11.5px; color: #8b959c; align-self: flex-start; border-bottom: 1px solid rgba(255,255,255,.18);" style-hover="color: #eef2f4;">Also listed separately &#8599;</a>
               </sc-if>
             </div>
             <sc-if value="{{ hasApplicants }}" hint-placeholder-val="{{ false }}">
@@ -358,7 +364,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           </div>
         </sc-if>
         <sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="14">
-          <a href="{{ b.url }}" target="_blank" rel="noopener noreferrer" onClick="{{ b.click }}" data-bub="{{ b.id }}" aria-label="{{ b.aria }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" onFocus="{{ b.enter }}" onBlur="{{ b.leave }}" style="position: absolute; left: 0; top: 0; width: {{ b.size }}px; height: {{ b.size }}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; opacity: {{ b.op }}; background: {{ b.fill }}; border: {{ b.bw }}px {{ b.bstyle }} {{ b.ring }}; box-shadow: {{ b.glow }}; transition: opacity 1.1s cubic-bezier(.22,.7,.3,1); will-change: transform; outline-offset: 4px;">
+          <a href="{{ b.url }}" target="_blank" rel="noopener noreferrer" onClick="{{ b.click }}" data-bub="{{ b.id }}" data-days="{{ b.days }}" aria-label="{{ b.aria }}" onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" onFocus="{{ b.enter }}" onBlur="{{ b.leave }}" style="position: absolute; left: 0; top: 0; width: {{ b.size }}px; height: {{ b.size }}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; opacity: {{ b.op }}; background: {{ b.fill }}; border: {{ b.bw }}px {{ b.bstyle }} {{ b.ring }}; box-shadow: {{ b.glow }}; transition: opacity 1.1s cubic-bezier(.22,.7,.3,1); will-change: transform; outline-offset: 4px;">
             <span style="font-size: {{ b.font }}px; line-height: 1.15; letter-spacing: -0.01em; color: rgba(255,255,255,{{ b.ink }}); opacity: {{ b.labelOp }}; pointer-events: none; max-width: 100%; max-height: 100%; overflow: hidden;">{{ b.name }}</span>
           </a>
         </sc-for>
@@ -408,7 +414,7 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
           </div>
           <div style="position: relative; border: 1px solid rgba(255,255,255,.09); padding: clamp(16px, 2vw, 26px) clamp(12px, 1.6vw, 20px);">
             <sc-if value="{{ flowTipOn }}" hint-placeholder-val="{{ false }}">
-  <div aria-hidden="true" style="position: absolute; z-index: 5; left: {{ flowTipPct }}; top: 8px; transform: {{ flowTipSide }}; min-width: 172px; background: rgba(10,13,16,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; pointer-events: none;">
+  <div onMouseEnter="{{ flowTipHold }}" onMouseLeave="{{ flowTipDrop }}" style="position: absolute; z-index: 5; left: clamp(126px, {{ flowTipPct }}, calc(100% - 126px)); top: 8px; transform: translate(-50%, 0); min-width: 172px; background: rgba(10,13,16,.97); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
     <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #8b959c;">{{ flowTipDay }}</div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Added</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #3ddc9b;">+{{ flowTipAdded }}</span></div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; font-size: 11.5px;"><span style="color: #b3bcc2;">Closed or expired</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #ff6257;">&#8722;{{ flowTipRemoved }}</span></div>
@@ -419,14 +425,14 @@ gtag('config', 'G-0MQY8LYYJ3', { anonymize_ip: true, allow_google_signals: false
     <sc-if value="{{ flowTipHasAdds }}" hint-placeholder-val="{{ false }}">
       <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
         <sc-for list="{{ flowTipAdds }}" as="fa" hint-placeholder-count="3">
-          <div style="font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></div>
+          <a href="{{ fa.u }}" target="_blank" rel="noopener noreferrer" style="font-size: 10.5px; line-height: 1.35; color: #9fd8bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;" style-hover="text-decoration: underline;">+ {{ fa.t }} &#183; <span style="color: #7d878e;">{{ fa.c }}</span></a>
         </sc-for>
       </div>
     </sc-if>
     <sc-if value="{{ flowTipHasRems }}" hint-placeholder-val="{{ false }}">
       <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; max-width: 236px;">
         <sc-for list="{{ flowTipRems }}" as="fr" hint-placeholder-count="3">
-          <div style="font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">&#8722; {{ fr.t }} &#183; <span style="color: #7d878e;">{{ fr.c }}</span> <span style="color: #e6b45c;">{{ fr.days }}</span></div>
+          <a href="{{ fr.u }}" target="_blank" rel="noopener noreferrer" style="font-size: 10.5px; line-height: 1.35; color: #f0a09a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;" style-hover="text-decoration: underline;">&#8722; {{ fr.t }} &#183; <span style="color: #7d878e;">{{ fr.c }}</span> <span style="color: #e6b45c;">{{ fr.days }}</span></a>
         </sc-for>
       </div>
     </sc-if>
@@ -1733,7 +1739,7 @@ class Component extends DCLogic {
       const isToday = playing && j._today && !j.stock;
       const isGone = playing && j.leaving;
       return {
-        id: j.id, url: j.url || '#field', size: size,
+        id: j.id, url: j.url || '#field', size: size, days: Math.max(0, Math.round(j.postedDays || 0)),
         bw: isToday || isGone ? 2 : isNew ? 1.5 : 1,
         bstyle: isGone ? 'dashed' : 'solid',
         name: (function (nm) {
@@ -2130,6 +2136,15 @@ class Component extends DCLogic {
       descToggle: this.state.descOpen ? 'Show less' : 'Show all',
       descAria: this.state.descOpen ? 'Collapse the description' : 'Show the full description',
       toggleDesc: () => this.setState(s => ({ descOpen: !s.descOpen })),
+      hasOriginalPosted: !!(this.state.job && this.state.job.originalPosted),
+      jobOriginalPosted: (() => {
+        const j = this.state.job;
+        if (!j || !j.originalPosted) return '';
+        const p = String(j.originalPosted).slice(0, 10).split('-');
+        return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      })(),
+      hasAltUrl: !!(this.state.job && this.state.job.altUrl),
+      jobAltUrl: this.state.job ? (this.state.job.altUrl || '#') : '#',
       hasCompanyUrl: !!(this.state.job && this.state.job.companyUrl),
       noCompanyUrl: !(this.state.job && this.state.job.companyUrl),
       jobCompanyUrl: this.state.job ? (this.state.job.companyUrl || '#') : '#',
@@ -2321,8 +2336,8 @@ class Component extends DCLogic {
           wk: (i > 0 && flowRows[i - 1] && weekStart(r.week) !== weekStart(flowRows[i - 1].week))
             ? 'inset 1px 0 0 rgba(255,255,255,.22)' : 'none',
           aria: fmtWeek(r.week) + ': ' + r.added + ' added, ' + r.removed + ' removed, net ' + (r.added - r.removed),
-          enter: () => this.setState({ flowHover: i }),
-          leave: () => this.setState({ flowHover: null })
+          enter: () => { if (this._ftT) clearTimeout(this._ftT); this.setState({ flowHover: i }); },
+          leave: () => { if (this._ftT) clearTimeout(this._ftT); this._ftT = setTimeout(() => this.setState({ flowHover: null }), 320); }
         };
       }),
       flowWeekLabel: (() => {
@@ -2379,6 +2394,8 @@ class Component extends DCLogic {
         const dd = Math.round(r.daysToFill);
         return dd + (dd === 1 ? ' day' : ' days');
       })(),
+      flowTipHold: () => { if (this._ftT) clearTimeout(this._ftT); },
+      flowTipDrop: () => { if (this._ftT) clearTimeout(this._ftT); this._ftT = setTimeout(() => this.setState({ flowHover: null }), 220); },
       flowTipAdds: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
         if (!r) return [];
@@ -2386,7 +2403,8 @@ class Component extends DCLogic {
         return (d.jobs || []).filter(j => (!filter || j.category === filter)
             && (String(j.firstSeen || '').slice(0, 10) === day
                 || (j.repostedAt && String(j.repostedAt).slice(0, 10) === day)))
-          .slice(0, 3).map(j => ({ t: j.title, c: j.company }));
+          .slice(0, 3).map(j => ({ t: j.title, c: j.company,
+            u: j.url || ('https://www.linkedin.com/jobs/view/' + j.id) }));
       })(),
       flowTipRems: (() => {
         const r = flowHoverFx != null ? flowRows[flowHoverFx] : null;
@@ -2395,6 +2413,7 @@ class Component extends DCLogic {
         return (d.closedJobs || []).filter(c => (!filter || c.category === filter)
             && String(c.removedAt || '').slice(0, 10) === day)
           .slice(0, 3).map(c => ({ t: c.title, c: c.company,
+            u: 'https://www.linkedin.com/jobs/view/' + c.id,
             days: c.daysListed == null ? '' : 'listed ' + c.daysListed + (c.daysListed === 1 ? ' day' : ' days') }));
       })(),
       flowTipHasAdds: (() => {
@@ -2810,6 +2829,12 @@ class Component extends DCLogic {
   function setTextDirection() {
     var HEB = /[֐-׿]/;
     document.querySelectorAll('[role="dialog"] p, [role="dialog"] li').forEach(function (p) {
+      // Only the posting's own text. A list item that holds a button is a ROW
+      // of the page — Roles like this — and flipping it moved the dot and the
+      // day count to the wrong sides whenever the title was Hebrew. The row
+      // keeps the English layout; the title inside renders in its own
+      // direction via unicode-bidi, set in the stylesheet.
+      if (p.querySelector('button, a, svg')) { p.removeAttribute('data-dir'); return; }
       if (p.hasAttribute('data-dir')) return;
       var t = p.textContent || '';
       if (!t.trim()) return;
@@ -3342,34 +3367,65 @@ class Component extends DCLogic {
     find.setAttribute('data-bubsearch', '');
     find.innerHTML = '<input type="search" data-bubq placeholder="Company / role" '
       + 'aria-label="Highlight bubbles by company or role" autocomplete="off" spellcheck="false">'
-      + '<button type="button" data-bubclear aria-label="Clear the highlight">&times;</button>';
+      + '<button type="button" data-bubclear aria-label="Clear the highlight">&times;</button>'
+      // A second filter in the same pill: how recently the role was published,
+      // off the same day count the bubbles are sized by. Bubbles outside the
+      // window drop back exactly as non-matching search results do.
+      + '<span data-bubsep aria-hidden="true"></span>'
+      + '<select data-bubage aria-label="Show only bubbles published within">'
+      + '<option value="0">Anytime</option><option value="1">24h</option>'
+      + '<option value="7">Week</option><option value="30">Month</option></select>';
     (field.parentElement || field).appendChild(find);
+
+    // Placed by measurement, not by a guessed constant: the zoom pill's width
+    // moves with its zoom figure, and a fixed left either overlaps RESET or
+    // drifts away from it. 8px after wherever the pill really ends.
+    var placeFind = function () {
+      var z = document.querySelector('[data-zoomui]');
+      var wrapEl2 = find.parentElement;
+      if (!z || !wrapEl2) return;
+      var zr = z.getBoundingClientRect(), pr = wrapEl2.getBoundingClientRect();
+      if (zr.width) find.style.left = Math.round(zr.right - pr.left + 8) + 'px';
+    };
+    placeFind();
+    setTimeout(placeFind, 600);
+    window.addEventListener('resize', placeFind);
 
     var applyFind = function () {
       var input = document.querySelector('[data-bubq]');
       var q = input ? String(input.value || '').trim().toLowerCase() : '';
+      var ageSel = document.querySelector('[data-bubage]');
+      var age = ageSel ? parseInt(ageSel.value, 10) || 0 : 0;
       var hits = 0;
       document.querySelectorAll('[data-bub]').forEach(function (b) {
-        if (!q) { b.removeAttribute('data-dim'); return; }
-        var hay = ((b.getAttribute('aria-label') || '') + ' ' + (b.textContent || '')).toLowerCase();
-        // Spaces stripped as well, so "checkpoint" finds "Check Point".
-        var flat = hay.split(' ').join('');
-        var qflat = q.split(' ').join('');
-        if (hay.indexOf(q) > -1 || flat.indexOf(qflat) > -1) { b.removeAttribute('data-dim'); hits++; }
+        var days = parseInt(b.getAttribute('data-days'), 10);
+        var ageOk = !age || (isFinite(days) && days <= age);
+        var qOk = true;
+        if (q) {
+          var hay = ((b.getAttribute('aria-label') || '') + ' ' + (b.textContent || '')).toLowerCase();
+          // Spaces stripped as well, so "checkpoint" finds "Check Point".
+          var flat = hay.split(' ').join('');
+          var qflat = q.split(' ').join('');
+          qOk = hay.indexOf(q) > -1 || flat.indexOf(qflat) > -1;
+        }
+        if (!q && !age) { b.removeAttribute('data-dim'); return; }
+        if (ageOk && qOk) { b.removeAttribute('data-dim'); hits++; }
         else b.setAttribute('data-dim', '');
       });
       if (find) find.setAttribute('data-on', q ? '1' : '0');
       var badge = find.querySelector('[data-bubcount]');
-      if (q && !badge) {
+      var active = !!q || !!age;
+      if (active && !badge) {
         badge = document.createElement('span');
         badge.setAttribute('data-bubcount', '');
         find.insertBefore(badge, find.querySelector('[data-bubclear]'));
       }
-      if (badge) badge.textContent = q ? String(hits) : '';
-      if (badge && !q) badge.remove();
+      if (badge) badge.textContent = active ? String(hits) : '';
+      if (badge && !active) badge.remove();
     };
     window.__bubFind = applyFind;
     find.addEventListener('input', applyFind);
+    find.addEventListener('change', applyFind);
     find.addEventListener('click', function (e) {
       if (!e.target.closest('[data-bubclear]')) return;
       var input = document.querySelector('[data-bubq]');
@@ -3542,6 +3598,9 @@ class Component extends DCLogic {
     // the correct side. Marked per paragraph, so a mixed posting still reads.
     + '[data-dir="rtl"]{direction:rtl;text-align:right;unicode-bidi:plaintext}'
     + '[data-dir="ltr"]{direction:ltr;text-align:left}'
+    // A Hebrew title inside an English-layout row: the row's dot and day stay
+    // on their usual sides, the words order themselves.
+    + '[role="dialog"] li button span span{unicode-bidi:plaintext}'
     // Something to look at while the feed loads. The page was black until
     // React mounted, which on a phone reads as a site that failed.
     + '#boot{position:fixed;inset:0;z-index:200;display:flex;align-items:center;'
@@ -3603,17 +3662,18 @@ class Component extends DCLogic {
     // of line box where the zoom buttons are a flat 26 and the left padding was
     // 11 against 3. Both boxes now take the same 3px and both contents the same
     // 26px, so the pills match without either being measured against the other.
-    // On the right edge, opposite the zoom pill: the two controls stopped
-    // crowding one corner and the field's top reads left tools, right search.
-    + '[data-bubsearch]{position:absolute;right:12px;top:12px;z-index:8;display:inline-flex;align-items:center;'
+    // Right beside the zoom pill, a small gap after RESET. The zoom pill sits
+    // at 12px and runs about 143px wide, so 164 leaves a 9px breath.
+    + '[data-bubsearch]{position:absolute;left:164px;top:12px;z-index:8;display:inline-flex;align-items:center;'
     + 'gap:4px;padding:3px;border:1px solid rgba(255,255,255,.14);border-radius:999px;'
     + 'background:rgba(6,8,10,.72);backdrop-filter:blur(8px);box-sizing:border-box}'
     + '[data-zoomui] button,[data-bubsearch] input,[data-bubclear]{height:26px;box-sizing:border-box}'
     // line-height pinned to the box: with line-height normal the browser sets
     // the text on the input font's own metrics and the 9px placeholder rides
-    // that baseline about a pixel high of centre.
+    // that baseline about a pixel high of centre. Centred horizontally too —
+    // the placeholder is the pill's label, and a label sits in the middle.
     + '[data-bubsearch] input{width:132px;min-width:0;background:none;border:0;outline:none;color:#eef2f4;'
-    + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:0 0 0 8px;line-height:26px}'
+    + 'font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;padding:0 4px;line-height:26px;text-align:center}'
     // Same face as RESET beside it: Helvetica Neue 9px/400 at .1em, uppercase.
     // Only the placeholder, because the input itself has to stay at 16px or
     // focusing it zooms the whole page on iOS — that fix is older than this one
@@ -3623,6 +3683,14 @@ class Component extends DCLogic {
     + 'letter-spacing:.1em;text-transform:uppercase}'
     + '[data-bubsearch] input::-webkit-search-cancel-button{display:none}'
     + '[data-bubcount]{font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#3ddc9b;padding:0 2px}'
+    + '[data-bubsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 2px;flex:none}'
+    // The publish window, in the pill's own face. Appearance none, or the OS
+    // paints it as a grey form control in the middle of a glass pill.
+    + '[data-bubage]{appearance:none;-webkit-appearance:none;background:none;border:0;outline:none;'
+    + 'color:#8b959c;font:400 9px "Helvetica Neue",Helvetica,ui-sans-serif,system-ui,sans-serif;'
+    + 'letter-spacing:.1em;text-transform:uppercase;height:26px;padding:0 8px 0 6px;cursor:pointer;text-align:center}'
+    + '[data-bubage] option{background:#0d1115;color:#cbd4d9;text-transform:none;font-size:12px}'
+    + '[data-bubage]:hover{color:#eef2f4}'
     + '[data-bubclear]{display:none;align-items:center;justify-content:center;width:22px;height:22px;border:0;'
     + 'border-radius:999px;background:none;color:#cbd4d9;font-size:14px;line-height:1;cursor:pointer;padding:0}'
     + '[data-bubsearch][data-on="1"] [data-bubclear]{display:inline-flex}'
@@ -3636,8 +3704,8 @@ class Component extends DCLogic {
     // "COMPANY / ROLE" sat smaller and 4px lower than "− 100% + RESET" — not
     // padding, not font size. Same scale, same origin, same top.
     // The zoom pill starts at 8 and is 143 wide at .92, so it ends near 151.
-    + '@media (max-width:620px){[data-bubsearch]{left:auto;right:8px;top:8px;align-items:center;'
-    + 'transform:scale(.92);transform-origin:right top;padding:3px}'
+    + '@media (max-width:620px){[data-bubsearch]{left:158px;top:8px;align-items:center;'
+    + 'transform:scale(.92);transform-origin:left top;padding:3px}'
     + '[data-bubsearch] input{width:118px;padding:0 0 0 8px;letter-spacing:.02em}}'
     + '[data-zoomsep]{width:1px;height:15px;background:rgba(255,255,255,.16);margin:0 3px}'
     + '[data-size]{font-size:9px!important;color:#8b959c!important}'
